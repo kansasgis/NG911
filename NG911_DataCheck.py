@@ -6,6 +6,7 @@
 #               kristen@kgs.ku.edu
 #
 # Created:     19/09/2014
+# Modified:    25/09/2014 by dirktall04
 #-------------------------------------------------------------------------------
 
 def getCurrentLayerList():
