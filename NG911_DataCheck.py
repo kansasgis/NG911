@@ -134,9 +134,7 @@ def checkLayerList(gdb):
     print layers
 
 def getKeyword(layer, esb):
-    if layer in ("AuthoritativeBoundary", "CountyBoundary", "MunicipalBoundary"):
-        keyword = "Boundaries"
-    elif layer in esb:
+    if layer in esb:
         keyword = "EmergencyBoundary"
     else:
         keyword = layer
