@@ -125,7 +125,7 @@ def checkLayerList(gdb):
 
     layers = []
 
-    for dirpath, dirnames, filenames in arcpy.da.Walk(gdb, True, '', False, ["Table","FeatureClass"]):
+    for dirpath, dirnames, filenames in arcpy.da.Walk(gdb, True, '', False, ["Table","FeatureClass"]):  # @UnusedVariable @UndefinedVariable
         for filename in filenames:
             if filename not in layerList:
                 print filename + " not in geodatabase layer list template"
@@ -154,8 +154,8 @@ def getRequiredFields(folder):
 ##    print valueList
 
     #get field indexes
-    fcIndex = valueList.index("FeatureClass")
-    fieldIndex = valueList.index("Field\n")
+    fcIndex = valueList.index("FeatureClass")  # @UnusedVariable
+    fieldIndex = valueList.index("Field\n")  # @UnusedVariable
 
     #create a field definition dictionary
     rfDict = {}
@@ -192,8 +192,8 @@ def getFieldDomain(keyword):
     headerLine = doc.readline()
     valueList = headerLine.split("|")
 
-    valueIndex = valueList.index("Values")
-    defIndex = valueList.index("Definition\n")
+    valueIndex = valueList.index("Values")  # @UnusedVariable
+    defIndex = valueList.index("Definition\n")  # @UnusedVariable
 
     domainDict = {}
 
@@ -210,10 +210,10 @@ def checkDomainExistence(gdb):
     #get current domain list
     domainList = getCurrentDomainList()
 
-    domains = {}
+    domains = {}  # @UnusedVariable
 
     #list domains
-    for domain in arcpy.da.ListDomains(gdb):
+    for domain in arcpy.da.ListDomains(gdb):  # @UndefinedVariable
         if domain.name not in domainList:
             print domain.name + " not in geodatabase domain template"
         else:
@@ -256,7 +256,7 @@ def checkRequiredFields(gdb, folder, esb):
     rfDict = getRequiredFields(folder)
 
     #walk through the tables/feature classes
-    for dirpath, dirnames, filenames in arcpy.da.Walk(gdb, True, '', False, ["Table","FeatureClass"]):
+    for dirpath, dirnames, filenames in arcpy.da.Walk(gdb, True, '', False, ["Table","FeatureClass"]):  # @UnusedVariable @UndefinedVariable
         for filename in filenames:
             fields = []
             fullPath = os.path.join(gdb, filename)
@@ -282,7 +282,7 @@ def checkRequiredFields(gdb, folder, esb):
                             fieldList = (comparisonField)
                             i = 0
                             #make sure field is populated with values
-                            with arcpy.da.SearchCursor(fullPath, fieldList) as rows:
+                            with arcpy.da.SearchCursor(fullPath, fieldList) as rows:  # @UndefinedVariable
                                 for row in rows:
                                     if row[0] in (None, "", " "):
                                         i = 1
@@ -304,7 +304,7 @@ def checkFeatureLocations(gdb):
 
     arcpy.MakeFeatureLayer_management(authBound, ab)
 
-    for dirpath, dirnames, filenames in arcpy.da.Walk(gdb, True, '', False, ["FeatureClass"]):
+    for dirpath, dirnames, filenames in arcpy.da.Walk(gdb, True, '', False, ["FeatureClass"]):  # @UnusedVariable @UndefinedVariable
         for filename in filenames:
             if filename != "AuthoritativeBoundary":
                 #get full path name & create a feature layer
