@@ -9,5 +9,5 @@
 #-------------------------------------------------------------------------------
 
 esb = ["EMS", "FIRE", "LAW"]
-gdb = r"R:\BigDrives\internal\internal1\NG911_Pilot_Agg\Final_GIS_Data\Region1_KW_Final.gdb"
+gdb = r"E:\Kristen\Data\NG911\RSDigital_SF_NG911_PSAP.gdb"
 folder = r"E:\Kristen\Data\NG911\NG911_Metadata_Fix\Domains"
