@@ -130,11 +130,13 @@ def LRSRoutePrep(gdb, DOTroads):
     """functions that add several administrative fields and calculate coded values for a NG911 attribute based LRS_Key field"""
     checkfile = gdb
     thelayer = checkfile+"/RoadCenterline"
+    alias = gdb+"/RoadAlias"
     from arcpy import MakeFeatureLayer_management, SelectLayerByAttribute_management, AddField_management, CalculateField_management, AddJoin_management, MakeTableView_management, RemoveJoin_management
     #MakeFeatureLayer_management(checkfile+"/RoadCenterline","RoadCenterline","#","#","#")
     lyr =MakeFeatureLayer_management(thelayer,"RoadCenterline","#","#","#")
+    Alias = MakeTableView_management(alias, "RoadAlias")
     Kdotdbfp = DOTRoads
-    def addAdminFields(lyr):
+    def addAdminFields(lyr, Alias):
         from arcpy import AddField_management as addField, AddIndex_management as AddIndex
         AddIndex(lyr,"SEGID;COUNTY_L;COUNTY_R;MUNI_L;MUNI_R","RCL_INDEX","NON_UNIQUE","NON_ASCENDING")
         FieldList3=("KDOT_COUNTY_R", "KDOT_COUNTY_L","KDOT_CITY_R", "KDOT_CITY_L", 'UniqueNo' )
@@ -147,6 +149,9 @@ def LRSRoutePrep(gdb, DOTroads):
         addField(lyr, "RID", "TEXT", "#", "#", "26")
         addField(lyr, "KDOT_START_DATE", "DATE")
         addField(lyr, "KDOT_END_DATE", "DATE")
+        addField(Alias, "KDOT_PREFIX", "TEXT", "#", "#", "1" )
+        addField(Alias, "KDOT_CODE", "LONG" )
+        addField(Alias, "KDOT_ROUTENAME", "TEXT", "#", "#", "3" )
 
     def CalcAdminFields(lyr, Kdotdbfp):
         from arcpy import CalculateField_management as CalcField
@@ -199,14 +204,15 @@ def LRSRoutePrep(gdb, DOTroads):
     def HighwayCalc(lyr, gdb):
         #Pull out State Highways to preserve KDOT LRS Key (CANSYS FORMAT - non directional CRAD)
         MakeTableView_management(gdb+"\RoadAlias", "RoadAlias")
-        from arcpy import CalculateField_management as CalcField
+        from arcpy import CalculateField_management as CalcField, Sort_management
         from arcpy import MakeTableView_management as TableView, SelectLayerByAttribute_management as Select
         from arcpy import AddJoin_management as JoinTbl, RemoveJoin_management as removeJoin
         Select(lyr,"NEW_SELECTION","ROUTE_ID LIKE '%X0'")
         CalcField(in_table="RoadCenterline",field="KDOT_ADMO",expression="'X'",expression_type="PYTHON_9.3",code_block="#")
-        TableView(Kdotdbfp+"\RoadAlias", "RoadAlias")
-        JoinTbl(lyr,"SEGID","RoadAlias", "SEGID")
-        Select(lyr, "NEW_SELECTION", "RoadAlias.LABEL LIKE 'US %' OR RoadAlias.LABEL LIKE 'I %' OR RoadAlias.LABEL LIKE 'K %'" )
+        Sort_management("RoadAlias",gdb+"/AliasSort1","LABEL ASCENDING","UR")
+        TableView(Kdotdbfp+"\AliasSort1", "AliasSort1")
+        JoinTbl(lyr,"SEGID","AliasSort1", "SEGID")
+        Select(lyr, "NEW_SELECTION", "AliasSort1.LABEL LIKE 'US %' OR AliasSort1.LABEL LIKE 'I %' OR AliasSort1.LABEL LIKE 'K %'" )
         removeJoin(lyr)
         CalcField(lyr,"RID","!ROUTE_ID![:11]","PYTHON_9.3","#")
         Select(lyr, "REMOVE_FROM_SELECTION", "TRAVEL is null" )
@@ -218,13 +224,13 @@ def LRSRoutePrep(gdb, DOTroads):
         CalculateField_management(in_table="RoadCenterline",field="RoadCenterline.PreCode",expression="'0'",expression_type="PYTHON_9.3",code_block="#")
         CalculateField_management(in_table="RoadCenterline",field="RoadCenterline.KDOT_ADMO",expression="'S'",expression_type="PYTHON_9.3",code_block="#")
 
-    #addAdminFields(lyr)
-    #CalcAdminFields(lyr, Kdotdbfp)
-    #CountyCode(lyr)
+    addAdminFields(lyr)
+    CalcAdminFields(lyr, Kdotdbfp)
+    CountyCode(lyr)
     CityCodes(lyr, Kdotdbfp)
-    #RouteCalc(lyr)
-    #RoadinName(lyr)
-    #HighwayCalc(lyr,Kdotdbfp)
+    RouteCalc(lyr)
+    RoadinName(lyr)
+    HighwayCalc(lyr,Kdotdbfp)
     #CalculateField_management(lyr, "RID", "str(!KDOT_COUNTY_R!)+str(!KDOT_COUNTY_L!)+str(!KDOT_CITY_R!)+str(!KDOT_CITY_L!)+str(!PreCode!) + !Soundex! + str(!SuffCode!)+!TRAVEL!+str(!UniqueNo!)","PYTHON_9.3","#")
 
 def LRSIt():
