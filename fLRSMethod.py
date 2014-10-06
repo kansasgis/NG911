@@ -10,8 +10,6 @@
 #-------------------------------------------------------------------------------
 
 from NG911_Config import gdb, DOTRoads
-
-
 import re
 
 """
@@ -40,11 +38,8 @@ def normalize(s):
             s_clean += c
         char = c
     return s_clean
-
 def soundex(s):
-#""" Encode a string using Soundex.
-#Takes a string and returns its Soundex representation.
-#"""
+    """ Encode a string using Soundex. Takes a string and returns its Soundex representation."""
     if len(s) < 2:
         return None
     s = normalize(s)
@@ -60,9 +55,8 @@ def soundex(s):
         enc += '0'
     return enc
 
-
-#this module applies soundex to named streets, and pads the numbered streets with zeros, keeping the numbering system intact
 def numdex(s):
+    """this module applies soundex to named streets, and pads the numbered streets with zeros, keeping the numbering system intact"""
     if s[0] in ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0']:
         numerical_re = re.compile("[A-Z]|[^0-9][^0-9][^0-9][^0-9]")
         s=re.sub(numerical_re,"", s.zfill(4))
@@ -71,14 +65,15 @@ def numdex(s):
         return soundex(s)
 
 def RoadinName(lyr):
+    """This module corrects the road names in the soundex code where the road is named like Road A or Road 12 """
     from arcpy import SelectLayerByAttribute_management, CalculateField_management
     SelectLayerByAttribute_management(lyr,"NEW_SELECTION","RD LIKE 'ROAD %'")
     CalculateField_management(lyr,"Soundex",""""R"+!RD![5:].zfill(3)""","PYTHON_9.3","#")
     SelectLayerByAttribute_management(lyr,"CLEAR_SELECTION","#")
 
 
-#removes street centerlines from the topology and creates geometric network, then checks geometric network connectivity
 def StreetNetworkCheck(gdb):
+    """removes street centerlines from the topology and creates geometric network, then checks geometric network connectivity"""
     from arcpy import env, Exists, VerifyAndRepairGeometricNetworkConnectivity_management, RemoveFeatureClassFromTopology_management, CreateGeometricNetwork_management, FindDisconnectedFeaturesInGeometricNetwork_management
     checkfile = gdb
     env.workspace = checkfile
@@ -95,9 +90,8 @@ def StreetNetworkCheck(gdb):
     StreetLogfile = reviewpath+"/KDOTReview/"+ntpath.basename(ng911)+".log"
     VerifyAndRepairGeometricNetworkConnectivity_management(geonet, StreetLogfile, "VERIFY_ONLY", "EXHAUSTIVE_CHECK", "0, 0, 10000000, 10000000")
 
-
-
 def ConflateKDOTrestart(gdb, DOTRoads):
+    """Conflation restart for selecting KDOT roads to conflate to the NG911 Network"""
     from arcpy import SelectLayerByLocation_management, FeatureClassToFeatureClass_conversion
     from arcpy import env
     env.overwriteOutput = 1
@@ -107,9 +101,8 @@ def ConflateKDOTrestart(gdb, DOTRoads):
     SelectLayerByLocation_management("KDOT_Roads","INTERSECT","RoadCenterline","60 Feet","NEW_SELECTION")
     FeatureClassToFeatureClass_conversion("KDOT_Roads",checkfile+r"/NG911","KDOT_Roads_Review","#","#","#")
 
-
-#Prepares Street centerlines for LRS, detects changes and transfers the HPMS key field from the KDOT roads
 def ConflateKDOT(gdb, DOTRoads):
+    """detects road centerline changes and transfers the HPMS key field from the KDOT roads via ESRI conflation tools"""
     from arcpy import MakeFeatureLayer_management, Exists, TransferAttributes_edit, DetectFeatureChanges_management, RubbersheetFeatures_edit, SelectLayerByLocation_management, FeatureClassToFeatureClass_conversion, GenerateRubbersheetLinks_edit, RubbersheetFeatures_edit
     from arcpy import env
     env.overwriteOutput = 1
@@ -131,9 +124,10 @@ def ConflateKDOT(gdb, DOTRoads):
     RubbersheetFeatures_edit("KDOT_Roads_Review","RoadLinks","RoadLinks_pnt","LINEAR")
     DetectFeatureChanges_management("KDOT_Roads_Review","RoadCenterline",checkfile+r"/NG911/RoadDifference",spatialtolerance,"#",checkfile+r"/RoadDifTbl",spatialtolerance,"#")
     MakeFeatureLayer_management(checkfile+"/NG911/RoadDifference","RoadDifference","#","#","#")
-    TransferAttributes_edit("KDOT_Roads_Review","RoadCenterline","ROUTE_ID",spatialtolerance,"#",checkfile+r"/LRS_MATCH")
+    TransferAttributes_edit("KDOT_Roads_Review","RoadCenterline","YEAR_RECORD;ROUTE_ID",spatialtolerance,"#",checkfile+r"/LRS_MATCH")
 
 def LRSRoutePrep(gdb, DOTroads):
+    """functions that add several administrative fields and calculate coded values for a NG911 attribute based LRS_Key field"""
     checkfile = gdb
     thelayer = checkfile+"/RoadCenterline"
     from arcpy import MakeFeatureLayer_management, SelectLayerByAttribute_management, AddField_management, CalculateField_management, AddJoin_management, MakeTableView_management, RemoveJoin_management
@@ -220,12 +214,9 @@ def LRSRoutePrep(gdb, DOTroads):
 
     def ScratchCalcs():
         CalculateField_management("RoadCenterline","RoadCenterline.Soundex","""!RoadAlias.A_RD![0]  +  !RoadAlias.A_RD![1:].replace("S","").zfill(3)""","PYTHON_9.3","#")
-
-        arcpy.CalculateField_management(in_table="RoadCenterline",field="RoadCenterline.KDOTPreType",expression="!RoadAlias.A_RD![0]  ",expression_type="PYTHON_9.3",code_block="#")
-        arcpy.CalculateField_management(in_table="RoadCenterline",field="RoadCenterline.PreCode",expression="'0'",expression_type="PYTHON_9.3",code_block="#")
-        arcpy.CalculateField_management(in_table="RoadCenterline",field="RoadCenterline.KDOT_ADMO",expression="'S'",expression_type="PYTHON_9.3",code_block="#")
-
-
+        CalculateField_management(in_table="RoadCenterline",field="RoadCenterline.KDOTPreType",expression="!RoadAlias.A_RD![0]  ",expression_type="PYTHON_9.3",code_block="#")
+        CalculateField_management(in_table="RoadCenterline",field="RoadCenterline.PreCode",expression="'0'",expression_type="PYTHON_9.3",code_block="#")
+        CalculateField_management(in_table="RoadCenterline",field="RoadCenterline.KDOT_ADMO",expression="'S'",expression_type="PYTHON_9.3",code_block="#")
 
     #addAdminFields(lyr)
     #CalcAdminFields(lyr, Kdotdbfp)
@@ -236,8 +227,8 @@ def LRSRoutePrep(gdb, DOTroads):
     #HighwayCalc(lyr,Kdotdbfp)
     #CalculateField_management(lyr, "RID", "str(!KDOT_COUNTY_R!)+str(!KDOT_COUNTY_L!)+str(!KDOT_CITY_R!)+str(!KDOT_CITY_L!)+str(!PreCode!) + !Soundex! + str(!SuffCode!)+!TRAVEL!+str(!UniqueNo!)","PYTHON_9.3","#")
 
-
 def LRSIt():
+    """makes the LRS route layer and dissolves the NG911 fields to LRS event tables"""
     MakeRouteLayer_na()
     pass
 
