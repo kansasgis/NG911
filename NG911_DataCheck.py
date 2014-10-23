@@ -202,6 +202,43 @@ def GeocodeAddressPoints(addressPointPath, streetPath):
 
     userMessage("Completed geocoding. Results are in table " + output)
 
+def checkAddressPointFrequency(AddressPoints, gdb):
+    from arcpy import Frequency_analysis, MakeTableView_management, DeleteRows_management, GetCount_management, Delete_management, Exists
+    from os.path import join
+
+    AP_Freq = join(gdb, "AP_Freq")
+    fl = "fl"
+
+    #remove the frequency table if it exists already
+    if Exists(AP_Freq):
+        Delete_management(AP_Freq)
+
+    #run frequency analysis
+    Frequency_analysis(AddressPoints, AP_Freq, "MUNI;HNO;HNS;PRD;STP;RD;STS;POD;POM;ZIP;BLD;FLR;UNIT;ROOM;SEAT;LOC;LOCTYPE", "")
+
+    #get count of records
+    rFreq = GetCount_management(AP_Freq)
+    rCount = int(rFreq.getOutput(0))
+
+    #delete records
+    #make where clause
+    wc = "Frequency = 1 or LOCTYPE <> 'Primary'"
+
+    #make feature layer
+    MakeTableView_management(AP_Freq, fl, wc)
+
+    #get count of the results
+    result = GetCount_management(fl)
+    count = int(result.getOutput(0))
+
+    if rCount != count:
+        #Delete
+        DeleteRows_management(fl)
+        userMessage("Checked frequency of address points. Results are in table " + AP_Freq)
+    elif rCount == count:
+        Delete_management(AP_Freq)
+        userMessage("All address points are unique.")
+
 def checkLayerList(gdb, esb):
     userMessage("Checking geodatabase layers...")
     from arcpy.da import Walk
@@ -580,6 +617,8 @@ def checkFeatureLocations(gdb):
         RecordResults("fieldValues", values, gdb)
 
 def main():
+    from os.path import join
+
     try:
         from NG911_Config import esb, gdb, folder
     except:
@@ -587,16 +626,16 @@ def main():
 
     #check geodatabase template
 ##    checkLayerList(gdb, esb)
-    checkRequiredFields(gdb, folder, esb)
+##    checkRequiredFields(gdb, folder, esb)
 ##    checkRequiredFieldValues(gdb, folder, esb)
 
     #check values and locations
 ##    checkValuesAgainstDomain(gdb, folder)
 ##    checkFeatureLocations(gdb)
-##    from os.path import join
-##    addy_pt = join(gdb, "AddressPoints")
+    addy_pt = join(gdb, "AddressPoints")
 ##    street = join(gdb, "RoadCenterline")
 ##    GeocodeAddressPoints(addy_pt, street)
+    checkAddressPointFrequency(addy_pt, gdb)
 
     #checks we probably don't need to use
 ##    checkDomainExistence(gdb, folder)
