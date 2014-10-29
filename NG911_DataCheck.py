@@ -1,49 +1,64 @@
 #-------------------------------------------------------------------------------
-# Name:        NG911_DataCheck
-# Purpose:     Collection of functions to check submitted NG911 data
+# Name: NG911_DataCheck
+# Purpose: Collection of functions to check submitted NG911 data
 #
-# Author:      Kristen Jordan, Kansas Data Access and Support Center
-#               kristen@kgs.ku.edu
+# Author: Kristen Jordan, Kansas Data Access and Support Center
+# kristen@kgs.ku.edu
 #
-# Created:     19/09/2014
-# Modified:    25/09/2014 by dirktall04
+# Created: 19/09/2014
+# Modified: 29/10/2014 by dirktall04
+# Changes include: Reorganizing imports, change of variable name "id" to "ObjectXID"
+# as "id" is a reserved keyword. Addition of "today = strftime("%m/%d/%y")" line to
+# "checkFeatureLocations" function definition.
+# Added various comments to make PyDev happier with the script.
 #-------------------------------------------------------------------------------
+
+
+from arcpy import (AddField_management, AddMessage, CalculateField_management,  CopyRows_management, CreateAddressLocator_geocoding, # @UnusedImport
+                   CreateTable_management, Delete_management, Exists, GeocodeAddresses_geocoding, GetCount_management, FieldInfo, # @UnusedImport
+                   ListFields, MakeFeatureLayer_management, MakeTableView_management, SelectLayerByAttribute_management, # @UnusedImport
+                   SelectLayerByLocation_management) # @UnusedImport
+from arcpy.da import Walk, InsertCursor, ListDomains, SearchCursor  # @UnresolvedImport
+
+from os import path
+from os.path import basename, dirname, join
+
+from time import strftime
+
 
 def getCurrentLayerList(esb):
     layerList = ["RoadAlias", "AddressPoints", "RoadCenterline", "AuthoritativeBoundary", "CountyBoundary", "ESZ", "PSAP", "MunicipalBoundary"]
-
     for e in esb:
         layerList.append(e)
-
-    #future code: have each county's geodatabase model identified with ESB layers
-    #get the layer list from their standard geodatabase
-
+        #future code: have each county's geodatabase model identified with ESB layers
+        #get the layer list from their standard geodatabase
     return layerList
 
+
 def userMessage(msg):
-    from arcpy import AddMessage
     print msg
     AddMessage(msg)
 
+
 def getCurrentDomainList():
-
     domainList = ["AddressNumbers", "AddressParity", "AgencyID", "Counties", "Country",
-    "ESBType", "Municipality", "OneWay", "PlaceType", "PointLocation", "PostalCodes",
-    "PostalCommunities", "RoadClass", "RoadDirectionals", "RoadModifier", "RoadStatus",
-    "RoadSurface", "RoadTypes", "States", "Stewards"]
-
+                    "ESBType", "Municipality", "OneWay", "PlaceType", "PointLocation", "PostalCodes",
+                    "PostalCommunities", "RoadClass", "RoadDirectionals", "RoadModifier", "RoadStatus",
+                    "RoadSurface", "RoadTypes", "States", "Stewards"]
     #or get domain list from approved source
 
     return domainList
 
+
 def fieldsWithDomains():
     #list of all the fields that have a domain
     fieldList = ["LOCTYPE", "STATUS", "SURFACE", "STEWARD", "AGENCYID","PLC", "RDCLASS", "PARITY", "ONEWAY", "MUNI", "COUNTY", "COUNTRY","PRD", "ZIP", "POSTCO", "STATE", "STS"]
+
     return fieldList
+
 
 def getDomainKeyword(domainName):
     ucase_list = ["AgencyID", "Country", "OneWay"]
-
     if domainName == "AddressParity":
         keyword = "PARITY"
     elif domainName == "Counties":
@@ -81,12 +96,9 @@ def getDomainKeyword(domainName):
 
     return keyword
 
+
 def getAddFieldInfo(table):
-    from arcpy import AddField_management
-    from os.path import basename
-
     lyr = basename(table)
-
     #field info
     if lyr == "TemplateCheckResults":
         fieldInfo = [(table, "DateFlagged", "DATE", "", "", ""),(table, "Description", "TEXT", "", "", 250),(table, "Category", "TEXT", "", "", 25)]
@@ -95,12 +107,11 @@ def getAddFieldInfo(table):
 
     return fieldInfo
 
-def getResultsFieldList(table):
 
+def getResultsFieldList(table):
     #get field info
     fieldInfo = getAddFieldInfo(table)
     fieldList = []
-
     #loop through added fields
     for fi in fieldInfo:
         #append the field name
@@ -108,11 +119,8 @@ def getResultsFieldList(table):
 
     return fieldList
 
-def RecordResults(resultType, values, gdb):
-    from os.path import join
-    from arcpy import Exists, CreateTable_management, AddField_management
-    from arcpy.da import InsertCursor
 
+def RecordResults(resultType, values, gdb): # Guessed on whitespace formatting here.
     if resultType == "template":
         tbl = "TemplateCheckResults"
     elif resultType == "fieldValues":
@@ -135,16 +143,13 @@ def RecordResults(resultType, values, gdb):
         fieldList = getResultsFieldList(table)
 
     cursor = InsertCursor(table, fieldList)
-
     for row in values:
         cursor.insertRow(row)
-
     del cursor
+
 
 def GeocodeAddressPoints(addressPointPath, streetPath):
     userMessage("Geocoding address points...")
-    from os.path import join, dirname
-    from arcpy import ListFields, FieldInfo, MakeTableView_management, CopyRows_management, AddField_management, CalculateField_management, CreateAddressLocator_geocoding, GeocodeAddresses_geocoding
 
     gdb = dirname(addressPointPath)
     gc_table = join(gdb, "GeocodeTable")
@@ -154,7 +159,7 @@ def GeocodeAddressPoints(addressPointPath, streetPath):
     output = join(gdb, "gc_test")
 
     # Get the fields from the input
-    fields= ListFields(addressPointPath)
+    fields = ListFields(addressPointPath)
 
     # Create a fieldinfo object
     fieldinfo = FieldInfo()
@@ -163,8 +168,8 @@ def GeocodeAddressPoints(addressPointPath, streetPath):
     for field in fields:
         if field.name in ("LABEL", "ZIP"):
             fieldinfo.addField(field.name, field.name, "VISIBLE", "")
-        else:
-            fieldinfo.addField(field.name, field.name, "HIDDEN", "")
+    else:
+        fieldinfo.addField(field.name, field.name, "HIDDEN", "")
 
     userMessage("Preparing addresses...")
     # The created crime_view layer will have fields as set in fieldinfo object
@@ -202,52 +207,13 @@ def GeocodeAddressPoints(addressPointPath, streetPath):
 
     userMessage("Completed geocoding. Results are in table " + output)
 
-def checkAddressPointFrequency(AddressPoints, gdb):
-    from arcpy import Frequency_analysis, MakeTableView_management, DeleteRows_management, GetCount_management, Delete_management, Exists
-    from os.path import join
-
-    AP_Freq = join(gdb, "AP_Freq")
-    fl = "fl"
-
-    #remove the frequency table if it exists already
-    if Exists(AP_Freq):
-        Delete_management(AP_Freq)
-
-    #run frequency analysis
-    Frequency_analysis(AddressPoints, AP_Freq, "MUNI;HNO;HNS;PRD;STP;RD;STS;POD;POM;ZIP;BLD;FLR;UNIT;ROOM;SEAT;LOC;LOCTYPE", "")
-
-    #get count of records
-    rFreq = GetCount_management(AP_Freq)
-    rCount = int(rFreq.getOutput(0))
-
-    #delete records
-    #make where clause
-    wc = "Frequency = 1 or LOCTYPE <> 'Primary'"
-
-    #make feature layer
-    MakeTableView_management(AP_Freq, fl, wc)
-
-    #get count of the results
-    result = GetCount_management(fl)
-    count = int(result.getOutput(0))
-
-    if rCount != count:
-        #Delete
-        DeleteRows_management(fl)
-        userMessage("Checked frequency of address points. Results are in table " + AP_Freq)
-    elif rCount == count:
-        Delete_management(AP_Freq)
-        userMessage("All address points are unique.")
 
 def checkLayerList(gdb, esb):
     userMessage("Checking geodatabase layers...")
-    from arcpy.da import Walk
     #get current layer list
     layerList = getCurrentLayerList(esb)
-
     layers = []
-
-    for dirpath, dirnames, filenames in Walk(gdb, True, '', False, ["Table","FeatureClass"]):
+    for dirpath, dirnames, filenames in Walk(gdb, True, '', False, ["Table","FeatureClass"]):  # @UnusedVariable
         for filename in filenames:
             if filename not in layerList:
                 userMessage( filename + " not in geodatabase layer list template")
@@ -257,6 +223,7 @@ def checkLayerList(gdb, esb):
     userMessage("Finished checking layers: ")
     userMessage(layers)
 
+
 def getKeyword(layer, esb):
     if layer in esb:
         keyword = "EmergencyBoundary"
@@ -265,25 +232,24 @@ def getKeyword(layer, esb):
 
     return keyword
 
-def getRequiredFields(folder):
-    from os import path
 
+def getRequiredFields(folder):
     path1 = path.join(folder, "NG911_RequiredFields.txt")
     fieldDefDoc = open(path1, "r")
 
     #get the header information
     headerLine = fieldDefDoc.readline()
     valueList = headerLine.split("|")
-##    print valueList
+    ## print valueList
 
     #get field indexes
-    fcIndex = valueList.index("FeatureClass")
-    fieldIndex = valueList.index("Field\n")
+    fcIndex = valueList.index("FeatureClass")  # @UnusedVariable
+    fieldIndex = valueList.index("Field\n")  # @UnusedVariable
 
     #create a field definition dictionary
     rfDict = {}
 
-    #parse the text to population the field definition dictionary
+    #parse the text to populate the field definition dictionary
     for line in fieldDefDoc.readlines():
         stuffList = line.split("|")
         #set up values
@@ -302,19 +268,19 @@ def getRequiredFields(folder):
 
     return rfDict
 
+
 def getFieldDomain(field, folder):
-    from os import path
 
     docPath = path.join(folder, field + "_Domains.txt")
-##    print docPath
+    ## print docPath
 
     doc = open(docPath, "r")
 
     headerLine = doc.readline()
     valueList = headerLine.split("|")
 
-    valueIndex = valueList.index("Values")
-    defIndex = valueList.index("Definition\n")
+    valueIndex = valueList.index("Values")  # @UnusedVariable
+    defIndex = valueList.index("Definition\n")  # @UnusedVariable
 
     domainDict = {}
 
@@ -326,37 +292,37 @@ def getFieldDomain(field, folder):
 
     return domainDict
 
+
 def checkValuesAgainstDomain(gdb, folder):
     userMessage("Checking field values against approved domains...")
-    from arcpy import ListFields
-    from arcpy.da import Walk, SearchCursor
-    from os import path
 
     #get list of fields with domains
     fieldsWDoms = fieldsWithDomains()
-
-    for dirpath, dirnames, filenames in Walk(gdb, True, '', False, ["Table","FeatureClass"]):
+    for dirpath, dirnames, filenames in Walk(gdb, True, '', False, ["Table","FeatureClass"]):  # @UnusedVariable
         for filename in filenames:
             fields = []
             fullPath = path.join(gdb, filename)
+        #create complete field list
+        fields = ListFields(fullPath)
+        fieldNames = []
 
-            #create complete field list
-            fields = ListFields(fullPath)
-            fieldNames = []
-            for field in fields:
-                fieldNames.append((field.name).upper())
+        for field in fields:
+            fieldNames.append((field.name).upper())
 
-            #see if fields from complete list have domains
-            for fieldN in fieldNames:
-                #if field has a domain
-                if fieldN in fieldsWDoms:
-                    #get the full domain dictionary
-                    domainDict = getFieldDomain(fieldN, folder)
+        #see if fields from complete list have domains
+        for fieldN in fieldNames:
 
-                    #put domain values in a list
-                    domainList = []
-                    for val in domainDict.iterkeys():
-                        domainList.append(val.upper())
+            #if field has a domain
+            if fieldN in fieldsWDoms:
+
+                #get the full domain dictionary
+                domainDict = getFieldDomain(fieldN, folder)
+
+                #put domain values in a list
+                domainList = []
+
+                for val in domainDict.iterkeys():
+                    domainList.append(val.upper())
 
                     #loop through records for that particular field to see if all values match domain
                     wc = fieldN + " is not null"
@@ -368,20 +334,18 @@ def checkValuesAgainstDomain(gdb, folder):
                                     hno = row[1]
                                     if hno > 999999 or hno < 0:
                                         userMessage( filename + ": " + str(row[0]) + " value " + str(row[1]) + " not in approved domain for field " + fieldN)
-                                #otherwise, compare row value to domain list
-                                else:
-                                    if row[1].upper() not in domainList:
-                                        userMessage( filename + ": " + str(row[0]) + " value " + str(row[1]) + " not in approved domain for field " + fieldN)
+                                    #otherwise, compare row value to domain list
+                                    else:
+                                        if row[1].upper() not in domainList:
+                                            userMessage( filename + ": " + str(row[0]) + " value " + str(row[1]) + " not in approved domain for field " + fieldN)
 
     userMessage("Completed checking fields against domains")
 
-def checkDomainExistence(gdb, folder):
-    from arcpy.da import ListDomains
 
+def checkDomainExistence(gdb, folder):
     #get current domain list
     domainList = getCurrentDomainList()
-
-    domains = {}
+    domains = {}  # @UnusedVariable
 
     #list domains
     for domain in ListDomains(gdb):
@@ -394,6 +358,7 @@ def checkDomainExistence(gdb, folder):
                 cv = domain.codedValues
                 #get keyword
                 keyword = getDomainKeyword(domain.name)
+
                 if keyword <> "":
                     #get the established domain values and definitions in a dictionary
                     cv_recorded = getFieldDomain(keyword, folder)
@@ -408,24 +373,23 @@ def checkDomainExistence(gdb, folder):
                                 userMessage( key + " not in domain " + domain.name)
 
                     if um == 0:
-                       userMessage( domain.name + ": domain values match")
+                        userMessage( domain.name + ": domain values match")
 
             #for range: only address numbers have a range, so do the comparison directly
             elif domain.domainType == "Range":
                 low = int(domain.range[0])
                 high = int(domain.range[1])
+
                 if low != 0:
                     userMessage( domain.name + " range low is not 0. It is " + str(low))
+
                 if high != 999999:
                     userMessage( domain.name + " range high is not 999999. It is " + str(high))
+                    ## print domains
 
-##    print domains
+
 def checkRequiredFieldValues(gdb, folder, esb):
     userMessage("Checking that required fields have all values...")
-    from os import path
-    from arcpy.da import Walk, SearchCursor
-    from arcpy import MakeTableView_management, Delete_management, GetCount_management, ListFields
-    from time import strftime
 
     #get today's date
     today = strftime("%m/%d/%y")
@@ -433,11 +397,11 @@ def checkRequiredFieldValues(gdb, folder, esb):
     #get required fields
     rfDict = getRequiredFields(folder)
 
-    id = "OBJECTID"
+    ObjectXID = "OBJECTID"
     values = []
 
     #walk through the tables/feature classes
-    for dirpath, dirnames, filenames in Walk(gdb, True, '', False, ["Table","FeatureClass"]):
+    for dirpath, dirnames, filenames in Walk(gdb, True, '', False, ["Table","FeatureClass"]):  # @UnusedVariable
         for filename in filenames:
             fullPath = path.join(gdb, filename)
 
@@ -487,18 +451,17 @@ def checkRequiredFieldValues(gdb, folder, esb):
             #if count is greater than 0, it means a required value somewhere isn't filled in
             if count > 0:
                 #make sure the objectID gets included in the search for reporting
-                if id not in matchingFields:
-                    matchingFields.append(id)
+                if ObjectXID not in matchingFields:
+                    matchingFields.append(ObjectXID)
 
-                i = len(matchingFields)
+                i = len(matchingFields)  # @UnusedVariable
                 k = 0
 
                 #run a search cursor to get any/all records where a required field value is null
                 with SearchCursor(fullPath, (matchingFields), wc) as rows:
                     for row in rows:
-
                         #get object ID of the field
-                        oid = str(row[matchingFields.index(id)])
+                        oid = str(row[matchingFields.index(ObjectXID)])
 
                         #loop through row
                         while k < 0:
@@ -510,8 +473,8 @@ def checkRequiredFieldValues(gdb, folder, esb):
                                 val = (today, report, filename, matchingFields[k], oid)
                                 values.append(val)
 
-                            #iterate!
-                            k = k + 1
+                                #iterate!
+                                k = k + 1
             else:
                 userMessage( "All required values present for " + filename)
 
@@ -522,12 +485,9 @@ def checkRequiredFieldValues(gdb, folder, esb):
 
     userMessage("Completed check for required field values")
 
+
 def checkRequiredFields(gdb, folder, esb):
     userMessage("Checking that required fields exist...")
-    from os import path
-    from arcpy import ListFields
-    from arcpy.da import Walk
-    from time import strftime
 
     #get today's date
     today = strftime("%m/%d/%y")
@@ -537,22 +497,24 @@ def checkRequiredFields(gdb, folder, esb):
     rfDict = getRequiredFields(folder)
 
     #walk through the tables/feature classes
-    for dirpath, dirnames, filenames in Walk(gdb, True, '', False, ["Table","FeatureClass"]):
+    for dirpath, dirnames, filenames in Walk(gdb, True, '', False, ["Table","FeatureClass"]):  # @UnusedVariable
         for filename in filenames:
             fields = []
             fullPath = path.join(gdb, filename)
 
             #list fields
             fs = ListFields(fullPath)
+
             for f in fs:
                 fields.append(f.name.upper())
 
             #get the keyword to acquire required field names
             keyword = getKeyword(filename, esb)
+
             #get the appropriate comparison list
             if keyword in rfDict:
                 comparisonList = rfDict[keyword]
-##                print comparisonList
+                ## print comparisonList
 
                 #loop through required fields to make sure they exist in the geodatabase
                 for comparisonField in comparisonList:
@@ -569,13 +531,15 @@ def checkRequiredFields(gdb, folder, esb):
 
     userMessage("Completed check for required fields")
 
+
 def checkFeatureLocations(gdb):
     userMessage("Checking feature locations...")
-    from os import path
-    from arcpy import MakeFeatureLayer_management, SelectLayerByAttribute_management, SelectLayerByLocation_management, GetCount_management, Delete_management, da
 
+    #get today's date
+    today = strftime("%m/%d/%y")
     values = []
-    #make sure feature are all inside authoritative boundary
+
+    #make sure features are all inside authoritative boundary
 
     #get authoritative boundary
     authBound = path.join(gdb, "NG911", "AuthoritativeBoundary")
@@ -583,7 +547,7 @@ def checkFeatureLocations(gdb):
 
     MakeFeatureLayer_management(authBound, ab)
 
-    for dirpath, dirnames, filenames in da.Walk(gdb, True, '', False, ["FeatureClass"]):
+    for dirpath, dirnames, filenames in Walk(gdb, True, '', False, ["FeatureClass"]):  # @UnusedVariable
         for filename in filenames:
             if filename != "AuthoritativeBoundary":
                 #get full path name & create a feature layer
@@ -601,7 +565,7 @@ def checkFeatureLocations(gdb):
                 #report results
                 if count > 0:
                     fields = ("OBJECTID")
-                    with da.SearchCursor(fl, fields) as rows:
+                    with SearchCursor(fl, fields) as rows:
                         for row in rows:
                             val = (today, "Feature not inside authoritative boundary", filename, "", row[0])
                             values.append(val)
@@ -616,9 +580,8 @@ def checkFeatureLocations(gdb):
     if values != []:
         RecordResults("fieldValues", values, gdb)
 
-def main():
-    from os.path import join
 
+def main():
     try:
         from NG911_Config import esb, gdb, folder
     except:
@@ -638,7 +601,7 @@ def main():
     checkAddressPointFrequency(addy_pt, gdb)
 
     #checks we probably don't need to use
-##    checkDomainExistence(gdb, folder)
+    ## checkDomainExistence(gdb, folder)
 
 if __name__ == '__main__':
     main()
