@@ -12,7 +12,7 @@
 # pip install -U PySide
 # from the command line to install PySide.
 
-# Check compatibility with the new version of NG911_DataChecks.
+# ***Check compatibility with the new version of NG911_DataChecks.***
 
 # The ability to select and run the datachecks from this GUI will be
 # added in layoutContainer4. -- Next step in development after
@@ -30,6 +30,10 @@
 
 ## Need to remove old functions dealing with page 2/3 after done using them
 ## as templates for the new functions dealing with page 2.
+
+## See about using function decorators
+## to display text sent to the userMessage() function
+## in the output message boxes.
 
 #-------------------------------------------------------------------------------
 # Name:        NG911_Frontend
@@ -998,7 +1002,7 @@ class NG911_Window(QWidget):
     
     def getFieldNameMapping(self):
         print "This feature is not yet fully implemented."
-        return "apples"
+        return "!Error!"
         # Test updateFieldNameMapping, then
         # Add a way to get the data back out
         # and combine with the default

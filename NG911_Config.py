@@ -6,10 +6,6 @@
 #
 # Created:     24/09/2014
 # Modified:    29/10/2014 by dirktall04
-# The "soundexNameExclusions" and "ordinalNumberEndings" variables are 
-# used by the fLRMSMethod script.
-# The "currentLayerList" and "nonDisplayFields" variables are
-# used by the NG911_Frontend script.
 #-------------------------------------------------------------------------------
 
 esb = ["EMS", "FIRE", "LAW"]
@@ -22,4 +18,3 @@ ordinalNumberEndings = ["ST", "ND", "RD", "TH"]
 
 currentLayerList = ["RoadAlias", "AddressPoints", "RoadCenterline", "AuthoritativeBoundary", "CountyBoundary", "ESZ", "PSAP", "MunicipalBoundary"]
 nonDisplayFields = ["ObjectID", "Shape", "Shape_Area", "Shape_Length"]
-
