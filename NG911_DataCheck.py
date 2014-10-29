@@ -8,6 +8,7 @@
 # Created: 19/09/2014
 # Modified: 25/09/2014 by dirktall04
 #-------------------------------------------------------------------------------
+
 def getCurrentLayerList(esb):
 layerList = ["RoadAlias", "AddressPoints", "RoadCenterline", "AuthoritativeBoundary", "CountyBoundary", "ESZ", "PSAP", "MunicipalBoundary"]
 for e in esb:
@@ -19,6 +20,7 @@ def userMessage(msg):
 from arcpy import AddMessage
 print msg
 AddMessage(msg)
+
 def getCurrentDomainList():
 domainList = ["AddressNumbers", "AddressParity", "AgencyID", "Counties", "Country",
 "ESBType", "Municipality", "OneWay", "PlaceType", "PointLocation", "PostalCodes",
@@ -31,6 +33,7 @@ def fieldsWithDomains():
 fieldList = ["LOCTYPE", "STATUS", "SURFACE", "STEWARD", "AGENCYID","PLC", "RDCLASS", "PARITY", "ONEWAY", "MUNI", "COUNTY", "COUNTRY","PRD", "ZIP", "POSTCO", "STATE", "STS"]
 return fieldList
 def getDomainKeyword(domainName):
+
 ucase_list = ["AgencyID", "Country", "OneWay"]
 if domainName == "AddressParity":
 keyword = "PARITY"
@@ -172,6 +175,7 @@ else:
 layers.append(filename)
 userMessage("Finished checking layers: ")
 userMessage(layers)
+
 def getKeyword(layer, esb):
 if layer in esb:
 keyword = "EmergencyBoundary"
@@ -223,6 +227,7 @@ stuffList = line.split("|")
 domainDict[stuffList[0]] = stuffList[1].rstrip()
 return domainDict
 def checkValuesAgainstDomain(gdb, folder):
+
 userMessage("Checking field values against approved domains...")
 from arcpy import ListFields
 from arcpy.da import Walk, SearchCursor
@@ -470,5 +475,6 @@ checkRequiredFields(gdb, folder, esb)
 ## GeocodeAddressPoints(addy_pt, street)
 #checks we probably don't need to use
 ## checkDomainExistence(gdb, folder)
+
 if __name__ == '__main__':
 main()
