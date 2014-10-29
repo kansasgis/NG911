@@ -9,5 +9,5 @@
 #-------------------------------------------------------------------------------
 
 esb = ["EMS", "FIRE", "LAW"] #list of layers that are emergency services boundaries
-gdb = r"E:\Kristen\Data\NG911\RSDigital_KW_NG911_PSAP.gdb" #full path of the NG911 geodatabase
+gdb = r"R:\BigDrives\internal\internal1\NG911_Pilot_Agg\Final_GIS_Data\Region1_PR_Final_KJ.gdb" #full path of the NG911 geodatabase
 folder = r"E:\Kristen\Data\NG911\NG911_Metadata_Fix\Domains" #folder containing the magical text files

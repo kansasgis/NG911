@@ -625,16 +625,16 @@ def main():
         userMessage( "Copy config file into command line")
 
     #check geodatabase template
-##    checkLayerList(gdb, esb)
-##    checkRequiredFields(gdb, folder, esb)
-##    checkRequiredFieldValues(gdb, folder, esb)
+    checkLayerList(gdb, esb)
+    checkRequiredFields(gdb, folder, esb)
+    checkRequiredFieldValues(gdb, folder, esb)
 
     #check values and locations
-##    checkValuesAgainstDomain(gdb, folder)
-##    checkFeatureLocations(gdb)
+    checkValuesAgainstDomain(gdb, folder)
+    checkFeatureLocations(gdb)
     addy_pt = join(gdb, "AddressPoints")
-##    street = join(gdb, "RoadCenterline")
-##    GeocodeAddressPoints(addy_pt, street)
+    street = join(gdb, "RoadCenterline")
+    GeocodeAddressPoints(addy_pt, street)
     checkAddressPointFrequency(addy_pt, gdb)
 
     #checks we probably don't need to use
