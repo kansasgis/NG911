@@ -14,9 +14,10 @@
 #-------------------------------------------------------------------------------
 
 
-from arcpy import (AddField_management, CalculateField_management,  CopyRows_management, CreateAddressLocator_geocoding, CreateTable_management,  # @UnusedImport
-                   Delete_management, Exists, GeocodeAddresses_geocoding, GetCount_management, FieldInfo, ListFields, MakeFeatureLayer_management,
-                   MakeTableView_management, SelectLayerByAttribute_management, SelectLayerByLocation_management)  # @UnusedImport
+from arcpy import (AddField_management, AddMessage, CalculateField_management,  CopyRows_management, CreateAddressLocator_geocoding, # @UnusedImport
+                   CreateTable_management, Delete_management, Exists, GeocodeAddresses_geocoding, GetCount_management, FieldInfo, # @UnusedImport
+                   ListFields, MakeFeatureLayer_management, MakeTableView_management, SelectLayerByAttribute_management, # @UnusedImport
+                   SelectLayerByLocation_management) # @UnusedImport
 from arcpy.da import Walk, InsertCursor, ListDomains, SearchCursor  # @UnresolvedImport
 
 from os import path
@@ -35,11 +36,10 @@ def getCurrentLayerList(esb):
 
 
 def userMessage(msg):
-    from arcpy import AddMessage
     print msg
     AddMessage(msg)
-    
-    
+
+
 def getCurrentDomainList():
     domainList = ["AddressNumbers", "AddressParity", "AgencyID", "Counties", "Country",
                     "ESBType", "Municipality", "OneWay", "PlaceType", "PointLocation", "PostalCodes",
@@ -146,8 +146,8 @@ def RecordResults(resultType, values, gdb): # Guessed on whitespace formatting h
     for row in values:
         cursor.insertRow(row)
     del cursor
-    
-    
+
+
 def GeocodeAddressPoints(addressPointPath, streetPath):
     userMessage("Geocoding address points...")
     
@@ -206,8 +206,8 @@ def GeocodeAddressPoints(addressPointPath, streetPath):
     GeocodeAddresses_geocoding(gc_table, Locator, "'Single Line Input' SingleLineInput VISIBLE NONE", output, "STATIC")
     
     userMessage("Completed geocoding. Results are in table " + output)
-    
-    
+
+
 def checkLayerList(gdb, esb):
     userMessage("Checking geodatabase layers...")
     #get current layer list

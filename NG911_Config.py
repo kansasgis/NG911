@@ -22,3 +22,4 @@ ordinalNumberEndings = ["ST", "ND", "RD", "TH"]
 
 currentLayerList = ["RoadAlias", "AddressPoints", "RoadCenterline", "AuthoritativeBoundary", "CountyBoundary", "ESZ", "PSAP", "MunicipalBoundary"]
 nonDisplayFields = ["ObjectID", "Shape", "Shape_Area", "Shape_Length"]
+
