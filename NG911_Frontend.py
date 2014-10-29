@@ -12,17 +12,24 @@
 # pip install -U PySide
 # from the command line to install PySide.
 
-# Can only check GDBs located in the same folder as this script.
-# Add the ability to scan the next higher level directory for the Domains folder and for GDBs to check.
-# ^^ Done.
-
 # Check compatibility with the new version of NG911_DataChecks.
 
 # The ability to select and run the datachecks from this GUI will be
 # added in layoutContainer4. -- Next step in development after
 # reverse translation for the written to GDB field name mapping.
 
-# Scrollable text box should be a non-editable QTextEdit box.
+## ^^ Simplified writes/reads for these settings in preparation for
+## reverse translation.
+
+### ^^^ Recently collapsed page 2 and page 3 into page 2 alone.
+### References still go to pages 1, 2, 3, 4 as layoutContainer<x>.
+### Will keep that way until the rest of the functionality
+### is added, then remove old references and update to
+### pages 1, 2, 3... renaming layoutContainer to applicationPage
+### or similar.
+
+## Need to remove old functions dealing with page 2/3 after done using them
+## as templates for the new functions dealing with page 2.
 
 #-------------------------------------------------------------------------------
 # Name:        NG911_Frontend
@@ -37,7 +44,7 @@
 #
 # Created:     26/09/2014
 # Modified:    13/10/2014
-# Version:     0.37a
+# Version:     0.39a
 #-------------------------------------------------------------------------------
 import sys
 import platform  # @UnusedImport
@@ -56,10 +63,10 @@ import datetime
 
 from arcpy import (env, Exists as arcpyExists, ListWorkspaces, ListDatasets, ListFeatureClasses, CreateTable_management,
                 ListTables, ListFields, GetCount_management)  # @UnusedImport
-from arcpy.da import (InsertCursor as daInsertCursor, SearchCursor as daSearchCursor, # @UnresolvedImport @UnusedImport
-                       UpdateCursor as daUpdateCursor)  # @UnresolvedImport @UnusedImport
+from arcpy.da import (InsertCursor as daInsertCursor, SearchCursor as daSearchCursor, # @UnresolvedImport
+                       UpdateCursor as daUpdateCursor)  # @UnresolvedImport
 from arcpy.management import AddField
-#import NG911_DataCheck
+
 from NG911_DataCheck import getRequiredFields
 
 # Use NG91_DataCheck's getCurrentLayerList function instead when it is fully implemented.
