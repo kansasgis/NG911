@@ -16,6 +16,7 @@
 # from the command line to install PySide.
 
 # ***Check compatibility with the new version of NG911_DataChecks.***
+# ^^ Partially complete.
 
 # The ability to select and run the datachecks from this GUI will be
 # added in layoutContainer4. -- Next step in development after
@@ -50,8 +51,8 @@
 #               dtalley@ksdot.org
 #
 # Created:     26/09/2014
-# Modified:    29/10/2014 by dirktall04
-# Version:     0.40a
+# Modified:    30/10/2014 by dirktall04
+# Version:     0.41a
 #-------------------------------------------------------------------------------
 
 
