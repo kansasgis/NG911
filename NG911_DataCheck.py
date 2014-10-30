@@ -6,7 +6,7 @@
 # kristen@kgs.ku.edu
 #
 # Created: 19/09/2014
-# Modified: 29/10/2014 by dirktall04
+# Modified: 30/10/2014 by dirktall04
 # Changes include: Reorganizing imports, change of variable name "id" to "ObjectXID"
 # as "id" is a reserved keyword. Addition of "today = strftime("%m/%d/%y")" line to
 # "checkFeatureLocations" function definition.
@@ -120,7 +120,7 @@ def getResultsFieldList(table):
     return fieldList
 
 
-def RecordResults(resultType, values, gdb): # Guessed on whitespace formatting here.
+def RecordResults(resultType, values, gdb): # Guessed on whitespace formatting here. -- DT
     if resultType == "template":
         tbl = "TemplateCheckResults"
     elif resultType == "fieldValues":
@@ -148,7 +148,7 @@ def RecordResults(resultType, values, gdb): # Guessed on whitespace formatting h
     del cursor
 
 
-def GeocodeAddressPoints(addressPointPath, streetPath):
+def geocodeAddressPoints(addressPointPath, streetPath):
     userMessage("Geocoding address points...")
 
     gdb = dirname(addressPointPath)
@@ -172,7 +172,7 @@ def GeocodeAddressPoints(addressPointPath, streetPath):
         fieldinfo.addField(field.name, field.name, "HIDDEN", "")
 
     userMessage("Preparing addresses...")
-    # The created crime_view layer will have fields as set in fieldinfo object
+    # The created addyview layer will have fields as set in fieldinfo object
     MakeTableView_management(addressPointPath, addyview, "", "", fieldinfo)
 
     # To persist the layer on disk make a copy of the view
@@ -208,7 +208,10 @@ def GeocodeAddressPoints(addressPointPath, streetPath):
     userMessage("Completed geocoding. Results are in table " + output)
 
 
-def checkLayerList(gdb, esb):
+def checkLayerList(pathsInfoObject):
+    gdb = pathsInfoObject.gdbPath
+    esb = pathsInfoObject.esbList # Not currently dynamic.
+    
     userMessage("Checking geodatabase layers...")
     #get current layer list
     layerList = getCurrentLayerList(esb)

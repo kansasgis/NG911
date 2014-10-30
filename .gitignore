@@ -41,3 +41,9 @@ Icon
 Network Trash Folder
 Temporary Items
 .apdisk
+
+.project
+.pydevproject
+NG911_Config.pyc
+NG911_DataCheck.pyc
+NG911_Frontend_3.py
