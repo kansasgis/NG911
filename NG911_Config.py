@@ -5,12 +5,12 @@
 # Author:      kristen
 #
 # Created:     24/09/2014
-# Modified:    29/10/2014 by dirktall04
+# Modified:    30/10/2014 by dirktall04
 #-------------------------------------------------------------------------------
 
-esb = ["EMS", "FIRE", "LAW"]
-gdb = r"\\gisdata\arcgis\GISdata\DASC\NG911\KDOTReview\RSDigital_GY_NG911.gdb" #r"\\gisdata\arcgis\GISdata\DASC\NG911\KDOTReview\RSDigital_CN_NG911.gdb" ##r"R:\BigDrives\internal\internal1\NG911_Pilot_Agg\Final_GIS_Data\Region1_KW_Final.gdb"
-folder = r"E:\Kristen\Data\NG911\NG911_Metadata_Fix\Domains"
+esb = ["EMS", "FIRE", "LAW"] #list of layers that are emergency services boundaries
+gdb = r"R:\BigDrives\internal\internal1\NG911_Pilot_Agg\Final_GIS_Data\Region1_PR_Final_KJ.gdb" #full path of the NG911 geodatabase
+folder = r"E:\Kristen\Data\NG911\NG911_Metadata_Fix\Domains" #folder containing the magical text files
 DOTRoads = r"\\gisdata\arcgis\GISdata\DASC\NG911\KDOTReview\KDOT_Roads.gdb"
 
 # These soundexNameExclusions entries are already checked for a space immediately following them.
