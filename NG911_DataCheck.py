@@ -120,7 +120,7 @@ def getResultsFieldList(table):
     return fieldList
 
 
-def RecordResults(resultType, values, gdb): # Guessed on whitespace formatting here.
+def RecordResults(resultType, values, gdb): # Guessed on whitespace formatting here. -- DT
     if resultType == "template":
         tbl = "TemplateCheckResults"
     elif resultType == "fieldValues":
@@ -148,7 +148,7 @@ def RecordResults(resultType, values, gdb): # Guessed on whitespace formatting h
     del cursor
 
 
-def GeocodeAddressPoints(addressPointPath, streetPath):
+def geocodeAddressPoints(addressPointPath, streetPath):
     userMessage("Geocoding address points...")
     
     gdb = dirname(addressPointPath)
@@ -172,7 +172,7 @@ def GeocodeAddressPoints(addressPointPath, streetPath):
         fieldinfo.addField(field.name, field.name, "HIDDEN", "")
         
     userMessage("Preparing addresses...")
-    # The created crime_view layer will have fields as set in fieldinfo object
+    # The created addyview layer will have fields as set in fieldinfo object
     MakeTableView_management(addressPointPath, addyview, "", "", fieldinfo)
     
     # To persist the layer on disk make a copy of the view
@@ -208,7 +208,10 @@ def GeocodeAddressPoints(addressPointPath, streetPath):
     userMessage("Completed geocoding. Results are in table " + output)
 
 
-def checkLayerList(gdb, esb):
+def checkLayerList(pathsInfoObject):
+    gdb = pathsInfoObject.gdbPath
+    esb = pathsInfoObject.esbList # Not currently dynamic.
+    
     userMessage("Checking geodatabase layers...")
     #get current layer list
     layerList = getCurrentLayerList(esb)
@@ -597,7 +600,7 @@ def main():
     ## from os.path import join
     ## addy_pt = join(gdb, "AddressPoints")
     ## street = join(gdb, "RoadCenterline")
-    ## GeocodeAddressPoints(addy_pt, street)
+    ## geocodeAddressPoints(addy_pt, street)
     #checks we probably don't need to use
     ## checkDomainExistence(gdb, folder)
 

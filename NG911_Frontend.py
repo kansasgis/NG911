@@ -1,9 +1,12 @@
 #!/usr/bin/env python
 # NG911_Frontend.py -- The PySide version.
-# Should  make the layout more stable
+# Should make the layout more stable
 # across different window sizes and allows
 # for better looking icons and a more native
 # appearance to the window.
+# Also gives a better chance of not
+# crashing ArcMap when called as a
+# script tool.
 
 # Requires PySide.
 # DisUtils or similar should make for simple-ish
@@ -23,7 +26,7 @@
 
 ### ^^^ Recently collapsed page 2 and page 3 into page 2 alone.
 ### References still go to pages 1, 2, 3, 4 as layoutContainer<x>.
-### Will keep that way until the rest of the functionality
+### Will keep them that way until the rest of the functionality
 ### is added, then remove old references and update to
 ### pages 1, 2, 3... renaming layoutContainer to applicationPage
 ### or similar.
@@ -41,15 +44,17 @@
 #              class and field mapping/crosswalk.
 #              Allows the user to select
 #              processes to run and view results.
-#              Use a scrollable canvas object to display output.
+#              Use a scrollable TextEdit box to display output.
 #
 # Author:      Dirk Talley, Kansas Department of Transportation
 #               dtalley@ksdot.org
 #
 # Created:     26/09/2014
-# Modified:    13/10/2014
-# Version:     0.39a
+# Modified:    29/10/2014 by dirktall04
+# Version:     0.40a
 #-------------------------------------------------------------------------------
+
+
 import sys
 import platform  # @UnusedImport
 import re  # @UnusedImport
@@ -60,7 +65,7 @@ from PySide.QtGui import (QApplication, QMainWindow, QTextEdit, QPushButton,  # 
         QMessageBox, QIcon, QAction, QWidget, QGridLayout, QHBoxLayout,  # @UnusedImport
         QMenuBar, QMenu, QStatusBar, QComboBox, QVBoxLayout, QFormLayout,  # @UnusedImport
         QStyleFactory, QLabel, QPixmap, QImage, QPainter, QTextDocument,  # @UnusedImport
-        QTextCursor)
+        QTextCursor, QCheckBox)
 
 import os  # @UnusedImport
 import datetime
@@ -71,14 +76,24 @@ from arcpy.da import (InsertCursor as daInsertCursor, SearchCursor as daSearchCu
                        UpdateCursor as daUpdateCursor)  # @UnresolvedImport
 from arcpy.management import AddField
 
-from NG911_DataCheck import getRequiredFields
+import NG911_DataCheck
 
 # Use NG91_DataCheck's getCurrentLayerList function instead when it is fully implemented.
+# from NG911_Config import currentLayerList, nonDisplayFields
 from NG911_Config import currentLayerList, nonDisplayFields
 
 env.workspace = os.getcwd()
 lineSeparator = os.linesep
+guiOutputSetting = True # Boolean Toggle for changing the NG911_DataCheck.userMessage function.
 
+class pathInformationObject():
+    def __init__(self):
+        self.gdbPath = "C:\\GIS\\Python"
+        self.domainsFolderPath = ""
+        self.addressPointsPath = ""
+        self.fieldNames = ""
+        self.otherPath = ""
+        self.esbList = ["EMS", "FIRE", "LAW"] # Currently static. Work on making this dynamic.
 
 # Every Qt application must have one and only one QApplication object;
 # it receives the command line arguments passed to the script, as they
@@ -99,7 +114,16 @@ class NG911_Window(QWidget):
         self.selectedGDBpath = ""
         self.combinedFeatureClassesDict = dict()
         self.domainsPath = self.getDomainsLocation()
-        self.defaultFieldsDict = getRequiredFields(self.domainsPath)
+        self.defaultFieldsDict = NG911_DataCheck.getRequiredFields(self.domainsPath)
+        
+        
+        self.dataCheckFunctList = list()
+        self.selectedItemsList = list()
+        
+        # Object to pass to the data check functions, containing dynamic
+        # paths and related variables.
+        self.pathsObject = pathInformationObject()
+        self.pathsObject.domainsFolderPath = self.domainsPath
         
         self.loadedImage = QIcon()
         self.loadedImage.addFile("DataCheckIcon")
@@ -108,6 +132,7 @@ class NG911_Window(QWidget):
         self.setMinimumWidth(400)
         self.setMinimumHeight(400)
         self.createWidgets()
+        self.monkeyPatchOutput()
         self.startGDBSelection()
         
         
@@ -152,6 +177,7 @@ class NG911_Window(QWidget):
         os.chdir(osCwd)
         
         return gdbList
+    
     
     def getDomainsLocation(self):
         # Scans the parent folder and each contained folder
@@ -403,16 +429,103 @@ class NG911_Window(QWidget):
         self.dataChecksLabel.setText(self.dataChecksLabelText)
         self.dialogueLayout4.addWidget(self.dataChecksLabel)
         
+        self.leftRightContainerQVBox4 = QHBoxLayout()
+        self.dialogueLayout4.addLayout(self.leftRightContainerQVBox4)
+        
+        self.leftSideQVBox4 = QVBoxLayout()
+        self.leftRightContainerQVBox4.addLayout(self.leftSideQVBox4)
+        
+        self.rightSideQVBox4 = QVBoxLayout()
+        self.leftRightContainerQVBox4.addLayout(self.rightSideQVBox4)
+        
+        self.selectorList = list()
+        
+        self.checkLayerListSelector = QCheckBox()
+        self.checkLayerListSelector.setText("Check Layer List")
+        self.checkLayerListSelector.setProperty("associatedFunction", NG911_DataCheck.checkLayerList)
+        
+        self.leftSideQVBox4.addWidget(self.checkLayerListSelector)
+        self.selectorList.append(self.checkLayerListSelector)
+        
+        
+        self.checkRequiredFieldsSelector = QCheckBox()
+        self.checkRequiredFieldsSelector.setText("Check Required Fields")
+        self.checkRequiredFieldsSelector.setProperty("associatedFunction", NG911_DataCheck.checkRequiredFields)
+        
+        self.leftSideQVBox4.addWidget(self.checkRequiredFieldsSelector)
+        self.selectorList.append(self.checkRequiredFieldsSelector)
+        
+        
+        self.checkRequiredFieldValuesSelector = QCheckBox()
+        self.checkRequiredFieldValuesSelector.setText("Check Required Field Values")
+        self.checkRequiredFieldValuesSelector.setProperty("associatedFunction", NG911_DataCheck.checkRequiredFieldValues)
+        
+        self.leftSideQVBox4.addWidget(self.checkRequiredFieldValuesSelector)
+        self.selectorList.append(self.checkRequiredFieldValuesSelector)
+        
+        
+        self.checkValuesAgainstDomainSelector = QCheckBox()
+        self.checkValuesAgainstDomainSelector.setText("Check Values Against Domain")
+        self.checkValuesAgainstDomainSelector.setProperty("associatedFunction", NG911_DataCheck.checkValuesAgainstDomain)
+        
+        self.rightSideQVBox4.addWidget(self.checkValuesAgainstDomainSelector)
+        self.selectorList.append(self.checkValuesAgainstDomainSelector)
+        
+        
+        self.checkFeatureLocationsSelector = QCheckBox()
+        self.checkFeatureLocationsSelector.setText("Check Feature Locations")
+        self.checkFeatureLocationsSelector.setProperty("associatedFunction", NG911_DataCheck.checkRequiredFieldValues)
+        
+        self.rightSideQVBox4.addWidget(self.checkFeatureLocationsSelector)
+        self.selectorList.append(self.checkFeatureLocationsSelector)
+        
+        
+        self.geocodeAddressPointsSelector = QCheckBox()
+        self.geocodeAddressPointsSelector.setText("Geocode Address Points")
+        self.geocodeAddressPointsSelector.setProperty("associatedFunction", NG911_DataCheck.geocodeAddressPoints)
+        
+        self.rightSideQVBox4.addWidget(self.geocodeAddressPointsSelector)
+        self.selectorList.append(self.geocodeAddressPointsSelector)
+        
+        
+        for selectorItem in self.selectorList:
+            if selectorItem.property("associatedFunction") not in self.dataCheckFunctList:
+                self.dataCheckFunctList.append(selectorItem.property("associatedFunction"))
+            else:
+                pass
+            
+        self.runSelectedDataChecksButton4 = QPushButton("Run Selected Data Checks", self)
+
+        
+        # Connect the button's clicked signal to the runSelectedDataChecks function
+        self.runSelectedDataChecksButton4.clicked.connect(self.runSelectedDataChecks)
+        
+        # Add it to the layout
+        self.dialogueLayout4.addWidget(self.runSelectedDataChecksButton4)
+        
+        #for selectorListItem in self.selectorList:
+            #functToRun = self.dataCheckDecorator("selectorListItem.NG911_DataCheck." + str(functToRun.property("associatedFunction")))
+            #print functToRun
+        
+        
+        # Loop through all the buttons and call .isChecked() on them.
+        # If .isChecked() == True
+        # checkedItemsList.append(buttonName)
+        
         # Make non-exclusive checkboxes so that more than one can be selected
         # at a given time.
         # See http://srinikom.github.io/pyside-docs/PySide/QtGui/QCheckBox.html
         
         
+        # Make a button to run the selected functions
+        # Make a button to run all the functions
+        # Make a button that returns a help message for
+        # the selected functions.
         
         # Add each checkbox to a list, then call
         # for checkBoxListItem in checkBoxList:
         #    if QAbstractButton.isChecked() == True:
-        #        checkedItems.append(checkBoxListItem)
+        #        checkedItemsList.append(checkBoxListItem)
         
         # for funct in functList:
         #     if funct in checkedItems:
@@ -442,6 +555,9 @@ class NG911_Window(QWidget):
         #        funct()
         # To run just the selected ones
         # in the order that they appear in functList.
+        
+        # Can use function decorators to give the functions new variables,
+        # unless they redefine those values themselves.
         
         # If certain checks should always be run after another check,
         # handle that by force-checking a box if the postcedent box is checked
@@ -506,13 +622,8 @@ class NG911_Window(QWidget):
         # Add the button box to the bottom of the main VBox layout
         self.dialogueLayout4.addLayout(self.buttonBox4)
         
-        # Add a canvas object and start writing to it.
-        
-        # Persist the data in the canvas object between the different pages?
-        
-        
         # ----------------------------------------------------------------------
-        # Init function continues, by going to the Start GDB Selection function
+        # Init function continues by calling the Start GDB Selection function
         # ----------------------------------------------------------------------
     
     
@@ -536,13 +647,55 @@ class NG911_Window(QWidget):
         self.textCursor4 = self.textBox4.textCursor()
         self.textCursor4.movePosition(QTextCursor.End, QTextCursor.MoveAnchor)
         self.textBox4.setTextCursor(self.textCursor4)
+    
+    
+    def newMessaging(self, textToDisplay):
+        self.updateTextBoxes(textToDisplay)
+        print str(textToDisplay)
+    
+    
+    def monkeyPatchOutput(self):
+        # Replaces the userMessage function from
+        # NG911_DataCheck with a different function.
         
+        # The new function prevents the output from
+        # printin twice on the console
+        #(once from print statement, once from AddMessage)
+        # and also shows it in the outputMessageBoxes.
         
+        # This is known as "Monkey patching" a function
+        # and is generally not recommended, but I'm
+        # not 100% sure how else to get the DataChecks
+        # to write output to the outputMessageBoxes
+        # without inlining them or risking
+        # a circular import by passing them the
+        # NG911_Window object and its functions.
+        
+        # ^^ Calling them through subprocesses and piping
+        # their output from proc.communicate()[0] per
+        # http://stackoverflow.com/questions/4537259/python-how-to-pipe-the-output-using-popen
+        # is probably the correct solution, but I'll leave that
+        # upgrade for another time. Just trying
+        # to get everything displaying/functioning right now.
+        if guiOutputSetting == True:
+            NG911_DataCheck.userMessage = self.newMessaging
+            print "Modified userMessage."
+        else:
+            pass
+        
+    
     def startGDBSelection(self):
+        
+        #NG911_DataCheck.decoratorTest("Test Message-4") ## Success!
+        
+        #for selectorListItem in self.selectorList:
+            #NG911_DataCheck.userMessage(selectorListItem.property("associatedFunction"))
+        
+        
         # -------------------------------------------------------
         # Hide Dialogue Layout 2 - Feature Mapping
         # -------------------------------------------------------
-
+        
         self.dialogueLayout2Container.hide()
         #self.dialogueLayout3Container.hide()
         self.dialogueLayout4Container.hide()
@@ -556,7 +709,6 @@ class NG911_Window(QWidget):
         
         self.gdbPromptLabel.setText("Searching for GDBs...")
         
-        #self.listLocalGDBs()
         
         # Then run listLocalGDBs(self)s
         self.gdbList1 = self.listLocalGDBs()
@@ -576,6 +728,7 @@ class NG911_Window(QWidget):
         
     def doneWithGDBSelection(self, fromButton):
         self.selectedGDBpath = self.localGDBCombobox.currentText()
+        self.pathsObject.gdbPath = self.selectedGDBpath
         if self.localGDBCombobox.currentIndex() != -1 and self.selectedGDBpath.find(".gdb") >= 0:
             if fromButton == "Next":
                 print self.selectedGDBpath + " selected."
@@ -711,39 +864,43 @@ class NG911_Window(QWidget):
         # Show Dialogue Layout 4 - Data Checks
         # --------------------------------------------------
         self.dialogueLayout4Container.show()
-    
-    #########################################################
-    #
-    # Need to give the option to select a default
-    # feature class and select all for field mapping
-    # along with the mapped feature class and all
-    # for the field mapping...
-    # This will be equivalent to telling
-    # the program that all of the field names
-    # are the same and only the feature class names
-    # are changed.
-    # Use ObjectID, DFC, DFN, MFC, MFN, DateTime for fields.
-    # Then, load the entire table at once
-    # and evaluate based on entries for
-    # DFC\All and DFC\DFN instead of
-    # trying to parse together and write out
-    # then reparse together separate DFC\MFC and
-    # DFN\MFN tables.
-    #
-    #
-    # Also need to give the option to clear
-    # all of the mappers for a default feature class
-    # then, explain how ALL and CLEAR
-    # work as fields and set up the logic to deal with
-    # them.
-    #
-    #
-    # First, it would make sense to get the data checks
-    # in here though, so that you can share your progress
-    # better and get some feedback.
-    #########################################################
-    
-    #### Current Work Area ####
+        
+        NG911_DataCheck.userMessage(self.pathsObject.gdbPath)
+        
+        #NG911_DataCheck.checkLayerList(self.pathsObject)
+        
+        #########################################################
+        #
+        # Need to give the option to select a default
+        # feature class and select all for field mapping
+        # along with the mapped feature class and all
+        # for the field mapping...
+        # This will be equivalent to telling
+        # the program that all of the field names
+        # are the same and only the feature class names
+        # are changed.
+        # Use ObjectID, DFC, DFN, MFC, MFN, DateTime for fields.
+        # Then, load the entire table at once
+        # and evaluate based on entries for
+        # DFC\All and DFC\DFN instead of
+        # trying to parse together and write out
+        # then reparse together separate DFC\MFC and
+        # DFN\MFN tables.
+        # 
+        # 
+        # Also need to give the option to clear
+        # all of the mappings for a default feature class.
+        # Then, explain how ALL and CLEAR
+        # work as fields and set up the logic to deal with
+        # them.
+        # 
+        # 
+        # First, it would make sense to get the data checks
+        # in here though, so that you can share your progress
+        # better and get some feedback.
+        #########################################################
+        
+        #### Current Work Area ####
     
     
     def updateFeatureClassAndFieldNameMapping(self):
@@ -762,10 +919,15 @@ class NG911_Window(QWidget):
         ##############################################################################
         if (self.defaultFeatureClassComboResult2 != self.defaultFeatureClassTextPrompt2 and \
             self.defaultFeatureClassComboResult2 != "" and \
+            
+            self.defaultFieldNameComboResult2 != self.defaultFieldNamePretextPrompt2 and \
             self.defaultFieldNameComboResult2 != self.defaultFieldNameTextPrompt2 and \
             self.defaultFieldNameComboResult2 != "" and \
+            
             self.targetFeatureClassComboResult2 != self.targetFeatureClassTextPrompt2 and \
             self.targetFeatureClassComboResult2!= "" and \
+            
+            self.targetFieldNameComboResult2 != self.targetFieldNamePretextPrompt2 and \
             self.targetFieldNameComboResult2 != self.targetFieldNameTextPrompt2 and \
             self.targetFieldNameComboResult2 != ""):
             
@@ -837,11 +999,57 @@ class NG911_Window(QWidget):
                 else:
                     pass
         else:
-            pass
+            # Default Feature Class Combo Box Warnings:
+            if self.defaultFeatureClassComboResult2 == self.defaultFeatureClassTextPrompt2:
+                print "Please select a Default Feature Class."
+                self.updateTextBoxes("Please select a Default Feature Class.")
+            elif self.defaultFeatureClassComboResult2 == "":
+                print "No Default Feature Class selected."
+                self.updateTextBoxes("No Default Feature Class selected.")
+                
+            # Default Field Name Combo Box Warnings:
+            elif str(self.defaultFieldNameComboResult2).upper() == str(self.defaultFieldNamePretextPrompt2).upper():
+                print "Please select a Default Feature Class."
+                self.updateTextBoxes("Please select a Default Feature Class.")
+            elif str(self.defaultFieldNameComboResult2).upper() == str(self.defaultFieldNameTextPrompt2).upper():
+                print "Please select a Default Field Name to map."
+                self.updateTextBoxes("Please select a Default Field Name to map.")
+            elif str(self.defaultFieldNameComboResult2) == "":
+                print "No Default Field Name selected."
+                self.updateTextBoxes("No Default Field Name selected.")
+                
+            # Target Feature Class Combo Box Warnings:
+            elif self.targetFeatureClassComboResult2 == self.targetFeatureClassTextPrompt2:
+                print "Please select a Target Feature Class."
+                self.updateTextBoxes("Please select a Target Feature Class.")
+            elif self.targetFeatureClassComboResult2 == "":
+                print "No Target Feature Class selected."
+                self.updateTextBoxes("No Target Feature Class selected.")
+                
+            # Target Field Name Combo Box Warnings:
+            elif str(self.targetFieldNameComboResult2).upper() == str(self.targetFieldNamePretextPrompt2).upper():
+                print "Please select a Target Field Name to map."
+                self.updateTextBoxes("Please select a Target Field Name to map.")
+            elif str(self.targetFieldNameComboResult2).upper() == str(self.targetFieldNameTextPrompt2).upper():
+                print "Please select a Target Field Name to map."
+                self.updateTextBoxes("Please select a Target Field Name to map.")
+            elif str(self.targetFieldNameComboResult2) == "":
+                print "No Target Field Name selected."
+                self.updateTextBoxes("No Target Field Name selected.")
+                
+            else:
+                pass
     
     
-    
-    
+    def runSelectedDataChecks(self):
+        for possiblySelectedItem in self.selectorList:
+            if possiblySelectedItem.isChecked() == True:
+                self.selectedItemsList.append(possiblySelectedItem.property("associatedFunction"))
+        for dataCheckFunct in self.dataCheckFunctList:
+            if dataCheckFunct in self.selectedItemsList:
+                dataCheckFunct(self.pathsObject)
+            else:
+                pass
     
     
     def listFeatureClassesInGDB(self, inWorkspaceLocation):
@@ -896,11 +1104,6 @@ class NG911_Window(QWidget):
         
         combinedFeatureClassesList = sorted(combinedFeatureClassesList)
         return combinedFeatureClassesList
-    
-    
-    def undefGetRequiredFields(self): # Use getRequiredFields(pathToDomains) to get the required fields for feature classes.
-        pass
-    
     
     
     def fieldNamesFilter(self, textToFilterOn):
@@ -1067,6 +1270,12 @@ def formatCurrentLayerList(inputLayerList):
 
 
 # Also, try to center the update mapping buttons in the right-hand column of the layouts.
+# Unused decorator function example below:
+'''def userMessageAndTextBoxes(self, functionName):
+        def addedMessaging(textInput):
+            functionName(textInput)
+            self.updateTextBoxes(textInput)
+        return addedMessaging'''
 
 currentLayerList = formatCurrentLayerList(currentLayerList)
 #Creates an instance of the NG911_Window class and runs it.

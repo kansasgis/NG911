@@ -9,6 +9,7 @@
 # Licence:     <your licence>
 #-------------------------------------------------------------------------------
 
+
 try:
     from NG911_Config import gdb, DOTRoads, soundexNameExclusions, ordinalNumberEndings
 except:
@@ -36,27 +37,32 @@ from arcpy import (
     Delete_management as Delete
     )
 
+
 from arcpy.da import (
     SearchCursor as daSearchCursor,
     UpdateCursor as daUpdateCursor,
     Editor as daEditor)
-holderList = list()
+
 
 from arcpy import env
 env.overwriteOutput = 1
 env.workspace = checkfile
+
 
 MakeFeatureLayer_management(thelayer,"RoadCenterline","#","#","#")
 lyr = "RoadCenterline"
 TableView(thealias, "RoadAlias","#","#","#")
 Alias = "RoadAlias"
 Kdotdbfp = DOTRoads
+holderList = list()
+
 
 try:
     DisableEditorTracking_management(thelayer ,"DISABLE_CREATOR","DISABLE_CREATION_DATE","DISABLE_LAST_EDITOR","DISABLE_LAST_EDIT_DATE")
     DisableEditorTracking_management(thealias ,"DISABLE_CREATOR","DISABLE_CREATION_DATE","DISABLE_LAST_EDITOR","DISABLE_LAST_EDIT_DATE")
 except:
     print "WARNING: could not Disable editor tracking, it has either already been disabled, or there is a lock on the database"
+
 
 """
 This module encodes a string using Soundex, as described by
@@ -70,13 +76,13 @@ charsubs = {'B': '1', 'F': '1', 'P': '1', 'V': '1',
             'C': '2', 'G': '2', 'J': '2', 'K': '2',
             'Q': '2', 'S': '2', 'X': '2', 'Z': '2',
             'D': '3', 'T': '3', 'L': '4', 'M': '5',
-            'N': '5', 'R': '6', '.':'!'}
+            'N': '5', 'R': '6', '.':''}
+
 
 def normalize(s):
     """ Returns a copy of s without invalid chars and repeated letters. """
     first = s[0].upper()
     s = re.sub(invalid_re, "", s.upper()[1:])
-
 
     # remove repeated chars
     char = None
@@ -86,10 +92,26 @@ def normalize(s):
             s_clean += c
         char = c
     return s_clean
-    
+
+
 def soundex(s):
     """ Encode a string using Soundex. Takes a string and returns its Soundex representation."""
-    if len(s) == 1:
+    replacementString = ""
+    replacementDict = {"A":"1", "E":"2", "H":"3", "I":"4", "O":"5", "U":"6", "W":"7", "Y":"8"}
+    
+    if len(s) == 2: 
+        if s[0] == s[1]:# Only affects one very specific road name type. Kind of a narrow fix.
+            for keyName in replacementDict:
+                if keyName == str(s[1].upper():
+                    replacementString = replacementDict[keyName]
+                    enc = str(str(s[0]) + replacementString).zfill(4)
+                    return enc
+                else:
+                    pass
+        else:
+            pass
+            
+    elif len(s) == 1:
         enc = str(s[0]).zfill(4)
         return enc
     elif len(s) == 0:
@@ -97,29 +119,27 @@ def soundex(s):
         return enc
     else:
         pass
-    
-    if s[0]==s[1]:
-        enc = str(s[0:1]).zfill(4)
-        return enc
-    else:
-        s = normalize(s)
-        last = None
 
-        enc = s[0]
-        for c in s[1:]:
-            if len(enc) == 4:
-                break
-            if charsubs[c] != last:
-                enc += charsubs[c]
-            last = charsubs[c]
-        while len(enc) < 4:
-            enc += '0'
-        return enc
+    s = normalize(s)
+    last = None
+
+    enc = s[0]
+    for c in s[1:]:
+        if len(enc) == 4:
+            break
+        if charsubs[c] != last:
+            enc += charsubs[c]
+        last = charsubs[c]
+    while len(enc) < 4:
+        enc += '0'
+    return enc
 
 
 def numdex(s):
     """this module applies soundex to named streets, and pads the numbered streets with zeros, keeping the numbering system intact"""
     if s[0] in ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.']:
+        # I don't think having a '.' here will do anything unless the road name is ".SomeName" since it only checks the
+        # first character of the string.
         numerical_re = re.compile("[A-Z]|[^0-9][^0-9][^0-9][^0-9]")
         s=re.sub(numerical_re,"", s.zfill(4))
         return s.zfill(4)
@@ -144,12 +164,14 @@ def StreetNetworkCheck(gdb):
     StreetLogfile = reviewpath+"/KDOTReview/"+ntpath.basename(ng911)+".log"
     VerifyAndRepairGeometricNetworkConnectivity_management(geonet, StreetLogfile, "VERIFY_ONLY", "EXHAUSTIVE_CHECK", "0, 0, 10000000, 10000000")
 
+
 def ConflateKDOTrestart(gdb, DOTRoads):
     """Conflation restart for selecting KDOT roads to conflate to the NG911 Network"""
     MakeFeatureLayer_management(DOTRoads+"/KDOT_HPMS_2012","KDOT_Roads","#","#","#")
     MakeFeatureLayer_management(checkfile+"/RoadCenterline","RoadCenterline","#","#","#")
     SelectLayerByLocation_management("KDOT_Roads","INTERSECT","RoadCenterline","60 Feet","NEW_SELECTION")
     FeatureClassToFeatureClass_conversion("KDOT_Roads",checkfile+r"/NG911","KDOT_Roads_Review","#","#","#")
+
 
 def ConflateKDOT(gdb, DOTRoads):
     """detects road centerline changes and transfers the HPMS key field from the KDOT roads via ESRI conflation tools"""
@@ -171,6 +193,7 @@ def ConflateKDOT(gdb, DOTRoads):
     DetectFeatureChanges_management("KDOT_Roads_Review","RoadCenterline",checkfile+r"/NG911/RoadDifference",spatialtolerance,"#",checkfile+r"/RoadDifTbl",spatialtolerance,"#")
     MakeFeatureLayer_management(checkfile+"/NG911/RoadDifference","RoadDifference","#","#","#")
     TransferAttributes_edit("KDOT_Roads_Review","RoadCenterline","YEAR_RECORD;ROUTE_ID",spatialtolerance,"#",checkfile+r"/LRS_MATCH")
+
 
 def addAdminFields(lyr, Alias):
     try:
@@ -227,6 +250,7 @@ def CountyCode(lyr):
     CalcField(lyr,"KDOT_COUNTY_R","!NG911_County.CountyNumber!","PYTHON_9.3","#")
     removeJoin(lyr)
 
+
 def CityCodes(lyr, Kdotdbfp):
     """Codify the City Limit\city number for LRS , calculated for LEFT and RIGHT from NG911)"""
     TableView(Kdotdbfp+"\City_Limits", "City_Limits")
@@ -239,6 +263,7 @@ def CityCodes(lyr, Kdotdbfp):
     TableView(lyr, "CityRoads", "KDOT_CITY_R = KDOT_CITY_L AND KDOT_CITY_R not like '999'")
     CalcField("CityRoads","KDOT_ADMO","'W'","PYTHON_9.3","#")
 
+
 def RoadinName1(lyr):
     """This module corrects the road names in the soundex code where the road is named like Road A or Road 12 """
     TableView(lyr,"ROAD_NAME","RD LIKE 'ROAD %'")
@@ -246,6 +271,7 @@ def RoadinName1(lyr):
 
     TableView(lyr,"RD_NAME","RD LIKE 'RD %'")
     CalcField(lyr,"Soundex","""("R"+!RD![1:5]).zfill(3)""","PYTHON_9.3","#")
+
 
 def RoadinName(roadFeatures, nameExclusions):
     """This module corrects the road names in the soundex code where the road is named like Road A or Road 12 """
@@ -393,10 +419,11 @@ def RoadinName(roadFeatures, nameExclusions):
 
 def RouteCalc(lyr, soundexNameExclusions):
     """calculate what should be a nearly unique LRS Route key based on the decoding and street name soundex/numdex function"""
-    CalcField(lyr,"Soundex","numdex(!RD!)","PYTHON_9.3","#")
+    #CalcField(lyr,"Soundex","numdex(!RD!)","PYTHON_9.3","#")
     RoadinName(lyr, soundexNameExclusions)
     CalcField(lyr, "RID", "str(!KDOT_COUNTY_R!)+str(!KDOT_COUNTY_L!)+str(!KDOT_CITY_R!)+str(!KDOT_CITY_L!)+str(!PreCode!) + !Soundex! + str(!SuffCode!)+str(!UniqueNo!)+str(!TDirCode!)","PYTHON_9.3","#")
 
+# Instead of calling numdex here, rewrite and incorporate numdex and soundex functionality into the RoadinName function.
 
 def AliasCalc(Alias, DOTRoads):
     CalcField(Alias, "KDOT_PREFIX", "!LABEL![0]","PYTHON_9.3","#")
@@ -406,6 +433,7 @@ def AliasCalc(Alias, DOTRoads):
     CalcField("RoadAlias","RoadAlias.KDOT_CODE","!KDOT_RoutePre.PreCode!","PYTHON_9.3","#")
     removeJoin("RoadAlias")
 
+    
 def HighwayCalc(lyr, gdb, Alias):
     """Pull out State Highways to preserve KDOT LRS Key (CANSYS FORMAT - non directional CRAD)"""
     if Exists(gdb+"\RoadAlias_Sort"):
@@ -431,12 +459,14 @@ def HighwayCalc(lyr, gdb, Alias):
     CalcField(lyr, "RID", "str(!KDOT_COUNTY_R!)+str(!KDOT_COUNTY_L!)+str(!KDOT_CITY_R!)+str(!KDOT_CITY_L!)+str(!PreCode!) + !Soundex! + str(!SuffCode!)+str(!UniqueNo!)+str(!TDirCode!)","PYTHON_9.3","#")
     CalcField(lyr, "LRSKEY", "str(!RID!)", "PYTHON_9.3","#")
 
+    
 def ScratchCalcs():
     CalcField("RoadCenterline","RoadCenterline.Soundex","""!RoadAlias.A_RD![0]  +  !RoadAlias.A_RD![1:].replace("S","").zfill(3)""","PYTHON_9.3","#")
     CalcField(in_table="RoadCenterline",field="RoadCenterline.KDOTPreType",expression="!RoadAlias.A_RD![0]  ",expression_type="PYTHON_9.3",code_block="#")
     CalcField(in_table="RoadCenterline",field="RoadCenterline.PreCode",expression="'0'",expression_type="PYTHON_9.3",code_block="#")
     CalcField(in_table="RoadCenterline",field="RoadCenterline.KDOT_ADMO",expression="'S'",expression_type="PYTHON_9.3",code_block="#")
 
+    
 def LRS_Tester():
     """makes the LRS route layer and dissolves the NG911 fields to LRS event tables"""
     # Replace a layer/table view name with a path to a dataset (which can be a layer file) or create the layer/table view within the script
@@ -453,8 +483,10 @@ def LRS_Tester():
     #MakeRouteLayer_na()
     pass
 
+    
 uniqueIdInFields = ["OBJECTID", "COUNTY_L", "COUNTY_R", "STATE_L", "STATE_R", "L_F_ADD", "L_T_ADD", "R_F_ADD", "R_T_ADD", "UniqueNo", "LRSKEY", "SHAPE_MILES"]
 uniqueIdOutFields = ["OBJECTID", "UniqueNo", "LRSKEY"]
+
 
 def createUniqueIdentifier(gdb, lyr, inFieldNamesList, outFieldNamesList):
     '''filters through records and calculates an incremental Unique Identifier for routes that are not border routes, to handle Y's, eyebrows, and splits that would cause complex routes'''
@@ -563,7 +595,6 @@ def createUniqueIdentifier(gdb, lyr, inFieldNamesList, outFieldNamesList):
         del newCursor
     else:
         pass
-
 
 
 #ConflateKDOT(gdb, DOTRoads)
