@@ -6,11 +6,11 @@
 # kristen@kgs.ku.edu
 #
 # Created: 19/09/2014
-# Modified: 30/10/2014 by dirktall04
-# Changes include: Reorganizing imports, change of variable name "id" to "ObjectXID"
-# as "id" is a reserved keyword. Addition of "today = strftime("%m/%d/%y")" line to
-# "checkFeatureLocations" function definition.
-# Added various comments to make PyDev happier with the script.
+# Modified: 31/10/2014 by dirktall04
+# Changes include: Adding the currentPathSettings variable from
+# NG911_Config as the default variable passed to several Data
+# Check functions, modifications to the functions to allow
+# them to use that variable as a data source.
 #-------------------------------------------------------------------------------
 
 

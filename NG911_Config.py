@@ -5,7 +5,7 @@
 # Author:      kristen
 #
 # Created:     24/09/2014
-# Modified:    30/10/2014 by dirktall04
+# Modified:    31/10/2014 by dirktall04
 #-------------------------------------------------------------------------------
 
 esb = ["EMS", "FIRE", "LAW"] #list of layers that are emergency services boundaries
@@ -24,6 +24,7 @@ ordinalNumberEndings = ["ST", "ND", "RD", "TH"]
 currentLayerList = ["RoadAlias", "AddressPoints", "RoadCenterline", "AuthoritativeBoundary", "CountyBoundary", "ESZ", "PSAP", "MunicipalBoundary"]
 nonDisplayFields = ["ObjectID", "Shape", "Shape_Area", "Shape_Length"]
 
+# This class is a to pass information to the Data Check functions.
 class pathInformationClass():
     def __init__(self):
         self.gdbPath = gdb

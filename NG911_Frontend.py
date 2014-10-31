@@ -21,6 +21,7 @@
 # The ability to select and run the datachecks from this GUI will be
 # added in layoutContainer4. -- Next step in development after
 # reverse translation for the written to GDB field name mapping.
+# ^^ Partially complete.
 
 ## ^^ Simplified writes/reads for these settings in preparation for
 ## reverse translation.
@@ -38,6 +39,8 @@
 ## See about using function decorators
 ## to display text sent to the userMessage() function
 ## in the output message boxes.
+## ^^ Used a monkey patch instead, but need
+## to replace with a better programming practice later.
 
 #-------------------------------------------------------------------------------
 # Name:        NG911_Frontend
@@ -51,8 +54,8 @@
 #               dtalley@ksdot.org
 #
 # Created:     26/09/2014
-# Modified:    30/10/2014 by dirktall04
-# Version:     0.41a
+# Modified:    31/10/2014 by dirktall04
+# Version:     0.43a
 #-------------------------------------------------------------------------------
 
 
