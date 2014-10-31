@@ -207,11 +207,47 @@ def geocodeAddressPoints(addressPointPath, streetPath):
 
     userMessage("Completed geocoding. Results are in table " + output)
 
+def checkAddressPointFrequency(AddressPoints, gdb):
+    from arcpy import Frequency_analysis, MakeTableView_management, DeleteRows_management, GetCount_management, Delete_management, Exists
+    from os.path import join
+
+    AP_Freq = join(gdb, "AP_Freq")
+    fl = "fl"
+
+    #remove the frequency table if it exists already
+    if Exists(AP_Freq):
+        Delete_management(AP_Freq)
+
+    #run frequency analysis
+    Frequency_analysis(AddressPoints, AP_Freq, "MUNI;HNO;HNS;PRD;STP;RD;STS;POD;POM;ZIP;BLD;FLR;UNIT;ROOM;SEAT;LOC;LOCTYPE", "")
+
+    #get count of records
+    rFreq = GetCount_management(AP_Freq)
+    rCount = int(rFreq.getOutput(0))
+
+    #delete records
+    #make where clause
+    wc = "Frequency = 1 or LOCTYPE <> 'Primary'"
+
+    #make feature layer
+    MakeTableView_management(AP_Freq, fl, wc)
+
+    #get count of the results
+    result = GetCount_management(fl)
+    count = int(result.getOutput(0))
+
+    if rCount != count:
+        #Delete
+        DeleteRows_management(fl)
+        userMessage("Checked frequency of address points. Results are in table " + AP_Freq)
+    elif rCount == count:
+        Delete_management(AP_Freq)
+        userMessage("All address points are unique.")
 
 def checkLayerList(pathsInfoObject):
     gdb = pathsInfoObject.gdbPath
     esb = pathsInfoObject.esbList # Not currently dynamic.
-    
+
     userMessage("Checking geodatabase layers...")
     #get current layer list
     layerList = getCurrentLayerList(esb)
@@ -299,7 +335,7 @@ def getFieldDomain(field, folder):
 def checkValuesAgainstDomain(pathsInfoObject):
     gdb = pathsInfoObject.gdbPath
     folder = pathsInfoObject.domainsFolderPath
-    
+
     userMessage("Checking field values against approved domains...")
 
     #get list of fields with domains
@@ -351,7 +387,7 @@ def checkValuesAgainstDomain(pathsInfoObject):
 def checkDomainExistence(pathsInfoObject):
     gdb = pathsInfoObject.gdbPath
     folder = pathsInfoObject.domainsFolderPath
-    
+
     #get current domain list
     domainList = getCurrentDomainList()
     domains = {}  # @UnusedVariable
@@ -503,7 +539,7 @@ def checkRequiredFields(pathsInfoObject):
     gdb = pathsInfoObject.gdbPath
     folder = pathsInfoObject.domainsFolderPath
     esb = pathsInfoObject.esbList
-    
+
     userMessage("Checking that required fields exist...")
 
     #get today's date
@@ -551,7 +587,7 @@ def checkRequiredFields(pathsInfoObject):
 
 def checkFeatureLocations(pathsInfoObject):
     gdb = pathsInfoObject.gdbPath
-    
+
     userMessage("Checking feature locations...")
 
     #get today's date
@@ -617,7 +653,7 @@ def main():
     addy_pt = join(currentPathSettings.gdbPath, "AddressPoints")
     street = join(currentPathSettings.gdbPath, "RoadCenterline")
     geocodeAddressPoints(addy_pt, street)
-    ###checkAddressPointFrequency(addy_pt, gdb) # Commented out because I didn't find the function definition.
+    checkAddressPointFrequency(addy_pt, gdb) # Commented out because I didn't find the function definition.
 
     #checks we probably don't need to use
     ## checkDomainExistence(gdb, folder)
