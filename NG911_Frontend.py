@@ -42,6 +42,16 @@
 ## ^^ Used a monkey patch instead, but need
 ## to replace with a better programming practice later.
 
+### ^^^ Also problematic because it prevents the
+### output message box from being updated
+### prior to the completion of the script.
+### This is not the desired behavior.
+### Subprocess (try first) or multiprocess
+### is needed to handle concurrency.
+
+### ^^^ This will be an issue when
+### trying to update a progress bar too.
+
 #-------------------------------------------------------------------------------
 # Name:        NG911_Frontend
 # Purpose:     Allows the user to define the feature
@@ -55,7 +65,7 @@
 #
 # Created:     26/09/2014
 # Modified:    31/10/2014 by dirktall04
-# Version:     0.43a
+# Version:     0.44a
 #-------------------------------------------------------------------------------
 
 
@@ -106,6 +116,7 @@ class NG911_Window(QWidget):
         # Set a variable to let the application know
         # if it should exit when the quit button is
         # pressed or print a warning message.
+        self.currentWorkingDirectory = os.getcwd()
         self.okayToQuit = 1
         self.selectedGDBpath = ""
         self.combinedFeatureClassesDict = dict()
@@ -116,7 +127,7 @@ class NG911_Window(QWidget):
         # paths and related variables.
         self.pathsObject = pathInformationClass()
         
-        self.domainsPath = self.getDomainsLocation()
+        self.domainsPath = self.getLocalDomainsLocation(self.currentWorkingDirectory)
         self.defaultFieldsDict = NG911_DataCheck.getRequiredFields(self.domainsPath)
         
         self.pathsObject.domainsFolderPath = self.domainsPath
@@ -132,12 +143,12 @@ class NG911_Window(QWidget):
         self.startGDBSelection()
         
         
-    def listLocalGDBs(self):
+    def listLocalGDBs(self, currentDirectory):
         # Scans the parent folder and each contained folder
         # for GDBs.
         
-        # Store the path of the current directory.
-        osCwd = os.getcwd()
+        os.chdir(currentDirectory)
+        
         # Go up one level.
         os.chdir("..")
         # Store the path of the directory which is up one level.
@@ -169,18 +180,70 @@ class NG911_Window(QWidget):
             else:
                 pass
         
+        if gdbList == None:
+            gdbList.append(self.pathsObject.gdbPath)
+        elif len(gdbList) == 0:
+            gdbList.append(self.pathsObject.gdbPath)
+        else:
+            pass
+                
+        #gdbList.append(self.pathsObject.gdbPath)
+        
         # Set the directory back to the starting directory.
-        os.chdir(osCwd)
+        os.chdir(currentDirectory)
         
         return gdbList
     
     
-    def getDomainsLocation(self):
+    def listTargetGDBs(self, currentDirectory, searchLocation): # Change to search the searchLocation.
+        # Scans the parent folder and each contained folder
+        # for GDBs.
+
+        os.chdir(searchLocation)
+        
+        # Go up one level.
+        os.chdir("..")
+        # Store the path of the directory which is up one level.
+        upOneLevelDir = os.getcwd()
+        
+        # List directories in the directory which is up one level.
+        upOneLevelDirList = os.listdir(upOneLevelDir)
+        
+        gdbList = list()
+        
+        # Run listWorkspaces for FileGDBs only on the upper level directory
+        # Append the results to gdbList
+        env.workspace = upOneLevelDir
+        workspacesList = ListWorkspaces("", "FileGDB")
+        if workspacesList != None:
+            for gdbLocation in workspacesList:
+                gdbList.append(gdbLocation)
+        else:
+            pass
+        
+        # Then, run listWorkspaces for FileGDBs only on the current directory and adjacent directories
+        # Append the results to gdbList
+        for dirItem in upOneLevelDirList:
+            env.workspace = os.path.join(upOneLevelDir, dirItem)
+            workspacesList = ListWorkspaces("", "FileGDB")
+            if workspacesList != None:
+                for gdbLocation in workspacesList:
+                    gdbList.append(gdbLocation)
+            else:
+                gdbList.append(self.pathsObject.gdbPath)
+        
+        # Set the directory back to the starting directory.
+        os.chdir(currentDirectory)
+        
+        return gdbList
+    
+    
+    def getLocalDomainsLocation(self, currentDirectory):
         # Scans the parent folder and each contained folder
         # for the Domains folder.
         
-        # Store the path of the current directory.
-        osCwd = os.getcwd()
+        os.chdir(currentDirectory)
+        
         # Go up one level.
         os.chdir("..")
         # Store the path of the directory which is up one level.
@@ -189,7 +252,7 @@ class NG911_Window(QWidget):
         domainsFolderList = list()
         
         # Check for the domains folder in the current directory.
-        for folderName in os.listdir(osCwd):
+        for folderName in os.listdir(currentDirectory):
             if folderName.upper() == "Domains".upper():
                 domainsFolderList.append(os.path.join(upOneLevelDir, folderName))
             else:
@@ -205,14 +268,62 @@ class NG911_Window(QWidget):
         domainsLocation = ""
         
         # If the domainsFolderList is not empty, use the first entry as the location for the domains folder.
-        if len(domainsFolderList) != 0: # Not the pythonic way to make this check, but I like this method better.
-            domainsLocation = domainsFolderList[0]
-        # If there is no domains folder found, default to using the current folder for the text files' location.
+        if domainsFolderList != None:
+            if len(domainsFolderList) != 0: # Not the pythonic way to make this check, but I like this method better.
+                domainsLocation = domainsFolderList[0]
+            # If there is no domains folder found, default to using the current folder for the text files' location.
+            else:
+                domainsLocation = self.pathsObject.domainsFolderPath
         else:
             domainsLocation = self.pathsObject.domainsFolderPath
         
         # Set the directory back to the starting directory.
-        os.chdir(osCwd)
+        os.chdir(currentDirectory)
+        
+        return domainsLocation
+    
+    
+    def getTargetDomainsLocation(self, currentDirectory, searchLocation): # Change to search the searchLocation.
+        # Scans the parent folder and each contained folder
+        # for the Domains folder.
+        
+        os.chdir(searchLocation)
+        
+        # Go up one level.
+        os.chdir("..")
+        # Store the path of the directory which is up one level.
+        upOneLevelDir = os.getcwd()
+        
+        domainsFolderList = list()
+        
+        # Check for the domains folder in the current directory.
+        for folderName in os.listdir(currentDirectory):
+            if folderName.upper() == "Domains".upper():
+                domainsFolderList.append(os.path.join(upOneLevelDir, folderName))
+            else:
+                pass
+        
+        # Check for the domains folder in the directory which is up one level.
+        for folderName in os.listdir(upOneLevelDir):
+            if folderName.upper() == "Domains".upper():
+                domainsFolderList.append(os.path.join(upOneLevelDir, folderName))
+            else:
+                pass
+        
+        domainsLocation = ""
+        
+        # If the domainsFolderList is not empty, use the first entry as the location for the domains folder.
+        if domainsFolderList != None:
+            if len(domainsFolderList) != 0: # Not the pythonic way to make this check, but I like this method better.
+                domainsLocation = domainsFolderList[0]
+            # If there is no domains folder found, default to using the current folder for the text files' location.
+            else:
+                domainsLocation = self.pathsObject.domainsFolderPath
+        else:
+            domainsLocation = self.pathsObject.domainsFolderPath
+        
+        # Set the directory back to the starting directory.
+        os.chdir(currentDirectory)
         
         return domainsLocation
     
@@ -416,11 +527,21 @@ class NG911_Window(QWidget):
         # on how to update the feature class mapping.
         self.dataChecksLabel = QLabel(self)
         self.dataChecksLabel.setWordWrap(True)
-        self.dataChecksLabelText = ("1) Mark the check boxes for the Data Checks that you would like to run." + \
-                                          lineSeparator + \
-                                          "2) Click the \"Check Data\" button to run the Data Checks." + \
-                                          lineSeparator + \
-                                          "3) View output messages in the text box below.")
+        self.dataChecksLabelText = ("1) Mark the check boxes for the Data Checks* that you would like to run." + \
+                                            lineSeparator + \
+                                            "2) Click the \"Run Selected Data Checks\" button to run only the Data Checks which have been selected." + \
+                                            lineSeparator + \
+                                            "-or-" + \
+                                            lineSeparator + \
+                                            "Click the \"Run All Data Checks\"** button to run all the Data Checks." + \
+                                            lineSeparator + \
+                                            "3) View the output messages in the text box below.") + \
+                                            lineSeparator + \
+                                            lineSeparator + \
+                                            "*: Check Layer List is the only Data Check which can be ran from this page at this time." + \
+                                            lineSeparator + \
+                                            "**: Not yet added."
+                                            
         
         self.dataChecksLabel.setText(self.dataChecksLabelText)
         self.dialogueLayout4.addWidget(self.dataChecksLabel)
@@ -708,7 +829,7 @@ class NG911_Window(QWidget):
         
         
         # Then run listLocalGDBs(self)s
-        self.gdbList1 = self.listLocalGDBs()
+        self.gdbList1 = self.listLocalGDBs(self.currentWorkingDirectory)
         # Sort the paths alphabetically
         self.gdbList1 = sorted(self.gdbList1)
         
@@ -862,7 +983,7 @@ class NG911_Window(QWidget):
         # --------------------------------------------------
         self.dialogueLayout4Container.show()
         
-        NG911_DataCheck.userMessage(self.pathsObject.gdbPath)
+        #NG911_DataCheck.userMessage(self.pathsObject.gdbPath)
         
         #NG911_DataCheck.checkLayerList(self.pathsObject)
         
@@ -1214,7 +1335,7 @@ class NG911_Window(QWidget):
         # checks that need it.
     
     def doneFieldNameMapping(self):
-        print "This feature is not yet fully implemented."
+        NG911_DataCheck.userMessage("This feature is not yet fully implemented.")
         # --------------------------------------------------
         # Hide Dialogue Layout 2 - Feature Class and Field Name Mapping
         # --------------------------------------------------

@@ -24,7 +24,7 @@ ordinalNumberEndings = ["ST", "ND", "RD", "TH"]
 currentLayerList = ["RoadAlias", "AddressPoints", "RoadCenterline", "AuthoritativeBoundary", "CountyBoundary", "ESZ", "PSAP", "MunicipalBoundary"]
 nonDisplayFields = ["ObjectID", "Shape", "Shape_Area", "Shape_Length"]
 
-# This class is a to pass information to the Data Check functions.
+# This is a class used to pass information to the Data Check functions.
 class pathInformationClass():
     def __init__(self):
         self.gdbPath = gdb
