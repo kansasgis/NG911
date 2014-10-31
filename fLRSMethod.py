@@ -97,7 +97,8 @@ def normalize(s):
 def soundex(s):
     """ Encode a string using Soundex. Takes a string and returns its Soundex representation."""
     replacementString = ""
-    replacementDict = {"A":"1", "E":"2", "H":"3", "I":"4", "O":"5", "U":"6", "W":"7", "Y":"8"}
+    #Added a "." here, should replace correctly now.
+    replacementDict = {"A":"1", "E":"2", "H":"3", "I":"4", "O":"5", "U":"6", "W":"7", "Y":"8", ".":""} 
     
     if len(s) == 2: 
         if s[0] == s[1]:# Only affects one very specific road name type. Kind of a narrow fix.
@@ -138,14 +139,15 @@ def soundex(s):
 def numdex(s):
     """this module applies soundex to named streets, and pads the numbered streets with zeros, keeping the numbering system intact"""
     if s[0] in ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.']:
-        # I don't think having a '.' here will do anything unless the road name is ".SomeName" since it only checks the
-        # first character of the string.
+        # I don't think having a '.' here will do anything unless the road name is ".SomeName" since it
+        # only checks the first character of the string.
         numerical_re = re.compile("[A-Z]|[^0-9][^0-9][^0-9][^0-9]")
         s=re.sub(numerical_re,"", s.zfill(4))
         return s.zfill(4)
 
     else:
         return soundex(s)
+
 
 def StreetNetworkCheck(gdb):
     """removes street centerlines from the topology and creates geometric network, then checks geometric network connectivity"""

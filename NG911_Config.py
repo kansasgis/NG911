@@ -23,3 +23,15 @@ ordinalNumberEndings = ["ST", "ND", "RD", "TH"]
 
 currentLayerList = ["RoadAlias", "AddressPoints", "RoadCenterline", "AuthoritativeBoundary", "CountyBoundary", "ESZ", "PSAP", "MunicipalBoundary"]
 nonDisplayFields = ["ObjectID", "Shape", "Shape_Area", "Shape_Length"]
+
+class pathInformationClass():
+    def __init__(self):
+        self.gdbPath = gdb
+        self.domainsFolderPath = folder
+        self.addressPointsPath = ""
+        self.fieldNames = ""
+        self.otherPath = ""
+        self.esbList = esb
+        self.DOTRoads = DOTRoads
+
+currentPathSettings = pathInformationClass()
