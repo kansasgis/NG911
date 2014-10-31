@@ -21,6 +21,7 @@
 # The ability to select and run the datachecks from this GUI will be
 # added in layoutContainer4. -- Next step in development after
 # reverse translation for the written to GDB field name mapping.
+# ^^ Partially complete.
 
 ## ^^ Simplified writes/reads for these settings in preparation for
 ## reverse translation.
@@ -38,6 +39,8 @@
 ## See about using function decorators
 ## to display text sent to the userMessage() function
 ## in the output message boxes.
+## ^^ Used a monkey patch instead, but need
+## to replace with a better programming practice later.
 
 #-------------------------------------------------------------------------------
 # Name:        NG911_Frontend
@@ -51,8 +54,8 @@
 #               dtalley@ksdot.org
 #
 # Created:     26/09/2014
-# Modified:    30/10/2014 by dirktall04
-# Version:     0.41a
+# Modified:    31/10/2014 by dirktall04
+# Version:     0.43a
 #-------------------------------------------------------------------------------
 
 
@@ -81,20 +84,12 @@ import NG911_DataCheck
 
 # Use NG91_DataCheck's getCurrentLayerList function instead when it is fully implemented.
 # from NG911_Config import currentLayerList, nonDisplayFields
-from NG911_Config import currentLayerList, nonDisplayFields
+from NG911_Config import currentLayerList, nonDisplayFields, pathInformationClass
 
 env.workspace = os.getcwd()
 lineSeparator = os.linesep
 guiOutputSetting = True # Boolean Toggle for changing the NG911_DataCheck.userMessage function.
 
-class pathInformationObject():
-    def __init__(self):
-        self.gdbPath = "C:\\GIS\\Python"
-        self.domainsFolderPath = ""
-        self.addressPointsPath = ""
-        self.fieldNames = ""
-        self.otherPath = ""
-        self.esbList = ["EMS", "FIRE", "LAW"] # Currently static. Work on making this dynamic.
 
 # Every Qt application must have one and only one QApplication object;
 # it receives the command line arguments passed to the script, as they
@@ -114,16 +109,16 @@ class NG911_Window(QWidget):
         self.okayToQuit = 1
         self.selectedGDBpath = ""
         self.combinedFeatureClassesDict = dict()
-        self.domainsPath = self.getDomainsLocation()
-        self.defaultFieldsDict = NG911_DataCheck.getRequiredFields(self.domainsPath)
-        
-        
         self.dataCheckFunctList = list()
         self.selectedItemsList = list()
         
         # Object to pass to the data check functions, containing dynamic
         # paths and related variables.
-        self.pathsObject = pathInformationObject()
+        self.pathsObject = pathInformationClass()
+        
+        self.domainsPath = self.getDomainsLocation()
+        self.defaultFieldsDict = NG911_DataCheck.getRequiredFields(self.domainsPath)
+        
         self.pathsObject.domainsFolderPath = self.domainsPath
         
         self.loadedImage = QIcon()
@@ -214,7 +209,7 @@ class NG911_Window(QWidget):
             domainsLocation = domainsFolderList[0]
         # If there is no domains folder found, default to using the current folder for the text files' location.
         else:
-            domainsLocation = osCwd
+            domainsLocation = self.pathsObject.domainsFolderPath
         
         # Set the directory back to the starting directory.
         os.chdir(osCwd)
@@ -488,15 +483,16 @@ class NG911_Window(QWidget):
         self.rightSideQVBox4.addWidget(self.geocodeAddressPointsSelector)
         self.selectorList.append(self.geocodeAddressPointsSelector)
         
+        self.dataCheckFunctList.append(NG911_DataCheck.checkLayerList)
         
-        for selectorItem in self.selectorList:
-            if selectorItem.property("associatedFunction") not in self.dataCheckFunctList:
-                self.dataCheckFunctList.append(selectorItem.property("associatedFunction"))
-            else:
-                pass
+        #for selectorItem in self.selectorList:
+            #if selectorItem.property("associatedFunction") not in self.dataCheckFunctList:
+                #self.dataCheckFunctList.append(selectorItem.property("associatedFunction"))
+            #else:
+                #pass
             
         self.runSelectedDataChecksButton4 = QPushButton("Run Selected Data Checks", self)
-
+        
         
         # Connect the button's clicked signal to the runSelectedDataChecks function
         self.runSelectedDataChecksButton4.clicked.connect(self.runSelectedDataChecks)
@@ -1043,9 +1039,11 @@ class NG911_Window(QWidget):
     
     
     def runSelectedDataChecks(self):
+        self.selectedItemsList = list()
         for possiblySelectedItem in self.selectorList:
             if possiblySelectedItem.isChecked() == True:
                 self.selectedItemsList.append(possiblySelectedItem.property("associatedFunction"))
+                
         for dataCheckFunct in self.dataCheckFunctList:
             if dataCheckFunct in self.selectedItemsList:
                 dataCheckFunct(self.pathsObject)
@@ -1187,7 +1185,7 @@ class NG911_Window(QWidget):
     
     def updateFieldNameMapping(self): 
             
-
+        
         if str(self.selectDefaultFieldNameResult3).upper() == str(self.selectDefaultFieldNameTextPreprompt3).upper():
             print "Please select a Feature Class to map first."
             self.updateTextBoxes("Please select a Feature Class to map first.")
@@ -1202,8 +1200,8 @@ class NG911_Window(QWidget):
             self.updateTextBoxes("Please select a Target Field Name to map.")
         else:
             pass
-    
-    
+
+
     def getFieldNameMapping(self):
         print "This feature is not yet fully implemented."
         return "!Error!"
@@ -1235,8 +1233,8 @@ class NG911_Window(QWidget):
         print "All done!"
         self.quitApplication()
         pass
-    
-    
+
+
     def quitApplication(self):
         if self.okayToQuit == 1:
             qt_app.quit()

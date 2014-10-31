@@ -6,11 +6,11 @@
 # kristen@kgs.ku.edu
 #
 # Created: 19/09/2014
-# Modified: 30/10/2014 by dirktall04
-# Changes include: Reorganizing imports, change of variable name "id" to "ObjectXID"
-# as "id" is a reserved keyword. Addition of "today = strftime("%m/%d/%y")" line to
-# "checkFeatureLocations" function definition.
-# Added various comments to make PyDev happier with the script.
+# Modified: 31/10/2014 by dirktall04
+# Changes include: Adding the currentPathSettings variable from
+# NG911_Config as the default variable passed to several Data
+# Check functions, modifications to the functions to allow
+# them to use that variable as a data source.
 #-------------------------------------------------------------------------------
 
 
@@ -296,7 +296,10 @@ def getFieldDomain(field, folder):
     return domainDict
 
 
-def checkValuesAgainstDomain(gdb, folder):
+def checkValuesAgainstDomain(pathsInfoObject):
+    gdb = pathsInfoObject.gdbPath
+    folder = pathsInfoObject.domainsFolderPath
+    
     userMessage("Checking field values against approved domains...")
 
     #get list of fields with domains
@@ -345,7 +348,10 @@ def checkValuesAgainstDomain(gdb, folder):
     userMessage("Completed checking fields against domains")
 
 
-def checkDomainExistence(gdb, folder):
+def checkDomainExistence(pathsInfoObject):
+    gdb = pathsInfoObject.gdbPath
+    folder = pathsInfoObject.domainsFolderPath
+    
     #get current domain list
     domainList = getCurrentDomainList()
     domains = {}  # @UnusedVariable
@@ -391,7 +397,11 @@ def checkDomainExistence(gdb, folder):
                     ## print domains
 
 
-def checkRequiredFieldValues(gdb, folder, esb):
+def checkRequiredFieldValues(pathsInfoObject):
+    gdb = pathsInfoObject.gdbPath
+    folder = pathsInfoObject.domainsFolderPath
+    esb = pathsInfoObject.esbList
+
     userMessage("Checking that required fields have all values...")
 
     #get today's date
@@ -489,7 +499,11 @@ def checkRequiredFieldValues(gdb, folder, esb):
     userMessage("Completed check for required field values")
 
 
-def checkRequiredFields(gdb, folder, esb):
+def checkRequiredFields(pathsInfoObject):
+    gdb = pathsInfoObject.gdbPath
+    folder = pathsInfoObject.domainsFolderPath
+    esb = pathsInfoObject.esbList
+    
     userMessage("Checking that required fields exist...")
 
     #get today's date
@@ -535,7 +549,9 @@ def checkRequiredFields(gdb, folder, esb):
     userMessage("Completed check for required fields")
 
 
-def checkFeatureLocations(gdb):
+def checkFeatureLocations(pathsInfoObject):
+    gdb = pathsInfoObject.gdbPath
+    
     userMessage("Checking feature locations...")
 
     #get today's date
@@ -586,22 +602,22 @@ def checkFeatureLocations(gdb):
 
 def main():
     try:
-        from NG911_Config import esb, gdb, folder
+        from NG911_Config import currentPathSettings # currentPathSettings should have all the path information available. ## import esb, gdb, folder
     except:
         userMessage( "Copy config file into command line")
 
     #check geodatabase template
-    checkLayerList(gdb, esb)
-    checkRequiredFields(gdb, folder, esb)
-    checkRequiredFieldValues(gdb, folder, esb)
+    checkLayerList(currentPathSettings)
+    checkRequiredFields(currentPathSettings)
+    checkRequiredFieldValues(currentPathSettings)
 
     #check values and locations
-    checkValuesAgainstDomain(gdb, folder)
-    checkFeatureLocations(gdb)
-    addy_pt = join(gdb, "AddressPoints")
-    street = join(gdb, "RoadCenterline")
-    GeocodeAddressPoints(addy_pt, street)
-    checkAddressPointFrequency(addy_pt, gdb)
+    checkValuesAgainstDomain(currentPathSettings)
+    checkFeatureLocations(currentPathSettings)
+    addy_pt = join(currentPathSettings.gdbPath, "AddressPoints")
+    street = join(currentPathSettings.gdbPath, "RoadCenterline")
+    geocodeAddressPoints(addy_pt, street)
+    ###checkAddressPointFrequency(addy_pt, gdb) # Commented out because I didn't find the function definition.
 
     #checks we probably don't need to use
     ## checkDomainExistence(gdb, folder)
