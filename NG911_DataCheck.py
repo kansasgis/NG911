@@ -17,7 +17,7 @@
 from arcpy import (AddField_management, AddMessage, CalculateField_management,  CopyRows_management, CreateAddressLocator_geocoding, # @UnusedImport
                    CreateTable_management, Delete_management, Exists, GeocodeAddresses_geocoding, GetCount_management, FieldInfo, # @UnusedImport
                    ListFields, MakeFeatureLayer_management, MakeTableView_management, SelectLayerByAttribute_management, # @UnusedImport
-                   SelectLayerByLocation_management) # @UnusedImport
+                   SelectLayerByLocation_management, RebuildAddressLocator_geocoding, Frequency_analysis, DeleteRows_management) # @UnusedImport
 from arcpy.da import Walk, InsertCursor, ListDomains, SearchCursor  # @UnresolvedImport
 
 from os import path
@@ -147,11 +147,14 @@ def RecordResults(resultType, values, gdb): # Guessed on whitespace formatting h
         cursor.insertRow(row)
     del cursor
 
+def geocodeAddressPoints(pathsInfoObject):
+    gdb = pathsInfoObject.gdbPath
 
-def geocodeAddressPoints(addressPointPath, streetPath):
+    addressPointPath = pathsInfoObject.addressPointsPath
+    streetPath = join(gdb, "RoadCenterline")
+
     userMessage("Geocoding address points...")
 
-    gdb = dirname(addressPointPath)
     gc_table = join(gdb, "GeocodeTable")
     sl_field = "SingleLineInput"
     Locator = join(gdb, "Locator")
@@ -176,6 +179,8 @@ def geocodeAddressPoints(addressPointPath, streetPath):
     MakeTableView_management(addressPointPath, addyview, "", "", fieldinfo)
 
     # To persist the layer on disk make a copy of the view
+    if Exists(gc_table):
+        Delete_management(gc_table)
     CopyRows_management(addyview, gc_table)
 
     #add single line input field for geocoding
@@ -199,38 +204,40 @@ def geocodeAddressPoints(addressPointPath, streetPath):
 
     userMessage("Creating address locator...")
     # Process: Create Address Locator
-    CreateAddressLocator_geocoding("US Address - Dual Ranges", streetPath + " 'Primary Table'", fieldMap, Locator, "")
+    if Exists(Locator):
+        RebuildAddressLocator_geocoding(Locator)
+    else:
+        CreateAddressLocator_geocoding("US Address - Dual Ranges", streetPath + " 'Primary Table'", fieldMap, Locator, "")
 
     userMessage("Geocoding addresses...")
     #geocode table address
+    if Exists(output):
+        Delete_management(output)
     GeocodeAddresses_geocoding(gc_table, Locator, "'Single Line Input' SingleLineInput VISIBLE NONE", output, "STATIC")
 
     userMessage("Completed geocoding. Results are in table " + output)
 
-def checkAddressPointFrequency(AddressPoints, gdb):
-    from arcpy import Frequency_analysis, MakeTableView_management, DeleteRows_management, GetCount_management, Delete_management, Exists
-    from os.path import join
+def checkFrequency(fc, freq, fields, wc):
+    AP_fields = "MUNI;HNO;HNS;PRD;STP;RD;STS;POD;POM;ZIP;BLD;FLR;UNIT;ROOM;SEAT;LOC;LOCTYPE"
+    AP_wc = "Frequency = 1 or LOCTYPE <> 'Primary'"
 
-    AP_Freq = join(gdb, "AP_Freq")
     fl = "fl"
 
     #remove the frequency table if it exists already
-    if Exists(AP_Freq):
-        Delete_management(AP_Freq)
+    if Exists(freq):
+        Delete_management(freq)
 
     #run frequency analysis
-    Frequency_analysis(AddressPoints, AP_Freq, "MUNI;HNO;HNS;PRD;STP;RD;STS;POD;POM;ZIP;BLD;FLR;UNIT;ROOM;SEAT;LOC;LOCTYPE", "")
+    Frequency_analysis(fc, freq, fields, "")
 
     #get count of records
-    rFreq = GetCount_management(AP_Freq)
+    rFreq = GetCount_management(freq)
     rCount = int(rFreq.getOutput(0))
 
     #delete records
-    #make where clause
-    wc = "Frequency = 1 or LOCTYPE <> 'Primary'"
 
     #make feature layer
-    MakeTableView_management(AP_Freq, fl, wc)
+    MakeTableView_management(freq, fl, wc)
 
     #get count of the results
     result = GetCount_management(fl)
@@ -239,10 +246,10 @@ def checkAddressPointFrequency(AddressPoints, gdb):
     if rCount != count:
         #Delete
         DeleteRows_management(fl)
-        userMessage("Checked frequency of address points. Results are in table " + AP_Freq)
+        userMessage("Checked frequency. Results are in table " + freq)
     elif rCount == count:
-        Delete_management(AP_Freq)
-        userMessage("All address points are unique.")
+        Delete_management(freq)
+        userMessage("All records are unique.")
 
 def checkLayerList(pathsInfoObject):
     gdb = pathsInfoObject.gdbPath
@@ -335,15 +342,15 @@ def getFieldDomain(field, folder):
 def checkValuesAgainstDomain(pathsInfoObject):
     gdb = pathsInfoObject.gdbPath
     folder = pathsInfoObject.domainsFolderPath
+    fcList = pathsInfoObject.fcList
 
     userMessage("Checking field values against approved domains...")
 
     #get list of fields with domains
     fieldsWDoms = fieldsWithDomains()
-    for dirpath, dirnames, filenames in Walk(gdb, True, '', False, ["Table","FeatureClass"]):  # @UnusedVariable
-        for filename in filenames:
-            fields = []
-            fullPath = path.join(gdb, filename)
+
+    for fullPath in fcList:
+        fields = []
         #create complete field list
         fields = ListFields(fullPath)
         fieldNames = []
@@ -375,11 +382,11 @@ def checkValuesAgainstDomain(pathsInfoObject):
                                 if fieldN == "HNO":
                                     hno = row[1]
                                     if hno > 999999 or hno < 0:
-                                        userMessage( filename + ": " + str(row[0]) + " value " + str(row[1]) + " not in approved domain for field " + fieldN)
+                                        userMessage( fullPath + ": " + str(row[0]) + " value " + str(row[1]) + " not in approved domain for field " + fieldN)
                                     #otherwise, compare row value to domain list
                                     else:
                                         if row[1].upper() not in domainList:
-                                            userMessage( filename + ": " + str(row[0]) + " value " + str(row[1]) + " not in approved domain for field " + fieldN)
+                                            userMessage( fullPath + ": " + str(row[0]) + " value " + str(row[1]) + " not in approved domain for field " + fieldN)
 
     userMessage("Completed checking fields against domains")
 
@@ -587,6 +594,12 @@ def checkRequiredFields(pathsInfoObject):
 
 def checkFeatureLocations(pathsInfoObject):
     gdb = pathsInfoObject.gdbPath
+    fcList = pathsInfoObject.fcList
+
+    RoadAlias = join(gdb, "RoadAlias")
+
+    if RoadAlias in fcList:
+        fcList.remove(RoadAlias)
 
     userMessage("Checking feature locations...")
 
@@ -602,33 +615,29 @@ def checkFeatureLocations(pathsInfoObject):
 
     MakeFeatureLayer_management(authBound, ab)
 
-    for dirpath, dirnames, filenames in Walk(gdb, True, '', False, ["FeatureClass"]):  # @UnusedVariable
-        for filename in filenames:
-            if filename != "AuthoritativeBoundary":
-                #get full path name & create a feature layer
-                fullPath = path.join(gdb, filename)
-                fl = "fl"
-                MakeFeatureLayer_management(fullPath, fl)
+    for fullPath in fcList:
+        fl = "fl"
+        MakeFeatureLayer_management(fullPath, fl)
 
-                #select by location to get count of features outside the authoritative boundary
-                SelectLayerByLocation_management(fl, "INTERSECT", ab)
-                SelectLayerByAttribute_management(fl, "SWITCH_SELECTION", "")
-                #get count of selected records
-                result = GetCount_management(fl)
-                count = int(result.getOutput(0))
+        #select by location to get count of features outside the authoritative boundary
+        SelectLayerByLocation_management(fl, "INTERSECT", ab)
+        SelectLayerByAttribute_management(fl, "SWITCH_SELECTION", "")
+        #get count of selected records
+        result = GetCount_management(fl)
+        count = int(result.getOutput(0))
 
-                #report results
-                if count > 0:
-                    fields = ("OBJECTID")
-                    with SearchCursor(fl, fields) as rows:
-                        for row in rows:
-                            val = (today, "Feature not inside authoritative boundary", filename, "", row[0])
-                            values.append(val)
-                else:
-                    userMessage( filename + ": all records inside authoritative boundary")
+        #report results
+        if count > 0:
+            fields = ("OBJECTID")
+            with SearchCursor(fl, fields) as rows:
+                for row in rows:
+                    val = (today, "Feature not inside authoritative boundary", fullPath, "", row[0])
+                    values.append(val)
+        else:
+            userMessage( fullPath + ": all records inside authoritative boundary")
 
-                #clean up
-                Delete_management(fl)
+        #clean up
+        Delete_management(fl)
 
     userMessage("Completed check on feature locations")
 
@@ -636,27 +645,67 @@ def checkFeatureLocations(pathsInfoObject):
         RecordResults("fieldValues", values, gdb)
 
 
-def main():
-    try:
-        from NG911_Config import currentPathSettings # currentPathSettings should have all the path information available. ## import esb, gdb, folder
-    except:
-        userMessage( "Copy config file into command line")
+def main_check(checkType, currentPathSettings):
+##    try:
+##        from NG911_Config import currentPathSettings # currentPathSettings should have all the path information available. ## import esb, gdb, folder
+##    except:
+##        userMessage( "Copy config file into command line")
+
+    checkList = currentPathSettings.checkList
 
     #check geodatabase template
-    checkLayerList(currentPathSettings)
-    checkRequiredFields(currentPathSettings)
-    checkRequiredFieldValues(currentPathSettings)
+    if checkType == "template":
+        if checkList[0] == "true":
+            checkLayerList(currentPathSettings)
 
-    #check values and locations
-    checkValuesAgainstDomain(currentPathSettings)
-    checkFeatureLocations(currentPathSettings)
-    addy_pt = join(currentPathSettings.gdbPath, "AddressPoints")
-    street = join(currentPathSettings.gdbPath, "RoadCenterline")
-    geocodeAddressPoints(addy_pt, street)
-    checkAddressPointFrequency(addy_pt, gdb) # Commented out because I didn't find the function definition.
+        if checkList[1] == "true":
+            checkRequiredFields(currentPathSettings)
 
-    #checks we probably don't need to use
-    ## checkDomainExistence(gdb, folder)
+        if checkList[2] == "true":
+            checkRequiredFieldValues(currentPathSettings)
+
+    #check address points
+    elif checkType == "AddressPoints":
+        if checkList[0] == "true":
+            checkValuesAgainstDomain(currentPathSettings)
+
+        if checkList[1] == "true":
+            checkFeatureLocations(currentPathSettings)
+
+        if checkList[2] == "true":
+            geocodeAddressPoints(currentPathSettings)
+
+        if checkList[3] == "true":
+            addressPoints = join(currentPathSettings.gdbPath, "AddressPoints")
+            AP_freq = join(currentPathSettings.gdbPath, "AP_Freq")
+            AP_fields = "MUNI;HNO;HNS;PRD;STP;RD;STS;POD;POM;ZIP;BLD;FLR;UNIT;ROOM;SEAT;LOC;LOCTYPE"
+            AP_wc = "Frequency = 1 or LOCTYPE <> 'Primary'"
+            checkFrequency(addressPoints, AP_freq, AP_fields, AP_wc)
+
+    #check roads
+    elif checkType == "Roads":
+        if checkList[0] == "true":
+            checkValuesAgainstDomain(currentPathSettings)
+
+        if checkList[1] == "true":
+            checkFeatureLocations(currentPathSettings)
+
+        if checkList[2] == "true":
+            roads = join(currentPathSettings.gdbPath, "RoadCenterline")
+            road_freq = join(currentPathSettings.gdbPath, "Road_Freq")
+            road_fields = """STATE_L;STATE_R;COUNTY_L;COUNTY_R;MUNI_L;MUNI_R;L_F_ADD;L_T_ADD;R_F_ADD;R_T_ADD;
+            PARITY_L;PARITY_R;POSTCO_L;POSTCO_R;ZIP_L;ZIP_R;ESN_L;ESN_R;MSAGCO_L;MSAGCO_R;PRD;STP;RD;STS;POD;
+            POM;SPDLIMIT;ONEWAY;RDCLASS;LABEL;ELEV_F;ELEV_T;ESN_C;SURFACE;STATUS;TRAVEL;LRSKEY"""
+            road_wc = "Frequency = 1"
+            checkFrequency(roads, road_freq, road_fields, road_wc)
+
+    #check boundaries or ESB
+    elif checkType in ("admin", "ESB"):
+        if checkList[0] == "true":
+            checkValuesAgainstDomain(currentPathSettings)
+
+        if checkList[1] == "true":
+            checkFeatureLocations(currentPathSettings)
 
 if __name__ == '__main__':
     main()

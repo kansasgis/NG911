@@ -34,5 +34,7 @@ class pathInformationClass():
         self.otherPath = ""
         self.esbList = esb
         self.DOTRoads = DOTRoads
+        self.checkList = []
+        self.fcList = []
 
 currentPathSettings = pathInformationClass()
