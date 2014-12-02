@@ -30,8 +30,6 @@ def getCurrentLayerList(esb):
     layerList = ["RoadAlias", "AddressPoints", "RoadCenterline", "AuthoritativeBoundary", "CountyBoundary", "ESZ", "PSAP", "MunicipalBoundary"]
     for e in esb:
         layerList.append(e)
-        #future code: have each county's geodatabase model identified with ESB layers
-        #get the layer list from their standard geodatabase
     return layerList
 
 
@@ -56,6 +54,10 @@ def fieldsWithDomains():
 
     return fieldList
 
+def getUniqueIDField(layer):
+    id_dict = {"ADDRESSPOINTS":"ADDID", "AUTHORITATIVEBOUNDARY":"ABID", "COUNTYBOUNDARY":"CountyID", "ESB":"ESBID", "ESZ":"ESZID", "MUNICIPALBOUNDARY":"MUNI_ID", "PSAP":"ESBID", "ROADCENTERLINE":"SEGID", "ROADALIAS":"ALIASID"}
+    id1 = id_dict[layer]
+    return id1
 
 def getDomainKeyword(domainName):
     ucase_list = ["AgencyID", "Country", "OneWay"]
@@ -103,7 +105,7 @@ def getAddFieldInfo(table):
     if lyr == "TemplateCheckResults":
         fieldInfo = [(table, "DateFlagged", "DATE", "", "", ""),(table, "Description", "TEXT", "", "", 250),(table, "Category", "TEXT", "", "", 25)]
     elif lyr == "FieldValuesCheckResults":
-        fieldInfo = [(table, "DateFlagged", "DATE", "", "", ""),(table, "Description", "TEXT", "", "", 250),(table, "Layer", "TEXT", "", "", 25),(table, "Field", "TEXT", "", "", 25),(table, "FeatureID", "LONG", "", "", "")]
+        fieldInfo = [(table, "DateFlagged", "DATE", "", "", ""),(table, "Description", "TEXT", "", "", 250),(table, "Layer", "TEXT", "", "", 25),(table, "Field", "TEXT", "", "", 25),(table, "FeatureID", "TEXT", "", "", 38)]
 
     return fieldInfo
 
@@ -215,12 +217,41 @@ def geocodeAddressPoints(pathsInfoObject):
         Delete_management(output)
     GeocodeAddresses_geocoding(gc_table, Locator, "'Single Line Input' SingleLineInput VISIBLE NONE", output, "STATIC")
 
-    userMessage("Completed geocoding. Results are in table " + output)
+    wc = "Status <> 'M'"
+    lyr = "lyr"
 
-def checkFrequency(fc, freq, fields, wc):
-    AP_fields = "MUNI;HNO;HNS;PRD;STP;RD;STS;POD;POM;ZIP;BLD;FLR;UNIT;ROOM;SEAT;LOC;LOCTYPE"
-    AP_wc = "Frequency = 1 or LOCTYPE <> 'Primary'"
+    MakeFeatureLayer_management(output, lyr, wc)
 
+    rStatus = GetCount_management(lyr)
+    rCount = int(rStatus.getOutput(0))
+
+    if rCount > 0:
+        #set up parameters to report duplicate records
+        values = []
+        recordType = "fieldValues"
+        today = strftime("%m/%d/%y")
+        filename = "AddressPoints"
+
+        rfields = ("ADDID")
+        with SearchCursor(output, rfields, wc) as rRows:
+            for rRow in rRows:
+                fID = rRow[0]
+                report = str(fID) + " did not geocode against centerline"
+                val = (today, report, filename, "", fID)
+                values.append(val)
+
+        #report duplicate records
+        if values != []:
+            RecordResults(recordType, values, gdb)
+
+        userMessage("Completed geocoding with " + str(rCount) + " errors.")
+
+    else:
+        userMessage("All records geocoded successfully.")
+        Delete_management(output)
+        Delete_management(gc_table)
+
+def checkFrequency(fc, freq, fields, wc, gdb):
     fl = "fl"
 
     #remove the frequency table if it exists already
@@ -246,10 +277,71 @@ def checkFrequency(fc, freq, fields, wc):
     if rCount != count:
         #Delete
         DeleteRows_management(fl)
-        userMessage("Checked frequency. Results are in table " + freq)
+
+        #set up parameters to report duplicate records
+        values = []
+        recordType = "fieldValues"
+        today = strftime("%m/%d/%y")
+        filename = ""
+
+        #add information to FieldValuesCheckResults for all duplicates
+        #get fields
+        fl_fields1 = fields.split(";")
+        fl_fields = []
+        for f1 in fl_fields1:
+            f = f1.strip()
+            fl_fields.append(f)
+
+        #get field count
+        fCount = len(fl_fields)
+
+        #see if we're working with address points or roads
+        if freq == join(gdb, "AP_Freq"):
+            filename = "AddressPoints"
+        elif freq == join(gdb, "Road_Freq"):
+            filename = "RoadCenterline"
+
+        #get the unique ID field name
+        id1 = getUniqueIDField(filename.upper())
+
+        #run a search on the frequency table to report duplicate records
+        with SearchCursor(freq, fl_fields) as rows:
+            for row in rows:
+                i = 0
+                #generate where clause to find duplicate ID's
+                wc = ""
+                while i < fCount:
+                    stuff = ""
+                    if row[i] != None:
+                        try:
+                            stuff = " = '" + row[i] + "' "
+                        except:
+                            stuff = " = " + str(row[i]) + " "
+                    else:
+                        stuff = " is null "
+                    wc = wc + fl_fields[i] + stuff + "and "
+                    i += 1
+
+                #trim last "and " off where clause
+                wc = wc[0:-5]
+##                userMessage(wc)
+
+                #find records with duplicates to get their unique ID's
+                with SearchCursor(fc, (id1), wc) as sRows:
+                    for sRow in sRows:
+                        fID = sRow[0]
+                        report = str(fID) + " has duplicate field information"
+                        val = (today, report, filename, "", fID)
+                        values.append(val)
+
+        #report duplicate records
+        if values != []:
+            RecordResults(recordType, values, gdb)
+            userMessage("Checked frequency. Results are in table FieldValuesCheckResults")
     elif rCount == count:
-        Delete_management(freq)
         userMessage("All records are unique.")
+
+    Delete_management(freq)
 
 def checkLayerList(pathsInfoObject):
     gdb = pathsInfoObject.gdbPath
@@ -343,13 +435,25 @@ def checkValuesAgainstDomain(pathsInfoObject):
     gdb = pathsInfoObject.gdbPath
     folder = pathsInfoObject.domainsFolderPath
     fcList = pathsInfoObject.fcList
+    esb = pathsInfoObject.esbList
 
     userMessage("Checking field values against approved domains...")
+    #set up parameters to report duplicate records
+    values = []
+    resultType = "fieldValues"
+    today = strftime("%m/%d/%y")
+    filename = ""
 
     #get list of fields with domains
     fieldsWDoms = fieldsWithDomains()
 
     for fullPath in fcList:
+        fc = basename(fullPath)
+        layer = fc.upper()
+        if fc in esb:
+            layer = "ESB"
+
+        id1 = getUniqueIDField(layer)
         fields = []
         #create complete field list
         fields = ListFields(fullPath)
@@ -373,71 +477,32 @@ def checkValuesAgainstDomain(pathsInfoObject):
                 for val in domainDict.iterkeys():
                     domainList.append(val.upper())
 
-                    #loop through records for that particular field to see if all values match domain
-                    wc = fieldN + " is not null"
-                    with SearchCursor(fullPath, ("OBJECTID", fieldN), wc) as rows:
-                        for row in rows:
-                            if row[1] is not None:
-                                #see if field domain is actually a range
-                                if fieldN == "HNO":
-                                    hno = row[1]
-                                    if hno > 999999 or hno < 0:
-                                        userMessage( fullPath + ": " + str(row[0]) + " value " + str(row[1]) + " not in approved domain for field " + fieldN)
-                                    #otherwise, compare row value to domain list
-                                    else:
-                                        if row[1].upper() not in domainList:
-                                            userMessage( fullPath + ": " + str(row[0]) + " value " + str(row[1]) + " not in approved domain for field " + fieldN)
+##                userMessage(domainList)
 
-    userMessage("Completed checking fields against domains")
+                #loop through records for that particular field to see if all values match domain
+                wc = fieldN + " is not null"
+                with SearchCursor(fullPath, (id1, fieldN), wc) as rows:
+                    for row in rows:
+                        if row[1] is not None:
+                            fID = row[0]
+                            #see if field domain is actually a range
+                            if fieldN == "HNO":
+                                hno = row[1]
+                                if hno > 999999 or hno < 0:
+                                    report = "Value " + str(row[1]) + " not in approved domain for field " + fieldN
+                                    val = (today, report, fc, fieldN, fID)
+                                    values.append(val)
+                            #otherwise, compare row value to domain list
+                            else:
+                                if row[1].upper() not in domainList:
+                                    report = "Value " + str(row[1]) + " not in approved domain for field " + fieldN
+                                    val = (today, report, fc, fieldN, fID)
+                                    values.append(val)
 
+    if values != []:
+        RecordResults(resultType, values, gdb)
 
-def checkDomainExistence(pathsInfoObject):
-    gdb = pathsInfoObject.gdbPath
-    folder = pathsInfoObject.domainsFolderPath
-
-    #get current domain list
-    domainList = getCurrentDomainList()
-    domains = {}  # @UnusedVariable
-
-    #list domains
-    for domain in ListDomains(gdb):
-        if domain.name not in domainList:
-            userMessage( domain.name + " not in geodatabase domain template")
-        else:
-            #check domain type
-            #for coded values: compare values to text files
-            if domain.domainType == "CodedValue":
-                cv = domain.codedValues
-                #get keyword
-                keyword = getDomainKeyword(domain.name)
-
-                if keyword <> "":
-                    #get the established domain values and definitions in a dictionary
-                    cv_recorded = getFieldDomain(keyword, folder)
-                    um = 0
-
-                    #see if the domains match
-                    if cv != cv_recorded:
-                        for key in cv.iterkeys():
-                            #check for upper/lower matches
-                            if key.upper() not in cv_recorded and key.lower() not in cv_recorded:
-                                um = 1
-                                userMessage( key + " not in domain " + domain.name)
-
-                    if um == 0:
-                        userMessage( domain.name + ": domain values match")
-
-            #for range: only address numbers have a range, so do the comparison directly
-            elif domain.domainType == "Range":
-                low = int(domain.range[0])
-                high = int(domain.range[1])
-
-                if low != 0:
-                    userMessage( domain.name + " range low is not 0. It is " + str(low))
-
-                if high != 999999:
-                    userMessage( domain.name + " range high is not 999999. It is " + str(high))
-                    ## print domains
+    userMessage("Completed checking fields against domains: " + str(len(values)) + " issues found")
 
 
 def checkRequiredFieldValues(pathsInfoObject):
@@ -453,93 +518,97 @@ def checkRequiredFieldValues(pathsInfoObject):
     #get required fields
     rfDict = getRequiredFields(folder)
 
-    ObjectXID = "OBJECTID"
     values = []
 
     #walk through the tables/feature classes
     for dirpath, dirnames, filenames in Walk(gdb, True, '', False, ["Table","FeatureClass"]):  # @UnusedVariable
         for filename in filenames:
-            fullPath = path.join(gdb, filename)
+            if filename.upper() not in ("FIELDVALUESCHECKRESULTS", "TEMPLATECHECKRESULTS"):
+                fullPath = path.join(gdb, filename)
+                if filename.upper() in esb:
+                    layer = "ESB"
+                else:
+                    layer = filename.upper()
+                id1 = getUniqueIDField(layer)
 
-            #get the keyword to acquire required field names
-            keyword = getKeyword(filename, esb)
+                #get the keyword to acquire required field names
+                keyword = getKeyword(filename, esb)
 
-            #goal: get list of required fields that are present in the feature class
-            #get the appropriate required field list
-            if keyword in rfDict:
-                requiredFieldList = rfDict[keyword]
+                #goal: get list of required fields that are present in the feature class
+                #get the appropriate required field list
+                if keyword in rfDict:
+                    requiredFieldList = rfDict[keyword]
 
-            rfl = []
-            for rf in requiredFieldList:
-                rfl.append(rf.upper())
+                rfl = []
+                for rf in requiredFieldList:
+                    rfl.append(rf.upper())
 
-            #get list of fields in the feature class
-            allFields = ListFields(fullPath)
+                #get list of fields in the feature class
+                allFields = ListFields(fullPath)
 
-            #make list of field names
-            fields = []
-            for aF in allFields:
-                fields.append(aF.name.upper())
+                #make list of field names
+                fields = []
+                for aF in allFields:
+                    fields.append(aF.name.upper())
 
-            #convert lists to sets
-            set1 = set(rfl)
-            set2 = set(fields)
+                #convert lists to sets
+                set1 = set(rfl)
+                set2 = set(fields)
 
-            #get the set of fields that are the same
-            matchingFields = list(set1 & set2)
+                #get the set of fields that are the same
+                matchingFields = list(set1 & set2)
 
-            #create where clause to select any records where required values aren't populated
-            wc = ""
+                #create where clause to select any records where required values aren't populated
+                wc = ""
 
-            for field in matchingFields:
-                wc = wc + " " + field + " is null or "
+                for field in matchingFields:
+                    wc = wc + " " + field + " is null or "
 
-            wc = wc[0:-4]
+                wc = wc[0:-4]
 
-            #make table view using where clause
-            lyr = "lyr"
-            MakeTableView_management(fullPath, lyr, wc)
+                #make table view using where clause
+                lyr = "lyr"
+                MakeTableView_management(fullPath, lyr, wc)
 
-            #get count of the results
-            result = GetCount_management(lyr)
-            count = int(result.getOutput(0))
+                #get count of the results
+                result = GetCount_management(lyr)
+                count = int(result.getOutput(0))
 
-            #if count is greater than 0, it means a required value somewhere isn't filled in
-            if count > 0:
-                #make sure the objectID gets included in the search for reporting
-                if ObjectXID not in matchingFields:
-                    matchingFields.append(ObjectXID)
+                #if count is greater than 0, it means a required value somewhere isn't filled in
+                if count > 0:
+                    #make sure the objectID gets included in the search for reporting
+                    if id1 not in matchingFields:
+                        matchingFields.append(id1)
 
-                i = len(matchingFields)  # @UnusedVariable
-                k = 0
+                    k = 0
 
-                #run a search cursor to get any/all records where a required field value is null
-                with SearchCursor(fullPath, (matchingFields), wc) as rows:
-                    for row in rows:
-                        #get object ID of the field
-                        oid = str(row[matchingFields.index(ObjectXID)])
+                    #run a search cursor to get any/all records where a required field value is null
+                    with SearchCursor(fullPath, (matchingFields), wc) as rows:
+                        for row in rows:
+                            #get object ID of the field
+                            oid = str(row[matchingFields.index(id1)])
 
-                        #loop through row
-                        while k < 0:
-                            #see if the value is nothing
-                            if row[k] is None:
-                                #report the value if it is indeed null
-                                report = matchingFields[k] + " is null for ObjectID " + oid
-                                userMessage(report)
-                                val = (today, report, filename, matchingFields[k], oid)
-                                values.append(val)
+                            #loop through row
+                            while k < 0:
+                                #see if the value is nothing
+                                if row[k] is None:
+                                    #report the value if it is indeed null
+                                    report = matchingFields[k] + " is null for Feature ID " + oid
+                                    userMessage(report)
+                                    val = (today, report, filename, matchingFields[k], oid)
+                                    values.append(val)
 
-                                #iterate!
-                                k = k + 1
-            else:
-                userMessage( "All required values present for " + filename)
+                                    #iterate!
+                                    k = k + 1
+                else:
+                    userMessage( "All required values present for " + filename)
 
-            Delete_management(lyr)
+                Delete_management(lyr)
 
-    if values != "":
+    if values != []:
         RecordResults("fieldValues", values, gdb)
 
-    userMessage("Completed check for required field values")
+    userMessage("Completed check for required field values: " + str(len(values)) + " issues found")
 
 
 def checkRequiredFields(pathsInfoObject):
@@ -589,7 +658,7 @@ def checkRequiredFields(pathsInfoObject):
     if values != []:
         RecordResults("template", values, gdb)
 
-    userMessage("Completed check for required fields")
+    userMessage("Completed check for required fields: " + str(len(values)) + " issues found")
 
 
 def checkFeatureLocations(pathsInfoObject):
@@ -639,10 +708,11 @@ def checkFeatureLocations(pathsInfoObject):
         #clean up
         Delete_management(fl)
 
-    userMessage("Completed check on feature locations")
-
     if values != []:
         RecordResults("fieldValues", values, gdb)
+
+
+    userMessage("Completed check on feature locations: " + str(len(values)) + " issues found")
 
 
 def main_check(checkType, currentPathSettings):
@@ -680,7 +750,7 @@ def main_check(checkType, currentPathSettings):
             AP_freq = join(currentPathSettings.gdbPath, "AP_Freq")
             AP_fields = "MUNI;HNO;HNS;PRD;STP;RD;STS;POD;POM;ZIP;BLD;FLR;UNIT;ROOM;SEAT;LOC;LOCTYPE"
             AP_wc = "Frequency = 1 or LOCTYPE <> 'Primary'"
-            checkFrequency(addressPoints, AP_freq, AP_fields, AP_wc)
+            checkFrequency(addressPoints, AP_freq, AP_fields, AP_wc, currentPathSettings.gdbPath)
 
     #check roads
     elif checkType == "Roads":
@@ -697,7 +767,7 @@ def main_check(checkType, currentPathSettings):
             PARITY_L;PARITY_R;POSTCO_L;POSTCO_R;ZIP_L;ZIP_R;ESN_L;ESN_R;MSAGCO_L;MSAGCO_R;PRD;STP;RD;STS;POD;
             POM;SPDLIMIT;ONEWAY;RDCLASS;LABEL;ELEV_F;ELEV_T;ESN_C;SURFACE;STATUS;TRAVEL;LRSKEY"""
             road_wc = "Frequency = 1"
-            checkFrequency(roads, road_freq, road_fields, road_wc)
+            checkFrequency(roads, road_freq, road_fields, road_wc, currentPathSettings.gdbPath)
 
     #check boundaries or ESB
     elif checkType in ("admin", "ESB"):

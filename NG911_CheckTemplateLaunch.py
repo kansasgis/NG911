@@ -20,7 +20,7 @@ def main():
     #get parameters
     gdb = GetParameterAsText(0)
     domainsFolder = GetParameterAsText(1)
-    esbList = GetParameterAsText(2)
+    esbList = GetParameterAsText(2).split(";")
     checkLayerList = GetParameterAsText(3)
     checkRequiredFields = GetParameterAsText(4)
     checkRequiredFieldValues = GetParameterAsText(5)
