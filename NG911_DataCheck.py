@@ -56,7 +56,10 @@ def fieldsWithDomains():
 
 def getUniqueIDField(layer):
     id_dict = {"ADDRESSPOINTS":"ADDID", "AUTHORITATIVEBOUNDARY":"ABID", "COUNTYBOUNDARY":"CountyID", "ESB":"ESBID", "ESZ":"ESZID", "MUNICIPALBOUNDARY":"MUNI_ID", "PSAP":"ESBID", "ROADCENTERLINE":"SEGID", "ROADALIAS":"ALIASID"}
-    id1 = id_dict[layer]
+    try:
+        id1 = id_dict[layer]
+    except:
+        id1 = ""
     return id1
 
 def getDomainKeyword(domainName):
@@ -146,7 +149,10 @@ def RecordResults(resultType, values, gdb): # Guessed on whitespace formatting h
 
     cursor = InsertCursor(table, fieldList)
     for row in values:
-        cursor.insertRow(row)
+        try:
+            cursor.insertRow(row)
+        except:
+            userMessage(row)
     del cursor
 
 def geocodeAddressPoints(pathsInfoObject):
@@ -249,7 +255,7 @@ def geocodeAddressPoints(pathsInfoObject):
     else:
         userMessage("All records geocoded successfully.")
         Delete_management(output)
-        Delete_management(gc_table)
+##        Delete_management(gc_table)
 
 def checkFrequency(fc, freq, fields, wc, gdb):
     fl = "fl"
@@ -352,11 +358,13 @@ def checkLayerList(pathsInfoObject):
     layerList = getCurrentLayerList(esb)
     layers = []
     for dirpath, dirnames, filenames in Walk(gdb, True, '', False, ["Table","FeatureClass"]):  # @UnusedVariable
+        ignoreList = ("gc_test", "TemplateCheckResults", "FieldValuesCheckResults", "GeocodeTable")
         for filename in filenames:
-            if filename not in layerList:
-                userMessage( filename + " not in geodatabase layer list template")
-            else:
-                layers.append(filename)
+            if not filename in ignoreList:
+                if filename not in layerList:
+                    userMessage( filename + " not in geodatabase layer list template")
+                else:
+                    layers.append(filename)
 
     userMessage("Finished checking layers: ")
     userMessage(layers)
@@ -454,50 +462,63 @@ def checkValuesAgainstDomain(pathsInfoObject):
             layer = "ESB"
 
         id1 = getUniqueIDField(layer)
-        fields = []
-        #create complete field list
-        fields = ListFields(fullPath)
-        fieldNames = []
+        if id1 != "":
+            fields = []
+            #create complete field list
+            fields = ListFields(fullPath)
+            fieldNames = []
 
-        for field in fields:
-            fieldNames.append((field.name).upper())
+            for field in fields:
+                fieldNames.append((field.name).upper())
 
-        #see if fields from complete list have domains
-        for fieldN in fieldNames:
+            #see if fields from complete list have domains
+            for fieldN in fieldNames:
 
-            #if field has a domain
-            if fieldN in fieldsWDoms:
+                #if field has a domain
+                if fieldN in fieldsWDoms:
 
-                #get the full domain dictionary
-                domainDict = getFieldDomain(fieldN, folder)
+                    #get the full domain dictionary
+                    domainDict = getFieldDomain(fieldN, folder)
 
-                #put domain values in a list
-                domainList = []
+                    #put domain values in a list
+                    domainList = []
 
-                for val in domainDict.iterkeys():
-                    domainList.append(val.upper())
+                    for val in domainDict.iterkeys():
+                        domainList.append(val.upper())
 
-##                userMessage(domainList)
+                    #add values for some CAD users of blank and space (edit suggested by Sherry M. & Keith S. Dec 2014)
+                    domainList.append('')
+                    domainList.append(" ")
 
-                #loop through records for that particular field to see if all values match domain
-                wc = fieldN + " is not null"
-                with SearchCursor(fullPath, (id1, fieldN), wc) as rows:
-                    for row in rows:
-                        if row[1] is not None:
-                            fID = row[0]
-                            #see if field domain is actually a range
-                            if fieldN == "HNO":
-                                hno = row[1]
-                                if hno > 999999 or hno < 0:
-                                    report = "Value " + str(row[1]) + " not in approved domain for field " + fieldN
-                                    val = (today, report, fc, fieldN, fID)
-                                    values.append(val)
-                            #otherwise, compare row value to domain list
-                            else:
-                                if row[1].upper() not in domainList:
-                                    report = "Value " + str(row[1]) + " not in approved domain for field " + fieldN
-                                    val = (today, report, fc, fieldN, fID)
-                                    values.append(val)
+                    #if the domain is counties, add county names to the list without "COUNTY" so both will work (edit suggest by Keith S. Dec 2014)
+                    if fieldN == "COUNTY":
+                        q = len(domainList)
+                        i = 0
+                        while i < q:
+                            dl1 = domainList[i].split(" ")[0]
+##                            userMessage(dl1)
+                            domainList.append(dl1)
+                            i += 1
+
+                    #loop through records for that particular field to see if all values match domain
+                    wc = fieldN + " is not null"
+                    with SearchCursor(fullPath, (id1, fieldN), wc) as rows:
+                        for row in rows:
+                            if row[1] is not None:
+                                fID = row[0]
+                                #see if field domain is actually a range
+                                if fieldN == "HNO":
+                                    hno = row[1]
+                                    if hno > 999999 or hno < 0:
+                                        report = "Value " + str(row[1]) + " not in approved domain for field " + fieldN
+                                        val = (today, report, fc, fieldN, fID)
+                                        values.append(val)
+                                #otherwise, compare row value to domain list
+                                else:
+                                    if row[1].upper() not in domainList:
+                                        report = "Value " + str(row[1]) + " not in approved domain for field " + fieldN
+                                        val = (today, report, fc, fieldN, fID)
+                                        values.append(val)
 
     if values != []:
         RecordResults(resultType, values, gdb)
@@ -530,80 +551,81 @@ def checkRequiredFieldValues(pathsInfoObject):
                 else:
                     layer = filename.upper()
                 id1 = getUniqueIDField(layer)
+                if id1 != "":
 
-                #get the keyword to acquire required field names
-                keyword = getKeyword(filename, esb)
+                    #get the keyword to acquire required field names
+                    keyword = getKeyword(filename, esb)
 
-                #goal: get list of required fields that are present in the feature class
-                #get the appropriate required field list
-                if keyword in rfDict:
-                    requiredFieldList = rfDict[keyword]
+                    #goal: get list of required fields that are present in the feature class
+                    #get the appropriate required field list
+                    if keyword in rfDict:
+                        requiredFieldList = rfDict[keyword]
 
-                rfl = []
-                for rf in requiredFieldList:
-                    rfl.append(rf.upper())
+                    rfl = []
+                    for rf in requiredFieldList:
+                        rfl.append(rf.upper())
 
-                #get list of fields in the feature class
-                allFields = ListFields(fullPath)
+                    #get list of fields in the feature class
+                    allFields = ListFields(fullPath)
 
-                #make list of field names
-                fields = []
-                for aF in allFields:
-                    fields.append(aF.name.upper())
+                    #make list of field names
+                    fields = []
+                    for aF in allFields:
+                        fields.append(aF.name.upper())
 
-                #convert lists to sets
-                set1 = set(rfl)
-                set2 = set(fields)
+                    #convert lists to sets
+                    set1 = set(rfl)
+                    set2 = set(fields)
 
-                #get the set of fields that are the same
-                matchingFields = list(set1 & set2)
+                    #get the set of fields that are the same
+                    matchingFields = list(set1 & set2)
 
-                #create where clause to select any records where required values aren't populated
-                wc = ""
+                    #create where clause to select any records where required values aren't populated
+                    wc = ""
 
-                for field in matchingFields:
-                    wc = wc + " " + field + " is null or "
+                    for field in matchingFields:
+                        wc = wc + " " + field + " is null or "
 
-                wc = wc[0:-4]
+                    wc = wc[0:-4]
 
-                #make table view using where clause
-                lyr = "lyr"
-                MakeTableView_management(fullPath, lyr, wc)
+                    #make table view using where clause
+                    lyr = "lyr"
+                    MakeTableView_management(fullPath, lyr, wc)
 
-                #get count of the results
-                result = GetCount_management(lyr)
-                count = int(result.getOutput(0))
+                    #get count of the results
+                    result = GetCount_management(lyr)
+                    count = int(result.getOutput(0))
 
-                #if count is greater than 0, it means a required value somewhere isn't filled in
-                if count > 0:
-                    #make sure the objectID gets included in the search for reporting
-                    if id1 not in matchingFields:
-                        matchingFields.append(id1)
+                    #if count is greater than 0, it means a required value somewhere isn't filled in
+                    if count > 0:
+                        #make sure the objectID gets included in the search for reporting
+                        if id1 not in matchingFields:
+                            matchingFields.append(id1)
 
-                    k = 0
+                        k = 0
 
-                    #run a search cursor to get any/all records where a required field value is null
-                    with SearchCursor(fullPath, (matchingFields), wc) as rows:
-                        for row in rows:
-                            #get object ID of the field
-                            oid = str(row[matchingFields.index(id1)])
+                        #run a search cursor to get any/all records where a required field value is null
+                        with SearchCursor(fullPath, (matchingFields), wc) as rows:
+                            for row in rows:
+                                #get object ID of the field
+                                oid = str(row[matchingFields.index(id1)])
 
-                            #loop through row
-                            while k < 0:
-                                #see if the value is nothing
-                                if row[k] is None:
-                                    #report the value if it is indeed null
-                                    report = matchingFields[k] + " is null for Feature ID " + oid
-                                    userMessage(report)
-                                    val = (today, report, filename, matchingFields[k], oid)
-                                    values.append(val)
+                                #loop through row
+                                while k < 0:
+                                    #see if the value is nothing
+                                    if row[k] is None:
+                                        #report the value if it is indeed null
+                                        report = matchingFields[k] + " is null for Feature ID " + oid
+                                        userMessage(report)
+                                        val = (today, report, filename, matchingFields[k], oid)
+                                        values.append(val)
 
-                                    #iterate!
-                                    k = k + 1
-                else:
-                    userMessage( "All required values present for " + filename)
+                                        #iterate!
+                                        k = k + 1
+                    else:
+                        userMessage( "All required values present for " + filename)
 
-                Delete_management(lyr)
+                    Delete_management(lyr)
 
     if values != []:
         RecordResults("fieldValues", values, gdb)
@@ -697,10 +719,13 @@ def checkFeatureLocations(pathsInfoObject):
 
         #report results
         if count > 0:
-            fields = ("OBJECTID")
-            with SearchCursor(fl, fields) as rows:
+            layer = basename(fullPath)
+            id1 = getUniqueIDField(layer.upper())
+            report = "Feature not inside authoritative boundary"
+            with SearchCursor(fl, (id1)) as rows:
                 for row in rows:
-                    val = (today, "Feature not inside authoritative boundary", fullPath, "", row[0])
+                    fID = row[0]
+                    val = (today, report, layer, " ", fID)
                     values.append(val)
         else:
             userMessage( fullPath + ": all records inside authoritative boundary")
