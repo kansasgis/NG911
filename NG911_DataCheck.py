@@ -259,13 +259,26 @@ def geocodeAddressPoints(pathsInfoObject):
 
 def checkFrequency(fc, freq, fields, wc, gdb):
     fl = "fl"
+    fl1 = "fl1"
 
     #remove the frequency table if it exists already
     if Exists(freq):
         Delete_management(freq)
 
+    #see if we're working with address points or roads, create a where clause
+    filename = ""
+    if freq == join(gdb, "AP_Freq"):
+        filename = "AddressPoints"
+        wc1 = "HNO <> 0"
+    elif freq == join(gdb, "Road_Freq"):
+        filename = "RoadCenterline"
+        wc1 = "L_F_ADD <> 0 AND L_T_ADD <> 0 AND R_F_ADD <> 0 AND R_T_ADD <> 0"
+
+    #run query on fc to make sure 0's are ignored
+    MakeTableView_management(fc, fl1, wc1)
+
     #run frequency analysis
-    Frequency_analysis(fc, freq, fields, "")
+    Frequency_analysis(fl1, freq, fields, "")
 
     #get count of records
     rFreq = GetCount_management(freq)
@@ -288,7 +301,6 @@ def checkFrequency(fc, freq, fields, wc, gdb):
         values = []
         recordType = "fieldValues"
         today = strftime("%m/%d/%y")
-        filename = ""
 
         #add information to FieldValuesCheckResults for all duplicates
         #get fields
@@ -300,12 +312,6 @@ def checkFrequency(fc, freq, fields, wc, gdb):
 
         #get field count
         fCount = len(fl_fields)
-
-        #see if we're working with address points or roads
-        if freq == join(gdb, "AP_Freq"):
-            filename = "AddressPoints"
-        elif freq == join(gdb, "Road_Freq"):
-            filename = "RoadCenterline"
 
         #get the unique ID field name
         id1 = getUniqueIDField(filename.upper())
@@ -333,7 +339,7 @@ def checkFrequency(fc, freq, fields, wc, gdb):
 ##                userMessage(wc)
 
                 #find records with duplicates to get their unique ID's
-                with SearchCursor(fc, (id1), wc) as sRows:
+                with SearchCursor(fl1, (id1), wc) as sRows:
                     for sRow in sRows:
                         fID = sRow[0]
                         report = str(fID) + " has duplicate field information"
@@ -711,7 +717,7 @@ def checkFeatureLocations(pathsInfoObject):
         MakeFeatureLayer_management(fullPath, fl)
 
         #select by location to get count of features outside the authoritative boundary
-        SelectLayerByLocation_management(fl, "INTERSECT", ab)
+        SelectLayerByLocation_management(fl, "WITHIN", ab)
         SelectLayerByAttribute_management(fl, "SWITCH_SELECTION", "")
         #get count of selected records
         result = GetCount_management(fl)
