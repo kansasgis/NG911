@@ -221,41 +221,53 @@ def geocodeAddressPoints(pathsInfoObject):
     #geocode table address
     if Exists(output):
         Delete_management(output)
-    GeocodeAddresses_geocoding(gc_table, Locator, "'Single Line Input' SingleLineInput VISIBLE NONE", output, "STATIC")
 
-    wc = "Status <> 'M'"
-    lyr = "lyr"
+    i = 0
 
-    MakeFeatureLayer_management(output, lyr, wc)
+    try:
+        GeocodeAddresses_geocoding(gc_table, Locator, "'Single Line Input' SingleLineInput VISIBLE NONE", output, "STATIC")
+        i = 1
+    except:
+        try:
+            GeocodeAddresses_geocoding(gc_table, Locator, "'Single Line Input' SingleLineInput VISIBLE NONE", output)
+            i = 1
+        except:
+            userMessage("Cannot complete geocoding")
 
-    rStatus = GetCount_management(lyr)
-    rCount = int(rStatus.getOutput(0))
+    if i == 1:
+        wc = "Status <> 'M'"
+        lyr = "lyr"
 
-    if rCount > 0:
-        #set up parameters to report duplicate records
-        values = []
-        recordType = "fieldValues"
-        today = strftime("%m/%d/%y")
-        filename = "AddressPoints"
+        MakeFeatureLayer_management(output, lyr, wc)
 
-        rfields = ("ADDID")
-        with SearchCursor(output, rfields, wc) as rRows:
-            for rRow in rRows:
-                fID = rRow[0]
-                report = str(fID) + " did not geocode against centerline"
-                val = (today, report, filename, "", fID)
-                values.append(val)
+        rStatus = GetCount_management(lyr)
+        rCount = int(rStatus.getOutput(0))
 
-        #report duplicate records
-        if values != []:
-            RecordResults(recordType, values, gdb)
+        if rCount > 0:
+            #set up parameters to report duplicate records
+            values = []
+            recordType = "fieldValues"
+            today = strftime("%m/%d/%y")
+            filename = "AddressPoints"
 
-        userMessage("Completed geocoding with " + str(rCount) + " errors.")
+            rfields = ("ADDID")
+            with SearchCursor(output, rfields, wc) as rRows:
+                for rRow in rRows:
+                    fID = rRow[0]
+                    report = str(fID) + " did not geocode against centerline"
+                    val = (today, report, filename, "", fID)
+                    values.append(val)
 
-    else:
-        userMessage("All records geocoded successfully.")
-        Delete_management(output)
-##        Delete_management(gc_table)
+            #report duplicate records
+            if values != []:
+                RecordResults(recordType, values, gdb)
+
+            userMessage("Completed geocoding with " + str(rCount) + " errors.")
+
+        else:
+            userMessage("All records geocoded successfully.")
+            Delete_management(output)
+##            Delete_management(gc_table)
 
 def checkFrequency(fc, freq, fields, wc, gdb):
     fl = "fl"
@@ -692,6 +704,7 @@ def checkRequiredFields(pathsInfoObject):
 def checkFeatureLocations(pathsInfoObject):
     gdb = pathsInfoObject.gdbPath
     fcList = pathsInfoObject.fcList
+    esb = pathsInfoObject.esbList
 
     RoadAlias = join(gdb, "RoadAlias")
 
@@ -726,13 +739,20 @@ def checkFeatureLocations(pathsInfoObject):
         #report results
         if count > 0:
             layer = basename(fullPath)
-            id1 = getUniqueIDField(layer.upper())
+            if layer in esb:
+                layerName = "ESB"
+            else:
+                layerName = layer
+            id1 = getUniqueIDField(layerName.upper())
             report = "Feature not inside authoritative boundary"
-            with SearchCursor(fl, (id1)) as rows:
-                for row in rows:
-                    fID = row[0]
-                    val = (today, report, layer, " ", fID)
-                    values.append(val)
+            if id1 != '':
+                with SearchCursor(fl, (id1)) as rows:
+                    for row in rows:
+                        fID = row[0]
+                        val = (today, report, layer, " ", fID)
+                        values.append(val)
+            else:
+                userMessage("Could not process features in " + fullPath)
         else:
             userMessage( fullPath + ": all records inside authoritative boundary")
 
