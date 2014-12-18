@@ -7,15 +7,25 @@
 # Created:     02/10/2014
 # Copyright:   (c) kyleg 2014
 # Licence:     <your licence>
+# Modified:    11/05/2014 by dirktall04
+# KMG           12/9/2014 Add Function to take in MSAG and linear reference the results
+#               PER Aggregation meetings December 2014:
+#               Modify LRS Key to use KDOT LRS Key, and use ADMO from KDOT North and West Road
+#               "Clear previous errors table"
+#               Create Intersections using Geometric Network
+#               Check valid highway names
+#               Create some Layer Files
+#               Consider Including Layer files (in Kristen's package) for mapping errors and cleanup
 #-------------------------------------------------------------------------------
 
 
 try:
-    from NG911_Config import gdb, DOTRoads, soundexNameExclusions, ordinalNumberEndings
+    from NG911_Config import gdb, DOTRoads, soundexNameExclusions, ordinalNumberEndings, currentPathSettings
 except:
     "Go ahead, debug this in ArcMap... but you will have to copy and paste the NG911_Config file first"
 import re
 """functions that add several administrative fields and calculate coded values for a NG911 attribute based LRS_Key field"""
+import os, ntpath
 checkfile = gdb
 thelayer = checkfile+"/RoadCenterline"
 thealias = checkfile+"/RoadAlias"
@@ -23,6 +33,7 @@ from arcpy import (
     MakeFeatureLayer_management,
     Sort_management,
     Exists,
+    GetMessages,
     FeatureClassToFeatureClass_conversion,
     SelectLayerByLocation_management,
     DisableEditorTracking_management)
@@ -54,7 +65,6 @@ lyr = "RoadCenterline"
 TableView(thealias, "RoadAlias","#","#","#")
 Alias = "RoadAlias"
 Kdotdbfp = DOTRoads
-holderList = list()
 
 
 try:
@@ -70,7 +80,7 @@ http://en.wikipedia.org/w/index.php?title=Soundex&oldid=466065377
 
 Only strings with the letters A-Z and of length >= 2 are supported.
 """
-invalid_re = re.compile("[AEHIOUWY.]|[^A-Z]")
+invalid_re = re.compile("[AEHIOUWY\.]|[^A-Z]")
 numerical_re = re.compile("[A-Z]")
 charsubs = {'B': '1', 'F': '1', 'P': '1', 'V': '1',
             'C': '2', 'G': '2', 'J': '2', 'K': '2',
@@ -97,13 +107,12 @@ def normalize(s):
 def soundex(s):
     """ Encode a string using Soundex. Takes a string and returns its Soundex representation."""
     replacementString = ""
-    #Added a "." here, should replace correctly now.
-    replacementDict = {"A":"1", "E":"2", "H":"3", "I":"4", "O":"5", "U":"6", "W":"7", "Y":"8", ".":""} 
-    
-    if len(s) == 2: 
+    replacementDict = {"A":"1", "E":"2", "H":"3", "I":"4", "O":"5", "U":"6", "W":"7", "Y":"8"}
+
+    if len(s) == 2:
         if s[0] == s[1]:# Only affects one very specific road name type. Kind of a narrow fix.
             for keyName in replacementDict:
-                if keyName == str(s[1].upper():
+                if keyName == str(s[1].upper()):
                     replacementString = replacementDict[keyName]
                     enc = str(str(s[0]) + replacementString).zfill(4)
                     return enc
@@ -111,12 +120,12 @@ def soundex(s):
                     pass
         else:
             pass
-            
+
     elif len(s) == 1:
         enc = str(s[0]).zfill(4)
         return enc
     elif len(s) == 0:
-        enc = str("x").zfill(4)
+        enc = str("X").zfill(4)
         return enc
     else:
         pass
@@ -138,10 +147,19 @@ def soundex(s):
 
 def numdex(s):
     """this module applies soundex to named streets, and pads the numbered streets with zeros, keeping the numbering system intact"""
-    if s[0] in ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '.']:
-        # I don't think having a '.' here will do anything unless the road name is ".SomeName" since it
-        # only checks the first character of the string.
+    if s[0] in ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0']:
         numerical_re = re.compile("[A-Z]|[^0-9][^0-9][^0-9][^0-9]")
+        # ^^ I don't think this is working as intended.
+        # As written, it would match a single alpha anywhere in the string -OR- 4 characters anywhere
+        # in the string which are NOT 0 through 9. That does not seem to be the intent, or if
+        # it is, it is at odds with trying to make something like Road 17A soundex to R17A.
+        # As it will replace the A with "", removing it from the string.
+        # Where the string is 3 or less, if it consists of two letters and a number,
+        # two numbers and a letter, one number and one letter, two letters, two numbers,
+        # one number, or one letter, treat it differently than other strings.
+
+        # Redo in dt_Regex.
+        s = s.replace(" ", "")
         s=re.sub(numerical_re,"", s.zfill(4))
         return s.zfill(4)
 
@@ -152,19 +170,102 @@ def numdex(s):
 def StreetNetworkCheck(gdb):
     """removes street centerlines from the topology and creates geometric network, then checks geometric network connectivity"""
     from arcpy import ListDatasets, VerifyAndRepairGeometricNetworkConnectivity_management, RemoveFeatureClassFromTopology_management, CreateGeometricNetwork_management, FindDisconnectedFeaturesInGeometricNetwork_management
-    #print topo
-    fd = ListDatasets(gdb)
+    print gdb
+    env.workspace= gdb
+    fd =  ListDatasets("*", "Feature")
+    fdNG = fd[0]
     print fd[0]
-    geonet = fd[0]+"\Street_Network"
-    #print geonet
+    topo = gdb+"/"+fdNG+"/NG911_Topology"
+    #topo = ListDatasets("*") #TOPO CANNOT GET TO WORK BY LIST FUNCTOINS in V10.2.2
+    geonet =gdb+"/"+fdNG+"/RoadCenterlineGeoNet"
+    print topo
     if Exists(geonet):
         print "Street Geometric Network Already Exists"
     else:
-        RemoveFeatureClassFromTopology_management(topo, "RoadCenterline")
-        CreateGeometricNetwork_management(fd, "Street_Network", "RoadCenterline SIMPLE_EDGE NO", "#", "#", "#", "#", "#")
-    FindDisconnectedFeaturesInGeometricNetwork_management(fd+"/RoadCenterline", "Roads_Disconnected")
-    StreetLogfile = reviewpath+"/KDOTReview/"+ntpath.basename(ng911)+".log"
+        try:
+            RemoveFeatureClassFromTopology_management(topo, "RoadCenterline")
+        except:
+            print "could not remove road centerlines from topology"
+        CreateGeometricNetwork_management(gdb+"/"+fdNG, "RoadCenterlineGeoNet", "RoadCenterline SIMPLE_EDGE NO", "#", "#", "#", "#", "#")
+    FindDisconnectedFeaturesInGeometricNetwork_management(gdb+"/"+fdNG+"/RoadCenterline", "Roads_Disconnected")
+    StreetLogfile = os.path.join(os.path.dirname(currentPathSettings.gdbPath), os.path.basename(currentPathSettings.gdbPath)[:-4]+"_Centerline.log")
     VerifyAndRepairGeometricNetworkConnectivity_management(geonet, StreetLogfile, "VERIFY_ONLY", "EXHAUSTIVE_CHECK", "0, 0, 10000000, 10000000")
+
+def IntersectionMaker(currentPathSettings):
+    print "this is in another code set"
+
+def ReturnStreetstoTopology(gdb):
+    from arcpy import Delete_management, AddFeatureClassToTopology_management, ListDatasets, AddRuleToTopology_management
+    env.workspace =currentPathSettings.gdbPath
+    fd =  ListDatasets("*", "Feature")
+    gdbw =os.path.join(currentPathSettings.gdbPath, fd[0])
+    env.workspace = gdbw
+    topoDatasetList =  arcpy.ListDatasets("*", "TOPOLOGY")
+    geonetDatasetList = arcpy.ListDatasets("*", "GeometricNetwork")
+    authbnd =os.path.join(gdbw, "AuthoritativeBoundary")
+    ESZBnd =os.path.join(gdbw, "ESZ")
+    if geonetDatasetList == []:
+        print "no geometric network created yet"
+    else:
+        Delete_management(geonetDatasetList)
+    desc = arcpy.Describe(topoDatasetList[0])
+    print "%-27s %s" % ("FeatureClassNames:", desc.featureClassNames)
+    if lyr in desc.featureClassNames:
+        print "Road Centerlines already exist in topology dataset"
+    else:
+        print "adding road centerlines to topology"
+        inputTopology = os.path.join(gdbw, topoDatasetList[0])
+        inputRoadCenterline =os.path.join(gdbw, "RoadCenterline")
+        AddFeatureClassToTopology_management(inputTopology, inputRoadCenterline, "1", "1")
+        AddRuleToTopology_management(inputTopology, "Must Not Overlap (line)", inputRoadCenterline, "", "", "")
+        AddRuleToTopology_management(inputTopology, "Must Not Intersect (line)", inputRoadCenterline, "", "", "")
+        AddRuleToTopology_management(inputTopology, "Must Not Have Dangles (Line)", inputRoadCenterline, "", "", "")
+        AddRuleToTopology_management(inputTopology, "Must Not Self-Overlap (Line)", inputRoadCenterline, "", "", "")
+        AddRuleToTopology_management(inputTopology, "Must Not Self-Intersect (Line)", inputRoadCenterline, "", "", "")
+        AddRuleToTopology_management(inputTopology, "Must Be Single Part (Line)", inputRoadCenterline, "", "", "")
+        AddRuleToTopology_management(inputTopology, "Must Not Intersect Or Touch Interior (Line)", inputRoadCenterline, "", "", "")
+        AddRuleToTopology_management(inputTopology, "Must Not Intersect Or Touch Interior (Line)", inputRoadCenterline, "", "", "")
+        AddRuleToTopology_management(inputTopology, "Must Be Inside (Line-Area)", inputRoadCenterline, "", authbnd, "")
+#write for loop - must be inside ESZ boundaries
+        AddRuleToTopology_management(inputTopology, "Boundary Must Be Covered By (Area-Line)", authbnd, "", inputRoadCenterline, "")
+        AddRuleToTopology_management(inputTopology, "Boundary Must Be Covered By (Area-Line)", ESZBnd, "", inputRoadCenterline, "")
+#write for loop - Boundary Must Be Covered By ESZ boundaries
+
+
+'''Available Topology rules for python:
+Must Not Have Gaps (Area)
+Must Not Overlap (Area)
+Must Be Covered By Feature Class Of (Area-Area)
+Must Cover Each Other (Area-Area)
+Must Be Covered By (Area-Area)
+Must Not Overlap With (Area-Area)
+Must Be Covered By Boundary Of (Line-Area)
+Must Be Covered By Boundary Of (Point-Area)
+Must Be Properly Inside (Point-Area)
+Must Not Overlap (Line)
+Must Not Intersect (Line)
+Must Not Have Dangles (Line) |
+Must Not Have Pseudo-Nodes (Line) |
+Must Be Covered By Feature Class Of (Line-Line) |
+Must Not Overlap With (Line-Line) |
+Must Be Covered By (Point-Line) |
+Must Be Covered By Endpoint Of (Point-Line) |
+Boundary Must Be Covered By (Area-Line) |
+Boundary Must Be Covered By Boundary Of (Area-Area) |
+Must Not Self-Overlap (Line) |
+Must Not Self-Intersect (Line) |
+Must Not Intersect Or Touch Interior (Line)
+Endpoint Must Be Covered By (Line-Point) |
+Contains Point (Area-Point) |
+Must Be Single Part (Line) |
+Must Coincide With (Point-Point) |
+Must Be Disjoint (Point) |
+Must Not Intersect With (Line-Line) |
+Must Not Intersect or Touch Interior With (Line-Line) |
+Must Be Inside (Line-Area)
+Contains One Point (Area-Point).
+Failed to execute (AddRuleToTopology)
+'''
 
 
 def ConflateKDOTrestart(gdb, DOTRoads):
@@ -197,6 +298,7 @@ def ConflateKDOT(gdb, DOTRoads):
     TransferAttributes_edit("KDOT_Roads_Review","RoadCenterline","YEAR_RECORD;ROUTE_ID",spatialtolerance,"#",checkfile+r"/LRS_MATCH")
 
 
+#Add checks here to see if these exist prior to creating them. Should prevent RID_1, RID_2, RID_3, etc.
 def addAdminFields(lyr, Alias):
     try:
         AddIndex(lyr,"SEGID;COUNTY_L;COUNTY_R;MUNI_L;MUNI_R","RCL_INDEX","NON_UNIQUE","NON_ASCENDING")
@@ -277,14 +379,20 @@ def RoadinName1(lyr):
 
 def RoadinName(roadFeatures, nameExclusions):
     """This module corrects the road names in the soundex code where the road is named like Road A or Road 12 """
+    # Need to add logic to remove the ST from roads like 3RD ST and make sure that this translates to 0003
+    # and not 003.
     fieldList = ['OBJECTID', 'RD', 'Soundex']
+    #Placeholder. Recompiled in nameExclusions for loop.
     listMatchString = re.compile(r'^WEST', re.IGNORECASE)
     roadNameString = ''
     roadPreSoundexString = ''
     roadSoundexString = ''
-    testMatch = None
+    holderList = list()
+
+    testMatch0 = None
     testMatch1 = None
     testMatch2 = None
+    testMatch3 = None
 
     # Get the data from the geodatabase so that it can be used in the next part of the function.
     cursor = daSearchCursor(roadFeatures, fieldList)  # @UndefinedVariable
@@ -293,139 +401,256 @@ def RoadinName(roadFeatures, nameExclusions):
         holderList.append(listRow)
 
     # Clean up
-    if cursor:
+    if "cursor" in locals():
         del cursor
     else:
         pass
-    if row:
+    if "row" in locals():
         del row
     else:
         pass
+
+    # Matches any group of 3 alpha characters in the string, ignoring case.
+    tripleAlphaMatchString = re.compile(r'[A-Z][A-Z][A-Z]', re.IGNORECASE)
+    # Matches 1 or 2 alpha characters at the start of a string, ignoring case.
+    singleOrDoubleAlphaMatchString = re.compile(r'^[A-Z]$|^[A-Z][A-Z]$', re.IGNORECASE)
+    # Matches 1 to 4 digits at the start of a string, probably no reason to ignore case in the check.
+    singleToQuadNumberMatchString = re.compile(r'^[0-9]$|^[0-9][0-9]$|^[0-9][0-9][0-9]$|^[0-9][0-9][0-9][0-9]$')
+    anyNumberMatchString = re.compile(r'[0-9]', re.IGNORECASE)
+
+    # For roads that don't match a name exclusion:
+    singleOrDoubleNumberThenAlphaMatchString = re.compile(r'^[0-9][0-9][A-Z]$|^[0-9][A-Z]$', re.IGNORECASE)
+    # For roads that don't match a name exclusion and should be normally Numdexed.
+    firstCharacterNumberString = re.compile(r'^[0-9]')
+
+    ## Significant structure change here 2014-11-05.
+    ## Watch for possible bugs.
+    ##
+    ## Added Numdex logic to this part, which
+    ## caused some issues.
+    ##
+    ## Flattened the loops out here so that it only
+    ## does a run through the
+    ## <for heldRow in holderList>
+    ## loop once instead of doing it once per
+    ## entry in the nameExclusions list via
+    ## <for excludedText in nameExclusions>
+    ##
+    ## Runs faster now. After changing the regex string
+    ## to be dynamically generated prior to compilation
+    ## and using \b{0}\b as part of the pattern,
+    ## errors *seem* to be gone.
+
+    stringToCompile = ""
 
     # Perform some regex on the strings to produce a new soundex in certain cases.
-    for excludedText in nameExclusions:
+    for i, excludedText in enumerate(nameExclusions): #shift left start
         excludedText = str(excludedText)
         excludedText = excludedText.upper()
-        listMatchString = re.compile(r'^{0}\s'.format(re.escape(excludedText)), re.IGNORECASE)
+        #listMatchString = re.compile(r'^{0}\s'.format(re.escape(excludedText)), re.IGNORECASE) ## Old version, pre-dynamic generation.
+        if i == 0:
+            stringToCompile = r'^\b{0}\b\ '.format(re.escape(excludedText))
+        else:
+            stringToCompile = stringToCompile + r'|^\b{0}\b\ '.format(re.escape(excludedText))
+        print i
+        listMatchString = re.compile(stringToCompile, re.IGNORECASE)
 
-        # Matches 1 or 2 alpha characters at the start of a string, ignoring case.
-        singleOrDoubleAlphaMatchString = re.compile(r'^[a-z]$|^[a-z][a-z]$', re.IGNORECASE)
-        # Matches 1 to 4 digits at the start of a string, probably no reason to ignore case in the check.
-        singleToQuadNumberMatchString = re.compile(r'^[0-9]$|^[0-9][0-9]$|^[0-9][0-9][0-9]$|^[0-9][0-9][0-9][0-9]$')
+    print "stringToCompile = " + str(stringToCompile)
 
-        for heldRow in holderList:
-            roadNameString = str(heldRow[1])
-            roadNameString = roadNameString.upper()
-            testMatch = listMatchString.search(roadNameString)
-            if testMatch != None:
-                roadPreSoundexString = roadNameString[testMatch.end():]
-                roadPreSoundexString = roadPreSoundexString.replace(" ", "")
+    for heldRow in holderList:
+        roadNameString = ''
+        roadPreSoundexString = ''
+        roadSoundexString = ''
 
-                # Do subbing for #ST, #ND, #RD, #TH etc...
-                for numberEnding in ordinalNumberEndings:
-                    nonsensitiveReplace = re.compile(r'[0-9]{0}'.format(re.escape(numberEnding), re.IGNORECASE))
-                    replaceMatch = nonsensitiveReplace.search(roadNameString)
-                    if replaceMatch != None:
-                        roadPreSoundexString = re.sub(replaceMatch.group(0), replaceMatch.group(0)[0:1], roadPreSoundexString)
-                    else:
-                        pass
-                
-                # Test for the following conditions:
-                # A, AA as in Road A, RD AA
-                testMatch1 = None
-                testMatch1 = singleOrDoubleAlphaMatchString.search(roadPreSoundexString)
-                # Test for the following conditions:
-                # 1, 10, 100, 1000 as in Road 1, RD 10, Road 100, CR1000
-                testMatch2 = None
-                testMatch2 = singleToQuadNumberMatchString.search(roadPreSoundexString)
-                if testMatch1 != None: # Road A, Road BB, or similar.
-                    roadPreSoundexString = roadPreSoundexString[testMatch1.start():testMatch1.end()]
-                    if len(roadPreSoundexString) > 2:
-                        pass
-                    elif len(roadPreSoundexString) == 2:
-                        roadSoundexString = "0" + roadPreSoundexString
-                        # Adds the first letter from the excluded text to the start of the Soundex string.
-                        roadSoundexString = excludedText[0:1] + roadSoundexString
-                    elif len(roadPreSoundexString) == 1:
-                        roadSoundexString = "00" + roadPreSoundexString
-                        roadSoundexString = excludedText[0:1] + roadSoundexString
-                    else:
-                        pass
-                
-                elif(testMatch2 != None):
-                    roadPreSoundexString = roadPreSoundexString[testMatch2.start():testMatch2.end()]
-                    if len(roadPreSoundexString) > 4:
-                        pass
-                    elif len(roadPreSoundexString) == 4:
-                        # Slice the string to include only the first 3 characters.
-                        roadSoundexString = roadPreSoundexString[:4]
-                        # Add the first letter from the excluded text to the start of the Soundex string.
-                        roadSoundexString = excludedText[0:1] + roadSoundexString
-                    elif len(roadPreSoundexString) == 3:
-                        roadSoundexString = roadPreSoundexString
-                        roadSoundexString = excludedText[0:1] + roadSoundexString
-                    elif len(roadPreSoundexString) == 2:
-                        roadSoundexString = "0" + roadPreSoundexString
-                        roadSoundexString = excludedText[0:1] + roadSoundexString
-                    elif len(roadPreSoundexString) == 1:
-                        roadSoundexString = "00" + roadPreSoundexString
-                        roadSoundexString = excludedText[0:1] + roadSoundexString
-                    else:
-                        pass
-                
-                # One of the excluded texts was found at the start of the name, but it was not followed by
-                # A, AA, 1, 20, 340, 5670, etc...
-                # Instead something like "Road Hitch" or "RD Empire"
-                # Do soundex normally, but replace the first character with the first character from the
-                # excluded text.
+        roadNameString = str(heldRow[1])
+        roadNameString = roadNameString.upper()
+        roadNameString = roadNameString.replace(".", "")
+
+        exclusionMatch = listMatchString.search(roadNameString)
+        if exclusionMatch != None: # Testing for excluded Road Names such as "Road" and "CR" in "Road 25" and "CR 2500".
+            # Get the characters from the end of the testMatch to the end of the string.
+            # Should return a string that starts with a space.
+
+            roadPreSoundexString = roadNameString[exclusionMatch.end():]
+
+            # Replace with a search for " " by group in regex.
+            roadPreSoundexString = roadPreSoundexString.replace(" ", "")
+            roadPreSoundexString = roadPreSoundexString.replace(" ", "")
+            # then loop through the groups to replace with "" so that any number
+            # of spaces can be removed.
+
+            print "roadNameString = " + str(roadNameString)
+            print "roadPreSoundexString = " + str(roadPreSoundexString)
+
+            # Do subbing for #ST, #ND, #RD, #TH etc...
+            for numberEnding in ordinalNumberEndings:
+                nonsensitiveReplace = re.compile(r'[0-9]{0}'.format(re.escape(numberEnding), re.IGNORECASE))
+                replaceMatch = nonsensitiveReplace.search(roadNameString)
+                if replaceMatch != None:
+                    roadPreSoundexString = re.sub(replaceMatch.group(0), "", roadPreSoundexString)
                 else:
-                    roadSoundexString = soundex(roadPreSoundexString)
-                    # Slice the roadSoundexString to remove the first character, but keep the rest.
-                    roadSoundexString = roadSoundexString[1:]
-                    # Add the first letter from the excluded text to the start of the Soundex string.
-                    roadSoundexString = excludedText[0:1] + roadSoundexString
+                    pass
 
-                # Assign the new road soundex string to the held row's third slot, heldRow[2],
-                # to be used in an update cursor to update the data in the geodatabase.
+            # Replace with regex string that matches spaces as groups, then loop through groups to replace.
+            roadPreSoundexString = roadPreSoundexString.replace(" ", "")
+            roadPreSoundexString = roadPreSoundexString.replace(" ", "")
+
+            testMatch0 = None
+            testMatch0 = tripleAlphaMatchString.search(roadPreSoundexString)
+            testMatch1 = None
+            testMatch1 = singleOrDoubleAlphaMatchString.search(roadPreSoundexString)
+            testMatch2 = None
+            testMatch2 = singleToQuadNumberMatchString.search(roadPreSoundexString)
+            testMatch3 = None
+            testMatch3 = anyNumberMatchString.search(roadPreSoundexString)
+
+            if testMatch0 != None:
+                roadSoundexString = soundex(roadPreSoundexString)
+                # Slice the roadSoundexString to remove the first character, but keep the rest.
+                if len(roadSoundexString) >= 4:
+                    roadSoundexString = roadSoundexString[1:4]
+                    # The next line looks complicated, but exclusionMatch.group(0)[0:1]
+                    # is actually just getting the first letter of the first matched pattern.
+                    roadSoundexString = exclusionMatch.group(0)[0:1] + roadSoundexString
+                elif len(roadSoundexString) == 3:
+                    roadSoundexString = exclusionMatch.group(0)[0:1] + roadSoundexString
+                elif len(roadSoundexString) == 2 or len(roadSoundexString) == 1:
+                    roadSoundexString = roadSoundexString.zfill(3)
+                    roadSoundexString = exclusionMatch.group(0)[0:1] + roadSoundexString
+                else:
+                    pass
+
                 heldRow[2] = roadSoundexString
+
+            elif testMatch1 != None: # Road A, Road BB, or similar.
+                roadPreSoundexString = roadPreSoundexString[testMatch1.start():testMatch1.end()]
+                if len(roadPreSoundexString) > 2:
+                    pass
+                elif len(roadPreSoundexString) == 2:
+                    roadSoundexString = "0" + roadPreSoundexString
+                    roadSoundexString = exclusionMatch.group(0)[0:1] + roadSoundexString
+                    heldRow[2] = roadSoundexString
+                elif len(roadPreSoundexString) == 1:
+                    roadSoundexString = "00" + roadPreSoundexString
+                    roadSoundexString = exclusionMatch.group(0)[0:1] + roadSoundexString
+                    heldRow[2] = roadSoundexString
+                else:
+                    pass
+
+            elif testMatch2 != None:
+                roadPreSoundexString = roadPreSoundexString[testMatch2.start():testMatch2.end()]
+                if len(roadPreSoundexString) > 4:
+                    pass
+                elif len(roadPreSoundexString) == 4:
+                    # Slice the string to include only the first 3 characters, as slice end is non-inclusive.
+                    roadSoundexString = roadPreSoundexString[:4]
+                    roadSoundexString = exclusionMatch.group(0)[0:1] + roadSoundexString
+                    heldRow[2] = roadSoundexString
+                elif len(roadPreSoundexString) == 3:
+                    roadSoundexString = roadPreSoundexString
+                    roadSoundexString = exclusionMatch.group(0)[0:1] + roadSoundexString
+                    heldRow[2] = roadSoundexString
+                elif len(roadPreSoundexString) == 2:
+                    roadSoundexString = "0" + roadPreSoundexString
+                    roadSoundexString = exclusionMatch.group(0)[0:1] + roadSoundexString
+                    heldRow[2] = roadSoundexString
+                elif len(roadPreSoundexString) == 1:
+                    roadSoundexString = "00" + roadPreSoundexString
+                    roadSoundexString = exclusionMatch.group(0)[0:1] + roadSoundexString
+                    heldRow[2] = roadSoundexString
+                else:
+                    pass
             else:
                 pass
 
-    # Start an edit session for this workspace because the centerline
-    # feature class participates in a topology.
-    editSession = daEditor(gdb)
-    editSession.startEditing(False, False)
-    editSession.startOperation()
+        else:
+            roadNameString = heldRow[1]
+            testMatch4 = None
+            testMatch4 = singleOrDoubleNumberThenAlphaMatchString.search(roadNameString)
+            testMatch5 = None
+            testMatch5 = firstCharacterNumberString.search(roadNameString)
 
-    cursor = daUpdateCursor(roadFeatures, fieldList)  # @UndefinedVariable
-    for row in cursor:
-        for heldRow in holderList:
-            if row[0] == heldRow[0]:
-                cursor.updateRow(heldRow)
-            else:
-                pass
+            # Numdex with one or two numbers, then alpha.
+            if testMatch4 != None:
+                roadPreSoundexString = roadNameString[testMatch4.start():]
+                roadSoundexString = roadPreSoundexString.zfill(4)
+                heldRow[2] = roadSoundexString
+            # Normal Numdex if there were not one or two numbers, then alpha, but the string starts with a number.
+            elif testMatch5 != None:
+                numerical_re = re.compile("[A-Z]|[^0-9][^0-9][^0-9][^0-9]")
 
-    # Clean up
-    if cursor:
-        del cursor
-    else:
-        pass
-    if row:
-        del row
-    else:
-        pass
+                roadPreSoundexString = roadNameString.replace(" ", "")
+                roadSoundexString = re.sub(numerical_re,"", roadPreSoundexString.zfill(4))
 
-    editSession.stopOperation()
-    editSession.stopEditing(True)
+                if len(roadSoundexString) > 4:
+                    roadSoundexString = roadSoundexString[:5]
+                else:
+                    pass
+
+                roadSoundexString = roadSoundexString.zfill(4)
+
+                heldRow[2] = roadSoundexString
+
+            else: # Check for AA, BB, EE, etc without an excluded name in front of it
+                if len(roadNameString) == 2:
+                    if roadNameString[0] == roadNameString[1]:
+                        roadPreSoundexString = roadNameString
+                        roadSoundexString = roadPreSoundexString.zfill(4)
+                else: # Normal Soundex
+                    roadPreSoundexString = roadNameString
+                    roadSoundexString = soundex(roadPreSoundexString)
+
+                heldRow[2] = roadSoundexString # shift left end
+
+
+    try:
+        # Start an edit session for this workspace because the centerline
+        # feature class participates in a topology.
+        editSession = daEditor(gdb)
+        editSession.startEditing(False, False)
+        editSession.startOperation()
+
+        print "Editing started."
+
+        cursor = daUpdateCursor(roadFeatures, fieldList)  # @UndefinedVariable
+        for row in cursor:
+            for heldRow in holderList: # N^2 looping, try not to place print statements inside this block.
+                if str(row[0]) == str(heldRow[0]):
+                    cursor.updateRow(heldRow)
+                else:
+                    pass
+
+        editSession.stopOperation()
+        editSession.stopEditing(True)
+
+        print "Editing complete."
+
+    except Exception as e:
+        print "Failed to update the Soundex values."
+        print e.message
+        print GetMessages(2)
+
+    finally:
+        # Clean up
+        if "cursor" in locals():
+            del cursor
+        else:
+            pass
+        if "row" in locals():
+            del row
+        else:
+            pass
 
 
 def RouteCalc(lyr, soundexNameExclusions):
     """calculate what should be a nearly unique LRS Route key based on the decoding and street name soundex/numdex function"""
+    # Trying to make the CalcField call unnecessary as RoadinName includes the functionality
+    # of numdex.
+    # Instead of calling numdex here, rewrite and incorporate numdex and soundex functionality into the RoadinName function.
     #CalcField(lyr,"Soundex","numdex(!RD!)","PYTHON_9.3","#")
     RoadinName(lyr, soundexNameExclusions)
     CalcField(lyr, "RID", "str(!KDOT_COUNTY_R!)+str(!KDOT_COUNTY_L!)+str(!KDOT_CITY_R!)+str(!KDOT_CITY_L!)+str(!PreCode!) + !Soundex! + str(!SuffCode!)+str(!UniqueNo!)+str(!TDirCode!)","PYTHON_9.3","#")
 
-# Instead of calling numdex here, rewrite and incorporate numdex and soundex functionality into the RoadinName function.
 
 def AliasCalc(Alias, DOTRoads):
     CalcField(Alias, "KDOT_PREFIX", "!LABEL![0]","PYTHON_9.3","#")
@@ -435,7 +660,7 @@ def AliasCalc(Alias, DOTRoads):
     CalcField("RoadAlias","RoadAlias.KDOT_CODE","!KDOT_RoutePre.PreCode!","PYTHON_9.3","#")
     removeJoin("RoadAlias")
 
-    
+
 def HighwayCalc(lyr, gdb, Alias):
     """Pull out State Highways to preserve KDOT LRS Key (CANSYS FORMAT - non directional CRAD)"""
     if Exists(gdb+"\RoadAlias_Sort"):
@@ -461,14 +686,14 @@ def HighwayCalc(lyr, gdb, Alias):
     CalcField(lyr, "RID", "str(!KDOT_COUNTY_R!)+str(!KDOT_COUNTY_L!)+str(!KDOT_CITY_R!)+str(!KDOT_CITY_L!)+str(!PreCode!) + !Soundex! + str(!SuffCode!)+str(!UniqueNo!)+str(!TDirCode!)","PYTHON_9.3","#")
     CalcField(lyr, "LRSKEY", "str(!RID!)", "PYTHON_9.3","#")
 
-    
+
 def ScratchCalcs():
     CalcField("RoadCenterline","RoadCenterline.Soundex","""!RoadAlias.A_RD![0]  +  !RoadAlias.A_RD![1:].replace("S","").zfill(3)""","PYTHON_9.3","#")
     CalcField(in_table="RoadCenterline",field="RoadCenterline.KDOTPreType",expression="!RoadAlias.A_RD![0]  ",expression_type="PYTHON_9.3",code_block="#")
     CalcField(in_table="RoadCenterline",field="RoadCenterline.PreCode",expression="'0'",expression_type="PYTHON_9.3",code_block="#")
     CalcField(in_table="RoadCenterline",field="RoadCenterline.KDOT_ADMO",expression="'S'",expression_type="PYTHON_9.3",code_block="#")
 
-    
+
 def LRS_Tester():
     """makes the LRS route layer and dissolves the NG911 fields to LRS event tables"""
     # Replace a layer/table view name with a path to a dataset (which can be a layer file) or create the layer/table view within the script
@@ -485,7 +710,7 @@ def LRS_Tester():
     #MakeRouteLayer_na()
     pass
 
-    
+
 uniqueIdInFields = ["OBJECTID", "COUNTY_L", "COUNTY_R", "STATE_L", "STATE_R", "L_F_ADD", "L_T_ADD", "R_F_ADD", "R_T_ADD", "UniqueNo", "LRSKEY", "SHAPE_MILES"]
 uniqueIdOutFields = ["OBJECTID", "UniqueNo", "LRSKEY"]
 
@@ -604,7 +829,7 @@ def createUniqueIdentifier(gdb, lyr, inFieldNamesList, outFieldNamesList):
 #CalcAdminFields(lyr, Kdotdbfp)
 #CountyCode(lyr)
 #CityCodes(lyr, Kdotdbfp)
-RouteCalc(lyr, soundexNameExclusions)
+#RouteCalc(lyr, soundexNameExclusions)
 #AliasCalc(Alias, DOTRoads)
 #HighwayCalc(lyr, gdb, Alias)
 #StreetNetworkCheck(gdb)

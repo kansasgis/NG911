@@ -18,7 +18,7 @@ DOTRoads = r"\\gisdata\arcgis\GISdata\DASC\NG911\KDOTReview\KDOT_Roads.gdb"
 # Also, this means that "CR" will only be matched to road names like "CR 2500",
 # it will not be matched to road names like "CRAFT".
 
-soundexNameExclusions = ["ROAD", "RD", "CO RD", "CR", "RS", "STATE HIGHWAY", "R"]
+soundexNameExclusions = ["ROAD", "US HIGHWAY", "RD", "CO RD", "CR", "RS", "R", "STATE HIGHWAY", "STATE ROAD", "BUSINESS US HIGHWAY"]
 ordinalNumberEndings = ["ST", "ND", "RD", "TH"]
 
 currentLayerList = ["RoadAlias", "AddressPoints", "RoadCenterline", "AuthoritativeBoundary", "CountyBoundary", "ESZ", "PSAP", "MunicipalBoundary"]
