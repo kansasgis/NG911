@@ -17,7 +17,7 @@
 from arcpy import (AddField_management, AddMessage, CalculateField_management,  CopyRows_management, CreateAddressLocator_geocoding, # @UnusedImport
                    CreateTable_management, Delete_management, Exists, GeocodeAddresses_geocoding, GetCount_management, FieldInfo, # @UnusedImport
                    ListFields, MakeFeatureLayer_management, MakeTableView_management, SelectLayerByAttribute_management, # @UnusedImport
-                   SelectLayerByLocation_management, RebuildAddressLocator_geocoding, Frequency_analysis, DeleteRows_management) # @UnusedImport
+                   SelectLayerByLocation_management, RebuildAddressLocator_geocoding, Frequency_analysis, DeleteRows_management, GetInstallInfo) # @UnusedImport
 from arcpy.da import Walk, InsertCursor, ListDomains, SearchCursor  # @UnresolvedImport
 
 from os import path
@@ -224,15 +224,19 @@ def geocodeAddressPoints(pathsInfoObject):
 
     i = 0
 
+    #test ArcGIS version
+    #if it's 10.1, set field mapping differently
+    gc_fieldMap = "'Single Line Input' SingleLineInput VISIBLE NONE"
+
+    version = GetInstallInfo()["Version"]
+    if version == "10.1":
+        gc_fieldMap = "Street LABEL VISIBLE NONE;City MUNI VISIBLE NONE;State State VISIBLE NONE;ZIP ZIP VISIBLE NONE"
+
     try:
-        GeocodeAddresses_geocoding(gc_table, Locator, "'Single Line Input' SingleLineInput VISIBLE NONE", output, "STATIC")
+        GeocodeAddresses_geocoding(gc_table, Locator, gc_fieldMap, output, "STATIC")
         i = 1
     except:
-        try:
-            GeocodeAddresses_geocoding(gc_table, Locator, "'Single Line Input' SingleLineInput VISIBLE NONE", output)
-            i = 1
-        except:
-            userMessage("Cannot complete geocoding")
+        userMessage("Cannot complete geocoding")
 
     if i == 1:
         wc = "Status <> 'M'"
