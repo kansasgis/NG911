@@ -160,6 +160,7 @@ def geocodeAddressPoints(pathsInfoObject):
 
     addressPointPath = pathsInfoObject.addressPointsPath
     streetPath = join(gdb, "RoadCenterline")
+    roadAliasPath = join(gdb, "RoadAlias")
 
     userMessage("Geocoding address points...")
 
@@ -199,23 +200,30 @@ def geocodeAddressPoints(pathsInfoObject):
     CalculateField_management(gc_table, sl_field, exp, "VB")
 
     #generate locator
-    fieldMap = """'Feature ID' '' VISIBLE NONE;'*From Left' L_F_ADD VISIBLE NONE;'*To Left' L_T_ADD VISIBLE NONE;
-    '*From Right' R_F_ADD VISIBLE NONE;'*To Right' R_T_ADD VISIBLE NONE;'Prefix Direction' PRD VISIBLE NONE;
-    'Prefix Type' '' VISIBLE NONE;'*Street Name' RD VISIBLE NONE;'Suffix Type' STS VISIBLE NONE;
-    'Suffix Direction' '' VISIBLE NONE;'Left City or Place' MUNI_L VISIBLE NONE;
-    'Right City or Place' MUNI_R VISIBLE NONE;'Left ZIP Code' ZIP_L VISIBLE NONE;'Right ZIP Code' ZIP_R VISIBLE NONE;
-    'Left State' STATE_L VISIBLE NONE;'Right State' STATE_R VISIBLE NONE;'Left Street ID' '' VISIBLE NONE;
-    'Right Street ID' '' VISIBLE NONE;'Min X value for extent' '' VISIBLE NONE;
-    'Max X value for extent' '' VISIBLE NONE;'Min Y value for extent' '' VISIBLE NONE;
-    'Max Y value for extent' '' VISIBLE NONE;'Left Additional Field' '' VISIBLE NONE;
-    'Right Additional Field' '' VISIBLE NONE;'Altname JoinID' '' VISIBLE NONE"""
+    fieldMap = """'Primary Table:Feature ID' <None> VISIBLE NONE;'*Primary Table:From Left' RoadCenterline:L_F_ADD VISIBLE NONE;
+    '*Primary Table:To Left' RoadCenterline:L_T_ADD VISIBLE NONE;'*Primary Table:From Right' RoadCenterline:R_F_ADD VISIBLE NONE;
+    '*Primary Table:To Right' RoadCenterline:R_T_ADD VISIBLE NONE;'Primary Table:Prefix Direction' RoadCenterline:PRD VISIBLE NONE;
+    'Primary Table:Prefix Type' <None> VISIBLE NONE;'*Primary Table:Street Name' RoadCenterline:RD VISIBLE NONE;
+    'Primary Table:Suffix Type' RoadCenterline:STS VISIBLE NONE;'Primary Table:Suffix Direction' RoadCenterline:POD VISIBLE NONE;
+    'Primary Table:Left City or Place' RoadCenterline:MUNI_L VISIBLE NONE;
+    'Primary Table:Right City or Place' RoadCenterline:MUNI_R VISIBLE NONE;
+    'Primary Table:Left ZIP Code' RoadCenterline:ZIP_L VISIBLE NONE;'Primary Table:Right ZIP Code' RoadCenterline:ZIP_R VISIBLE NONE;
+    'Primary Table:Left State' RoadCenterline:STATE_L VISIBLE NONE;'Primary Table:Right State' RoadCenterline:STATE_R VISIBLE NONE;
+    'Primary Table:Left Street ID' <None> VISIBLE NONE;'Primary Table:Right Street ID' <None> VISIBLE NONE;
+    'Primary Table:Min X value for extent' <None> VISIBLE NONE;'Primary Table:Max X value for extent' <None> VISIBLE NONE;
+    'Primary Table:Min Y value for extent' <None> VISIBLE NONE;'Primary Table:Max Y value for extent' <None> VISIBLE NONE;
+    'Primary Table:Left Additional Field' <None> VISIBLE NONE;'Primary Table:Right Additional Field' <None> VISIBLE NONE;
+    'Primary Table:Altname JoinID' RoadCenterline:SEGID VISIBLE NONE;'*Alternate Name Table:JoinID' RoadAlias:SEGID VISIBLE NONE;
+    'Alternate Name Table:Prefix Direction' RoadAlias:A_PRD VISIBLE NONE;'Alternate Name Table:Prefix Type' <None> VISIBLE NONE;
+    'Alternate Name Table:Street Name' RoadAlias:A_RD VISIBLE NONE;'Alternate Name Table:Suffix Type' RoadAlias:A_STS VISIBLE NONE;
+    'Alternate Name Table:Suffix Direction' RoadAlias:A_POD VISIBLE NONE"""
 
     userMessage("Creating address locator...")
     # Process: Create Address Locator
     if Exists(Locator):
         RebuildAddressLocator_geocoding(Locator)
     else:
-        CreateAddressLocator_geocoding("US Address - Dual Ranges", streetPath + " 'Primary Table'", fieldMap, Locator, "")
+        CreateAddressLocator_geocoding("US Address - Dual Ranges", streetPath + " 'Primary Table';" + roadAliasPath + " 'Alternate Name Table'", fieldMap, Locator, "")
 
     userMessage("Geocoding addresses...")
     #geocode table address
@@ -226,11 +234,11 @@ def geocodeAddressPoints(pathsInfoObject):
 
     #test ArcGIS version
     #if it's 10.1, set field mapping differently
-    gc_fieldMap = "'Single Line Input' SingleLineInput VISIBLE NONE"
+    gc_fieldMap = "Street LABEL VISIBLE NONE;City MUNI VISIBLE NONE;State State VISIBLE NONE;ZIP ZIP VISIBLE NONE"
 
-    version = GetInstallInfo()["Version"]
-    if version == "10.1":
-        gc_fieldMap = "Street LABEL VISIBLE NONE;City MUNI VISIBLE NONE;State State VISIBLE NONE;ZIP ZIP VISIBLE NONE"
+##    version = GetInstallInfo()["Version"]
+##    if version == "10.1":
+##        gc_fieldMap = "Street LABEL VISIBLE NONE;City MUNI VISIBLE NONE;State State VISIBLE NONE;ZIP ZIP VISIBLE NONE"
 
     try:
         GeocodeAddresses_geocoding(gc_table, Locator, gc_fieldMap, output, "STATIC")
