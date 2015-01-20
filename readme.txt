@@ -1,14 +1,55 @@
-readme.txt for NG911 Data Check
+readme.txt for Kansas NG911 GIS Tools
 
-This script requires the NG911_config.py and the folder of text files called "Domains"
+These tools assist with various tasks in preparing and validating data for the Kansas NG911 GIS project
 
-In the config file:
+The project consists of:
+	readme.txt
+	Kansas NG911 GIS Tools.tbx
+	Doc
+		EnhancementTools.docx
+		MetadataTools.docx
+		ValidationTools.docx
+	Domains
+		AGENCYID_Domains.txt
+		COUNTRY_Domains.txt
+		COUNTY_Domains.txt
+		LOCTYPE_Domains.txt
+		MUNI_Domains.txt
+		NG911_FieldDefinitions.txt
+		NG911_RequiredFields.txt
+		ONEWAY_Domains.txt
+		PARITY_Domains.txt
+		PLC_Domains.txt
+		POSTCO_Domains.txt
+		PRD_Domains.txt
+		RDCLASS_Domains.txt
+		STATE_Domains.txt
+		STATUS_Domains.txt
+		STEWARD_Domains.txt
+		STS_Domains.txt
+		SURFACE_Domains.txt
+		ZIP_Domains.txt
+	Scripts
+		CoordConvertor.py
+		Enhancement_AssignID.py
+		Enhancement_USNGCalc.py
+		Metadata_EnhanceMetadata.py
+		NG911_Config.py
+		NG911_DataCheck.py
+		Validation_CheckAddressPointsLaunch.py
+		Validation_CheckyAdminBndLaunch.py
+		Validation_CheckESBLaunch.py
+		Validation_CheckRoadsLaunch.py
+		Validation_CheckTemplateLaunch.py
+		Validation_ClearOldResults.py
+		
+The official repository for this project is on the KansasGIS GitHub account.
 
-ESB refers to a list of layers that are the Emergency Services Boundaries
-gdb is the submittal database
-folder is the path to the domains folder
+The tool will be available as a package download from the Kansas Data Access and Support Center (DASC) website: http://www.kansasgis.org
 
-The "soundexNameExclusions" and "ordinalNumberEndings" variables are 
-used by the fLRMSMethod script.
-The "currentLayerList" and "nonDisplayFields" variables are
-used by the NG911_Frontend script.
+Support: for questions or issues, email a full description to Kristen: kristen at kgs.ku.edu
+
+Credits: Scripts written by Sherry Massey with Dickinson County, Kristen Jordan with DASC, and Kyle Gonterwitz and Dirk Talley with Kansas Department of Transportation
+
+
+	

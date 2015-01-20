@@ -1,0 +1,13 @@
+Values|Definition
+PRIMARY|Primary roads are generally divided, limited-access highways within the interstate highway system or under state management, and are distinguished by the presence of interchanges. These highways are accessible by ramps and may include some toll highways.
+SECONDARY|Secondary roads are main arteries, usually in the U.S. Highway, State Highway or County Highway system. These roads have one or more lanes of traffic in each direction, may or may not be divided, and usually have at-grade intersections with many other roads and driveways. They often have both a local name and a route number.
+LOCAL|Generally a paved non-arterial street, road, or byway that usually has a single lane of traffic in each direction. Roads in this feature class may be privately or publicly maintained. Scenic park roads would be included in this feature class, as would (depending on the region of the country) some unpaved roads.
+RAMP|A road that allows controlled access from adjacent roads onto a limited access highway, often in the form of a cloverleaf interchange. These roads are unaddressable.
+SERVICE|A road, usually paralleling a limited access highway, that provides access to structures along the highway. These roads can be named and may intersect with other roads.
+VEHICULAR TRAIL|An unpaved dirt trail where a four-wheel drive vehicle is required. These vehicular trails are found almost exclusively in very rural areas. Minor, unpaved roads usable by ordinary cars and trucks belong in the S1400 category.
+WALKWAY|A path that is used for walking, being either too narrow for or legally restricted from vehicular traffic.
+ALLEY|A service road that does not generally have associated addressed structures and is usually unnamed. It is located at the rear of buildings and properties and is used for deliveries.
+PRIVATE|A road within private property that is privately maintained for service, extractive, or other purposes. These roads are often unnamed.
+PARKING LOT|The main travel route for vehicles through a paved parking area.
+TRAIL|A path that is used for manual or small, motorized bicycles, being either too narrow for or legally restricted from vehicular traffic.
+OTHER|Something else that resembles a road.

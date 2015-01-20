@@ -1,0 +1,5 @@
+Values|Definition
+E|Even Addresses Only
+O|Odd Addresses Only
+B|Both 
+Z|Address Range 0-0

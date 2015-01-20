@@ -1,0 +1,152 @@
+FeatureClass|Field|Definition
+RoadCenterline|STEWARD|The GNIS/INCITS code for the agency responsible for maintenance of the data.
+RoadCenterline|L_UPDATE|The date of the last update of the record.
+RoadCenterline|EFF_DATE|The date the record is or was scheduled to take effect.  For agencies not recording this information previously, the date of January 1, 2014 (20140101) can be used for all currently effective records"
+RoadCenterline|EXP_DATE|The date the record is scheduled to expire.  This field shall only be populated if the record has a defined end date.  Example:  A road segment being permanently re-routed.
+RoadCenterline|SEGID|The [SEGID] is an identifier used for tracking centerline segments within the local dataset (ex. 4658).  SEGID can be utilized as a way to link to an alternate road name table.
+RoadCenterline|STATE_L|The 2-character state abbreviation designated on the Left side of the road segment.
+RoadCenterline|STATE_R|The 2-character state abbreviation designated on the Right side of the road segment.
+RoadCenterline|COUNTY_L|The designated county area on the Left side of the road segment.
+RoadCenterline|COUNTY_R|The designated county area on the Right side of the road segment.
+RoadCenterline|MUNI_L|(Municipality Left) - The name of the incorporated municipality where the address is located on the Left side of the road segment.  Only used if a named municipality exists, otherwise populate with 'Unincorporated.'"
+RoadCenterline|MUNI_R|(Municipality Right) - The name of the incorporated municipality where the address is located on the Right side of the road segment.  Only used if a named municipality exists, otherwise populate with 'UNINCORPORATED.'"
+RoadCenterline|L_F_ADD|(Left From Address),The beginning value of an address range, on the Left side of the road segment.
+RoadCenterline|L_T_ADD|(Left To Address)  - The ending value of an address range, on the Left side of the road segment.
+RoadCenterline|R_F_ADD|(Right From Address),The beginning value of an address range, on the Right side of the road segment.
+RoadCenterline|R_T_ADD|(Right To Address),The ending value of an address range, on the Right side of the road segment.
+RoadCenterline|PARITY_L|(Left Address Range Parity) - Parity of Address Range on the Left side of the road segment. Valid entries: E, O, B, Z for Even, Odd, Both, or Zero (if the range is 0 to 0).
+RoadCenterline|PARITY_R|(Right Address Range Parity) - Parity of Address Range on the Right side of the road segment. Valid entries: E, O, B, Z for Even, Odd, Both, or Zero (if the range is 0 to 0).
+RoadCenterline|POSTCO_L|(Postal Community Left) - The city name for the ZIP code of an address as given in the USPS City State file, on the Left side of the road segment.
+RoadCenterline|POSTCO_R|(Postal Community Right) - The city name for the ZIP code of an address as given in the USPS City State file, on the Right side of the road segment.
+RoadCenterline|ZIP_L|(Postal Code/ZIP Code Left) - The 5-digit postal or ZIP code identifies the Left side of the road segment.
+RoadCenterline|ZIP_R|(Postal Code/ZIP Code Right) - The 5-digit postal or ZIP code identifies the Right side of the road segment.
+RoadCenterline|ESN_L|(ESN Left) - The emergency service number on the Left side of the road segment.
+RoadCenterline|ESN_R|(ESN Right) - The emergency service number on the Right side of the road segment.
+RoadCenterline|MSAGCO_L|The MSAG Community name on the Left side of the road segment.
+RoadCenterline|MSAGCO_R|The MSAG Community name on the Right side of the road segment.
+RoadCenterline|PRD|(Pre-Directional),A cardinal direction abbreviation preceding the street name key.  Only N, S, E, W or NE, NW, SE, SW can be used.
+RoadCenterline|STP|(Preceding Type),A Street type which precedes the street name key. This must always be spelled out fully.  Example:  AVENUE 3, not AVE 3.
+RoadCenterline|RD|(Street Name),The name of the street as designated by the local addressing authority.
+RoadCenterline|STS|(Street Post Type),An abbreviated suffix following the street name.  Valid values are limited to the abbreviations listed in USPS Publication 28, Appendix C1.
+RoadCenterline|POD|(Post Directional) - A cardinal direction abbreviation following the street name key.  *Only N, S, E, W or NE, NW, SE, SW can be used.
+RoadCenterline|POM|(Post Modifier),An additional value sometimes found on certain roads.  Valid values include but are not limited to: ACCESS, ALTERNATE, BUSINESS, BYPASS, CONNECTOR, EXTENDED, EXTENSION, LOOP, PRIVATE, PUBLIC, SCENIC, SPUR, RAMP, UNDERPASS, OLD, OVERPASS.
+RoadCenterline|SPDLIMIT|(Speed Limit),Posted Speed Limit in mph.
+RoadCenterline|ONEWAY|(One-Way),One way direction of travel. "
+RoadCenterline|RDCLASS|(Road Class) Type of road from the domain.
+RoadCenterline|LABEL|This value is the concatenation of the values found in the [PRM], [PRD], [STP], [NAME], [STS], [POD], and [POM] fields with the appropriate spacing interposed.  For aesthetics, proper case may be used. This field can be used to label the full street name in GIS application or map production.
+RoadCenterline|UPDATEBY|The person who last updated the record.  The format of this can be set by the data steward, but it should be sufficient to identify the specific individual.  First and last name are recommended.  The purpose of this field is to allow the data aggregator to contact the specific person who made a change if there is a question about the edit.
+RoadCenterline|ESN_C|(ESN Centerline) - The ESN of the actual centerline.  This should only be used if road right-of-way is in a different ESN than the land on either side of it.
+RoadCenterline|SURFACE|Basic road surface description from the domain.
+RoadCenterline|STATUS|The current status of the segment.  All roads that exist in the centerline file but are not actually built on the ground shall have this attribute set to 'Not Built.'  Examples include 'paper' roads or roads that are platted but not built. Valid values are in a domain.
+RoadCenterline|ELEV_F|(Elevation at From Node) - Elevation of the start node of the segment with relation to other road features.  Ground level roads have elevation of '0'.  Overpasses have elevation of '1'.
+RoadCenterline|ELEV_T|(Elevation at To Node) - Elevation of the end node of the segment with relation to other road features.  Ground level roads have elevation of '0'.  Overpasses have elevation of '1'.
+RoadCenterline|TRAVEL|Direction of travel on divided roadways.  Example:  WB for the westbound lane of Interstate 70.
+RoadCenterline|LRSKEY|(Linear Reference System Key) Unique identifier within the KDOT road network allowing the centerline segment to be related back to the KDOT LRS.
+AddressPoints|STEWARD|GNIS/INCITS code for the agency responsible for maintenance of the data.
+AddressPoints|L_UPDATE|The date of the last update of the record.
+AddressPoints|EFF_DATE|The date the record is or was scheduled to take effect.  For agencies not recording this information previously, the date of January 1, 2014 (20140101) can be used for all currently effective records.
+AddressPoints|EXP_DATE|The date the record is scheduled to expire.  This field shall only be populated if there is a defined end date.  Ex:  A building scheduled to be re-addressed.
+AddressPoints|ADDID|(Address ID) - The Address ID is an identifier used to for tracking address points within the local dataset (ex. 4658).
+AddressPoints|STATE|Two-character abbreviation for the state where the address point is located.
+AddressPoints|COUNTY|County name spelled out for the county where the address point is located.
+AddressPoints|MUNI|(Municipality) - The name of the incorporated municipality where the address point is located.  Only used if a named municipality exists, otherwise use 'Unincorporated'.
+AddressPoints|HNO|(Address Number) - The street or house number for address.  It does not include any secondary information like suite or apartment numbers.
+AddressPoints|HNS|(Address Number Suffix) - An extension of the address number that follows it and further identifies a location.  Example '1/2' in 101 1/2 Oak St.
+AddressPoints|PRD|(Pre - Directional) - A cardinal direction abbreviation preceding the street name key.  Only N, S, E, W or NE, NW, SE, SW can be used.
+AddressPoints|STP|(Preceding Type) - A street type which precedes the street name key.  This must always be spelled out fully.  Example:  AVENUE 3, not AVE 3.
+AddressPoints|RD|(Street Name) - The name of the street as designated by the local addressing authority.
+AddressPoints|STS|(Street Post Type) - An abbreviated suffix following the street name.  Valid values are limited to the abbreviations listed in USPS Publication 28, Appendix C1.
+AddressPoints|POD|(Post Directional) - A cardinal direction abbreviation following the street name key.  *Only N, S, E, W or NE, NW, SE, SW can be used.
+AddressPoints|POM|(Post Modifier) - An additional value sometimes found on certain roads.   Valid values include but are not limited to: ACCESS, ALTERNATE, BUSINESS, BYPASS, CONNECTOR, EXTENDED, EXTENSION, LOOP, PRIVATE, PUBLIC, SCENIC, SPUR, RAMP, UNDERPASS, OLD, OVERPASS.
+AddressPoints|BLD|(Building) - One among a group of buildings that have the same address number and complete street name.
+AddressPoints|FLR|(Floor) - A floor, story or level within a building.
+AddressPoints|UNIT|(Unit) - The unit type and unit number (or other designator) for a group or suite of rooms within a building that are under common ownership or tenancy, typically having a common primary entrance.  Examples:  Apt 2C, Lot 6, Ste 301.  Unit type shall be abbreviated using the Secondary Unit Designators list from USPS Publication 28.
+AddressPoints|ROOM|(Room) - A single room within a building.
+AddressPoints|SEAT|(Seat) - A place where a person might sit within a building.
+AddressPoints|LOC|(Additional Location) - Any part of a sub-address that is not a Building, Floor, Unit, Room or Seat.  Example:  A building that is in two different ESNs may have one address point with 'WEST HALF' in this field and a second with 'EAST HALF'.
+AddressPoints|ESN|Emergency Service Number for the address.
+AddressPoints|MSAGCO|(MSAG Community) - The MSAG community name for the address.
+AddressPoints|POSTCO|(Postal Community) - The city name for the ZIP code of an address as given in the USPS City State file.
+AddressPoints|ZIP|(ZIP Code) - The 5-digit postal or ZIP code.
+AddressPoints|ZIP4|(ZIP Plus 4 Code) - The ZIP plus 4 code without the dash.
+AddressPoints|LMK|(Landmark) - The name by which a prominent feature is publically known or Vanity address.  Example:  The White House, Harvard University.
+AddressPoints|MILEPOST|A numeric measurement from a given beginning point used for specifying locations along interstate highways, recreational trails and other unaddressed routes as well as stretches of county, state and federal routes where the distance measurement is posted.  May be included in addition to address numbers or in place of them if the route is unaddressed.  A value is required if the road is unaddressed, like most interstates, otherwise, the field is optional.  Example:  Mile Marker 231.5.
+AddressPoints|PLC|(Place Type) - The type of feature identified by the address.  The domain for this attribute is from RFC 4589.  Although this field is listed as Conditional in the NENA Standard, it is the opinion of the GIS Subcommittee that it should be an Optional attribute or have a different domain.  Until the final NENA NG9-1-1 Data Model is published, the use of this field will be suspended in the Kansas NG9-1-1 Data Model.  It shall be included in the attribute table but not populated.  See [KSPID] below.
+AddressPoints|LONG|(Longitude) - In decimal degrees.
+AddressPoints|LAT|(Latitude) - In decimal degrees.
+AddressPoints|ELEV|(Elevation) - Height above Mean Sea Level in meters.
+AddressPoints|LABEL|(Label) - A composite of the street number and naming information with the unit number, in proper case use for map symbology.  Building names, unit numbers and other secondary address elements should be preceded by the Secondary Unit Designator from the  Official USPS Abbreviations list  Examples:  101 E 1st St Apt B.
+AddressPoints|UPDATEBY|The person who last updated the record.  The format of this can be set by the data steward, but it should be sufficient to identify the specific individual.  Entries may be in upper case, lower case or both.  The purpose of this field is to allow the data aggregator to contact the specific person who made a change if there is a question about the edit.
+AddressPoints|LOCTYPE|(Point location type) - The location of the point relative to the structure in question selected from the following domain:  PRIMARY (on the structure or the site), SECONDARY-ACCESS (on driveway or other access point), SECONDARY-OTHER. Note:  Only the points attributed as 'Primary' will be included in the call-routing database.
+AddressPoints|USNGRID|The US National Grid coordinates to 10 digits (1 meter).
+AddressPoints|KSPID|The 19 character parcel ID or 'CAMA' number for the parcel on which the address point sits.  This attribute has been included to insure the Place Type attribute can be populated as economically as possible, should it be retained as a required attribute in the final NENA NG9-1-1 Data Model.
+AuthoritativeBoundary|STEWARD|The GNIS/INCITS code for the agency responsible for maintenance of the data.
+AuthoritativeBoundary|L_UPDATE|The date of the last update of the record.
+AuthoritativeBoundary|EFF_DATE|The date the record is or was scheduled to take effect.  For agencies not recording this information previously, the date of January 1, 2014 (20140101) can be used for all currently effective records.
+AuthoritativeBoundary|EXP_DATE|The date the record is scheduled to expire.  This field shall only be populated if there is a defined end date.  Ex:  A city limit boundary that is scheduled to change.
+AuthoritativeBoundary|ABID|An identifier used for tracking Authoritative Boundaries in the local dataset.
+AuthoritativeBoundary|STATE|Two-character abbreviation for the state where the address point is located.
+AuthoritativeBoundary|AGENCYID|Unique ID for the PSAP created by combining the LCPA PSAP Code from the Kansas NG911 Strategic Plan 2014-2017 with '.ks.us' to create an identifier that will be unique even if combined with data from other states.  This field shall be stored as lower case characters.  Example:  The LCPA PSAP Code for Dickinson County Emergency Communication is 'dk'.  The [AGENCYID] for that PSAP is psap.dk.ks.us.
+AuthoritativeBoundary|DISPLAY|(Display Name) - The Display Name of the authoritative source entity.  Examples:  ROOKS COUNTY KS, ANDOVER KS.
+AuthoritativeBoundary|UPDATEBY|The person who last updated the record.  The format of this can be set by the data steward, but it should be sufficient to identify the specific individual.  First and last name are recommended.  The purpose of this field is to allow the data aggregator to contact the specific person who made a change if there is a question about the edit.
+CountyBoundary|STEWARD|The GNIS/INCITS code for the agency responsible for maintenance of the data.
+CountyBoundary|L_UPDATE|The date of the last update of the record.
+CountyBoundary|COUNTYID|The identifier used for tracking County polygons within the local dataset.
+CountyBoundary|STATE|Two-character state abbreviation for the state where the ESB is located.
+CountyBoundary|COUNTY|County name spelled out for the county where the data is located.
+CountyBoundary|UPDATEBY|The person who last updated the record.  The format of this can be set by the data steward, but it should be sufficient to identify the specific individual.  First and last name are recommended.  The purpose of this field is to allow the data aggregator to contact the specific person who made a change if there is a question about the edit.
+MunicipalBoundary|STEWARD|The GNIS/INCITS code for the agency responsible for maintenance of the data.
+MunicipalBoundary|L_UPDATE|The date of the last update of the record.
+MunicipalBoundary|EFF_DATE|The date the record is or was scheduled to take effect.  For agencies not recording this information previously, the date of January 1, 2014 (20140101) can be used for all currently effective records.
+MunicipalBoundary|EXP_DATE|The date the record is scheduled to expire.  This field shall only be populated if there is a defined end date.
+MunicipalBoundary|MUNI_ID|The identifier used for tracking Municipal polygons within the local dataset.
+MunicipalBoundary|STATE|Two-character state abbreviation for the state where the ESB is located.
+MunicipalBoundary|COUNTY|County name spelled out for the county where the data is located.
+MunicipalBoundary|MUNI|(Municipality) - The name of the incorporated municipality where the data is located.  Only used if a named municipality exists, otherwise use 'Unincorporated'.
+MunicipalBoundary|UPDATEBY|The person who last updated the record.  The format of this can be set by the data steward, but it should be sufficient to identify the specific individual.  First and last name are recommended.  The purpose of this field is to allow the data aggregator to contact the specific person who made a change if there is a question about the edit.
+EmergencyBoundary|STEWARD|The GNIS/INCITS code for the agency responsible for maintenance of the data.
+EmergencyBoundary|L_UPDATE|The date of the last update of the record.
+EmergencyBoundary|EFF_DATE|The date the record is or was scheduled to take effect.  For agencies not recording this information previously, the date of January 1, 2014 (20140101) can be used for all currently effective records.
+EmergencyBoundary|EXP_DATE|The date the record is scheduled to expire.  This field shall only be populated if there is a defined end date.
+EmergencyBoundary|ESBID|An identifier used for tracking Emergency Services Boundaries in the local dataset.  This identifier shall be unique across all ESB layers in the local dataset.
+EmergencyBoundary|STATE|Two-character state abbreviation for the state where the ESB is located.
+EmergencyBoundary|AGENCYID|Unique ID for the PSAP created by combining the LCPA PSAP Code from the Kansas NG911 Strategic Plan 2014-2017 with '.ks.us' to create an identifier that will be unique even if combined with data from other states.  This field shall be stored as lower case characters.  Example:  The LCPA PSAP Code for Dickinson County Emergency Communication is 'dk'.  The [AGENCYID] for that PSAP is psap.dk.ks.us.
+EmergencyBoundary|SERV_NUM|(Service Number) - The number dialed by the public on a phone (12-digit keypad) to reach the emergency service.  This will usually be 911.
+EmergencyBoundary|DISPLAY|(Display Name) - The Display Name of the service.  Examples:  TOPEKA PD, DISTRICT 1 FIRE DEPT, COOPER EMS/COOPER 1ST RESPONDERS.
+EmergencyBoundary|ESB_TYPE|Description of the type of service represented in the layer.  Either COMBINED or the specific boundary type.  Specific boundary type examples include:  PSAP, LAW, FIRE, EMS, RESCUE and WRECKER.
+EmergencyBoundary|PSAP|(PSAP Display Name) - The PSAP that serves the area.
+EmergencyBoundary|LAW|(Law Enforcement Display Name) - Law enforcement agency for the area.
+EmergencyBoundary|FIRE|(Fire Department Display Name) - The fire response agency for the feature.
+EmergencyBoundary|EMS|(EMS Display Name) - The emergency medical response for the feature.
+EmergencyBoundary|UPDATEBY|The person who last updated the record.  The format of this can be set by the data steward, but it should be sufficient to identify the specific individual.  First and last name are recommended.  The purpose of this field is to allow the data aggregator to contact the specific person who made a change if there is a question about the edit.
+EmergencyBoundary|COUNTY|County name spelled out for the county where the data is located.
+EmergencyBoundary|MUNI|(Municipality) - The name of the incorporated municipality where the data is located.  Only used if a named municipality exists, otherwise use 'Unincorporated'.
+EmergencyBoundary|COUNTY_ID|The identifier used for tracking County polygons within the local dataset.
+EmergencyBoundary|MUNI_ID|The identifier used for tracking Municipal polygons within the local dataset.
+ESZ|STEWARD|The GNIS/INCITS code for the agency responsible for maintenance of the data.
+ESZ|L_UPDATE|The date of the last update of the record.
+ESZ|EFF_DATE|The date the record is or was scheduled to take effect.  For agencies not recording this information previously, the date of January 1, 2014 (20140101) can be used for all currently effective records.
+ESZ|EXP_DATE|The date the record is scheduled to expire.  This field shall only be populated if there is a defined end date.
+ESZ|ESZID|An identifier used for tracking Emergency Service Boundaries in the local dataset.
+ESZ|STATE|Two-character abbreviation for the state where the address point is located.
+ESZ|AGENCYID|Unique ID for the PSAP created by combining the LCPA PSAP Code from the Kansas NG911 Strategic Plan 2014-2017 with '.ks.us' to create an identifier that will be unique even if combined with data from other states.  This field shall be stored as lower case characters.  Example:  The LCPA PSAP Code for Dickinson County Emergency Communication is 'dk'.  The [AGENCYID] for that PSAP is psap.dk.ks.us.
+ESZ|ESN|The Emergency Service Number assigned to the ESZ.
+ESZ|UPDATEBY|The person who last updated the record.  The format of this can be set by the data steward, but it should be sufficient to identify the specific individual.  First and last name are recommended.  The purpose of this field is to allow the data aggregator to contact the specific person who made a change if there is a question about the edit.
+RoadAlias|STEWARD|The GNIS/INCITS code for the agency responsible for maintenance of the data.
+RoadAlias|L_UPDATE|The date of the last update of the record.
+RoadAlias|EFF_DATE|The date the record is or was scheduled to take effect.  For agencies not recording this information previously, the date of January 1, 2014 (20140101) can be used for all currently effective records.
+RoadAlias|EXP_DATE|The date the record is scheduled to expire.  This field shall only be populated if there is a defined end date.
+RoadAlias|ALIASID|An identifier used for tracking Authoritative Boundaries in the local dataset.
+RoadAlias|SEGID|The SEGID from the road centerline file for the segment the record refers to.
+RoadAlias|A_PRD|(Alias Pre - Directional) - A cardinal direction abbreviation preceding the street name key.  Only N, S, E, W or NE, NW, SE, SW can be used.
+RoadAlias|A_STP|(Alias Preceding Type) - A Street type which precedes the street name.  This must always be spelled out fully.  Example:  AVENUE 3, not AVE 3.
+RoadAlias|A_RD|(Alias Street Name) - The alias name for the segment.
+RoadAlias|A_STS|(Alias Street Post Type) - A abbreviated suffix following the street name key.
+RoadAlias|A_POD|(Alias Post Directional) - A cardinal direction abbreviation following the street name key.  *Only N, S, E, W or NE, NW, SE, SW can be used.
+RoadAlias|A_POM|(Alias Post Modifier) - An additional value sometimes found on certain roads.  Valid values include but are not limited to: Access, Alternate, Business, Bypass, Connector, Extended, Extension, Loop, Private, Public, Scenic, Spur, Ramp, Underpass, Old, Overpass.
+RoadAlias|LABEL|This value is the concatenation of the values found in the [A_PRM], [A_PRD], [A_STP], [A_RD], [A_STS], [A_POD], and [A_POM] fields with the appropriate spacing and punctuation interposed.  For aesthetics, proper case may be used. This field can be used to label the full street name in GIS application or map production.
+RoadAlias|UPDATEBY|The person who last updated the record.  The format of this can be set by the data steward, but it should be sufficient to identify the specific individual.  First and last name are recommended.  The purpose of this field is to allow the data aggregator to contact the specific person who made a change if there is a question about the edit.
+RoadAlias|A_L_FROM|'Left From' address for the alias road name.
+RoadAlias|A_L_TO|'Left To' address for the alias road name.
+RoadAlias|A_R_FROM|'Right From' address for the alias road name.
+RoadAlias|A_R_TO|'Right To' address for the alias road name.

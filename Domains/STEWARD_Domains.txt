@@ -1,0 +1,118 @@
+Values|Definition
+484970|Allen County Communications Data Steward
+484971|Anderson County Communications Center Data Steward
+2393956|Andover Police Department Data Steward
+484972|Atchison County Communications Center Data Steward
+485543|Augusta Department of Public Safety Data Steward
+484973|Barber County Sheriff's Department Data Steward
+484974|Barton County Communications Center Data Steward
+484976|Brown County Sheriff's Office Communications Data Steward
+485595|City of Horton Police Department Data Steward
+484977|Butler County Emergency Communications Data Steward
+484978|Chase County Sheriff's Department Data Steward
+484979|Chautauqua County Sheriff's Department Data Steward
+484980|Cherokee County Sheriff's Office Data Steward
+484981|Cheyenne County Communications Data Steward
+484982|Clark County Sheriff's Office Data Steward
+484983|Clay County Sheriff's Department Data Steward
+484985|Coffey County Sheriff's Office Data Steward
+484986|Comanche County Sheriff's Office Data Steward
+485559|Concordia Police Department Communications Data Steward
+484987|Cowley County Emergency Communications Data Steward
+484988|Crawford County Sheriff's Office Communications Data Steward
+485643|City of Pittsburg Police Department Data Steward
+484989|Decatur County Emergency Communications Data Steward
+484990|Dickinson County Emergency Communications Data Steward
+484991|Doniphan County Sheriff's Office Data Steward
+484992|Douglas County Emergency Communications Data Steward
+484993|Edwards County Sheriff's Department Data Steward
+484994|Elk County Treasurer's Office Data Steward
+485589|Ellis County 911/City of Hays Data Steward
+484996|Ellsworth County Sheriff's Office Data Steward
+485571|Emporia Police Department Data Steward
+484997|Ford County Communications Data Steward
+485575|Fort Scott Police Department Data Steward
+484998|Franklin County Sheriff's Office/911 Data Steward
+485579|Garden City Police Department Data Steward
+481811|Graham County Sheriff's Office Data Steward
+485099|Grant County Law Enforcement Center Data Steward
+485001|Gray County Sheriff's Office Data Steward
+485002|Greeley County Sheriff's Office Data Steward
+485003|Greenwood County Sheriff's Office Data Steward
+485327|Hamilton County Sheriff's Office Data Steward
+485004|Harper County 911 Data Steward
+485005|Harvey County Communications Data Steward
+485328|Haskell County Sheriff's Office Data Steward
+485006|Hodgeman County Sheriff's Office Data Steward
+485597|Hutchinson/Reno County Emergency Communications Data Steward
+485598|City of Independence Police Department Data Steward
+485556|City of Coffeyville Police Department Data Steward
+485007|Jackson County Sheriff's Office Data Steward
+485008|Jefferson County 911 Communications Data Steward
+485009|Jewell County Sheriff's Office Data Steward
+485010|Johnson County Emergency Communications Data Steward
+485600|Junction City Police Department Data Steward
+485601|Kansas City, Kansas Police Department Public Safety Communications Data Steward
+485011|Kearny County Sheriff's Office Data Steward
+485012|Kingman County Sheriff Data Steward
+485013|Kiowa County Sheriff's Department Data Steward
+485014|Labette County Emergency Communications Center Data Steward
+485641|City of Parsons Data Steward
+485015|Lane County Sheriff's Office Data Steward
+485608|Larned Police Department Data Steward
+485016|Leavenworth County Sheriff's Office Data Steward
+485610|Leavenworth Police Department Data Steward
+485611|Leawood Police Department Data Steward
+485612|Lenexa Police Department Data Steward
+485613|Liberal/Seward County Emergency Communications Data Steward
+485017|Lincoln County Sheriff's Office Data Steward
+485018|Linn County Sheriff's Department Data Steward
+2395293|Logan-Gove County 911 (Oakley Police Department) Data Steward
+485022|Marion County Emergency Communications Data Steward
+485023|Marshall County Sheriff's Office Data Steward
+485021|McPherson County Communications Data Steward
+485024|Meade County Sheriff's Office Data Steward
+485025|Miami County Sheriff's Office Data Steward
+485026|Mitchell County Communications Center Data Steward
+485028|Morris County Sheriff's Department Data Steward
+485135|Morton County Sheriff's Office Data Steward
+485029|Nemaha Sheriff's Department Data Steward
+485030|Neosho County Sheriff's Office Data Steward
+485031|Ness County Sheriff's Office Data Steward
+485032|Norton County Sheriff's Office Data Steward
+485033|Osage County Sheriff's Office Data Steward
+485034|Osborne County Sheriff's Department Data Steward
+485035|Ottawa County Sheriff's Department Data Steward
+485639|Overland Park Police Department Data Steward
+485037|Phillips County Sheriff's Department Data Steward
+485038|Pottawatomie County Sheriff's Office Communications Data Steward
+2397188|City of Wamego Police Department Data Steward
+485644|Prairie Village Police Department Data Steward
+485039|Pratt County 911 Data Steward
+485040|Rawlins County Communications Data Steward
+485042|Republic County Communications Center Data Steward
+485043|Rice County Emergency Communications Data Steward
+485044|Riley County 911 Data Steward
+485045|Rooks County Sherrif's Office Communications Data Steward
+485358|Rush County Sheriff's Office Communications Data Steward
+485647|Russell Police Department Data Steward
+485649|Salina Police Department Emergency Communications Data Steward
+2396558|Scott City Police Department Data Steward
+485049|Sedgwick County Emergency Communications Data Steward
+485051|Shawnee County Sheriff's Office Data Steward
+485652|Shawnee Police Department/Justice Center Data Steward
+485052|Sheridan County Sheriff's Office Data Steward
+485053|Sherman County Communications Data Steward
+484969|Smith County Communications Data Steward
+485054|Stafford County Sheriff's Office Communications Data Steward
+485055|Stanton County Sheriff's Office Data Steward
+485056|Stevens County Sheriff 911 Data Steward
+481812|Sumner County Emergency Communications/911 Data Steward
+485557|Thomas County/Colby Police Department Communications Data Steward
+485058|Trego County Communications Data Steward
+485059|Wabaunsee County Sheriff's Office Communications Data Steward
+485060|Wallace County Sheriff's Department Data Steward
+485061|Washington County 911 Communications Data Steward
+485062|Wichita County Sheriff's Office Data Steward
+485063|Wilson County Central Dispatch Data Steward
+485064|Woodson County Sheriff's Office Data Steward

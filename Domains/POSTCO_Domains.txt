@@ -1,0 +1,854 @@
+Values|Definition
+ABBYVILLE|PostalCommunity in or bordering Kansas
+ABILENE|Postal Community in or bordering Kansas
+ADA|Postal Community in or bordering Kansas
+ADMIRE|Postal Community in or bordering Kansas
+AGENDA|Postal Community in or bordering Kansas
+AGRA|Postal Community in or bordering Kansas
+ALBERT|Postal Community in or bordering Kansas
+ALDEN|Postal Community in or bordering Kansas
+ALEXANDER|Postal Community in or bordering Kansas
+ALLEN|Postal Community in or bordering Kansas
+ALMA|Postal Community in or bordering Kansas
+ALMENA|Postal Community in or bordering Kansas
+ALTA VISTA|Postal Community in or bordering Kansas
+ALTAMONT|Postal Community in or bordering Kansas
+ALTON|Postal Community in or bordering Kansas
+ALTOONA|Postal Community in or bordering Kansas
+ALVA|Postal Community in or bordering Kansas
+AMAZONIA|Postal Community in or bordering Kansas
+AMERICUS|Postal Community in or bordering Kansas
+AMES|Postal Community in or bordering Kansas
+AMORET|Postal Community in or bordering Kansas
+AMORITA|Postal Community in or bordering Kansas
+AMSTERDAM|Postal Community in or bordering Kansas
+ANDALE|Postal Community in or bordering Kansas
+ANDOVER|Postal Community in or bordering Kansas
+ANTELOPE|Postal Community in or bordering Kansas
+ANTHONY|Postal Community in or bordering Kansas
+ANTONINO|Postal Community in or bordering Kansas
+ARAPAHOE|Postal Community in or bordering Kansas
+ARCADIA|Postal Community in or bordering Kansas
+ARGONIA|Postal Community in or bordering Kansas
+ARKANSAS CITY|Postal Community in or bordering Kansas
+ARLINGTON|Postal Community in or bordering Kansas
+ARMA|Postal Community in or bordering Kansas
+ARNOLD|Postal Community in or bordering Kansas
+ASBURY|Postal Community in or bordering Kansas
+ASHLAND|Postal Community in or bordering Kansas
+ASSARIA|Postal Community in or bordering Kansas
+ATCHISON|Postal Community in or bordering Kansas
+ATHOL|Postal Community in or bordering Kansas
+ATLANTA|Postal Community in or bordering Kansas
+ATTICA|Postal Community in or bordering Kansas
+ATWOOD|Postal Community in or bordering Kansas
+AUBURN|Postal Community in or bordering Kansas
+AUGUSTA|Postal Community in or bordering Kansas
+AURORA|Postal Community in or bordering Kansas
+AVARD|Postal Community in or bordering Kansas
+AXTELL|Postal Community in or bordering Kansas
+BAILEYVILLE|Postal Community in or bordering Kansas
+BAKER|Postal Community in or bordering Kansas
+BALDWIN CITY|Postal Community in or bordering Kansas
+BARNARD|Postal Community in or bordering Kansas
+BARNES|Postal Community in or bordering Kansas
+BARTLETT|Postal Community in or bordering Kansas
+BASEHOR|Postal Community in or bordering Kansas
+BAVARIA|Postal Community in or bordering Kansas
+BAXTER SPGS|Postal Community in or bordering Kansas
+BAXTER SPRINGS|Postal Community in or bordering Kansas
+BAZINE|Postal Community in or bordering Kansas
+BEATTIE|Postal Community in or bordering Kansas
+BEAVER|Postal Community in or bordering Kansas
+BEAVER CITY|Postal Community in or bordering Kansas
+BEELER|Postal Community in or bordering Kansas
+BEL AIRE|Postal Community in or bordering Kansas
+BELLAIRE|Postal Community in or bordering Kansas
+BELLE PLAINE|Postal Community in or bordering Kansas
+BELLEVILLE|Postal Community in or bordering Kansas
+BELMONT|Postal Community in or bordering Kansas
+BELOIT|Postal Community in or bordering Kansas
+BELPRE|Postal Community in or bordering Kansas
+BELTON|Postal Community in or bordering Kansas
+BELVIDERE|Postal Community in or bordering Kansas
+BELVUE|Postal Community in or bordering Kansas
+BENDENA|Postal Community in or bordering Kansas
+BENEDICT|Postal Community in or bordering Kansas
+BENKELMAN|Postal Community in or bordering Kansas
+BENNINGTON|Postal Community in or bordering Kansas
+BENTLEY|Postal Community in or bordering Kansas
+BENTON|Postal Community in or bordering Kansas
+BERN|Postal Community in or bordering Kansas
+BERRYTON|Postal Community in or bordering Kansas
+BEVERLY|Postal Community in or bordering Kansas
+BIGELOW|Postal Community in or bordering Kansas
+BIRD CITY|Postal Community in or bordering Kansas
+BISON|Postal Community in or bordering Kansas
+BLAINE|Postal Community in or bordering Kansas
+BLOOM|Postal Community in or bordering Kansas
+BLOOMINGTON|Postal Community in or bordering Kansas
+BLUE MOUND|Postal Community in or bordering Kansas
+BLUE RAPIDS|Postal Community in or bordering Kansas
+BLUFF CITY|Postal Community in or bordering Kansas
+BOGUE|Postal Community in or bordering Kansas
+BONNER SPRINGS|Postal Community in or bordering Kansas
+BOWRING|Postal Community in or bordering Kansas
+BRAMAN|Postal Community in or bordering Kansas
+BRANDON|Postal Community in or bordering Kansas
+BREMEN|Postal Community in or bordering Kansas
+BREWSTER|Postal Community in or bordering Kansas
+BRISTOL|Postal Community in or bordering Kansas
+BRONAUGH|Postal Community in or bordering Kansas
+BRONSON|Postal Community in or bordering Kansas
+BROOKVILLE|Postal Community in or bordering Kansas
+BROWNELL|Postal Community in or bordering Kansas
+BUCKLIN|Postal Community in or bordering Kansas
+BUCYRUS|Postal Community in or bordering Kansas
+BUFFALO|Postal Community in or bordering Kansas
+BUHLER|Postal Community in or bordering Kansas
+BUNKER HILL|Postal Community in or bordering Kansas
+BURCHARD|Postal Community in or bordering Kansas
+BURDEN|Postal Community in or bordering Kansas
+BURDETT|Postal Community in or bordering Kansas
+BURDICK|Postal Community in or bordering Kansas
+BURLINGAME|Postal Community in or bordering Kansas
+BURLINGTON|Postal Community in or bordering Kansas
+BURNS|Postal Community in or bordering Kansas
+BURR OAK|Postal Community in or bordering Kansas
+BURRTON|Postal Community in or bordering Kansas
+BUSHONG|Postal Community in or bordering Kansas
+BUSHTON|Postal Community in or bordering Kansas
+BYERS|Postal Community in or bordering Kansas
+BYRON|Postal Community in or bordering Kansas
+CALDWELL|Postal Community in or bordering Kansas
+CAMBRIDGE|Postal Community in or bordering Kansas
+CANEY|Postal Community in or bordering Kansas
+CANTON|Postal Community in or bordering Kansas
+CAPRON|Postal Community in or bordering Kansas
+CARBONDALE|Postal Community in or bordering Kansas
+CARL JUNCTION|Postal Community in or bordering Kansas
+CARLTON|Postal Community in or bordering Kansas
+CARLYLE|Postal Community in or bordering Kansas
+CARONA|Postal Community in or bordering Kansas
+CASSODAY|Postal Community in or bordering Kansas
+CATHARINE|Postal Community in or bordering Kansas
+CAWKER CITY|Postal Community in or bordering Kansas
+CEDAR|Postal Community in or bordering Kansas
+CEDAR POINT|Postal Community in or bordering Kansas
+CEDAR VALE|Postal Community in or bordering Kansas
+CENTERVILLE|Postal Community in or bordering Kansas
+CENTRALIA|Postal Community in or bordering Kansas
+CENTROPOLIS|Postal Community in or bordering Kansas
+CHANUTE|Postal Community in or bordering Kansas
+CHAPMAN|Postal Community in or bordering Kansas
+CHASE|Postal Community in or bordering Kansas
+CHENEY|Postal Community in or bordering Kansas
+CHEROKEE|Postal Community in or bordering Kansas
+CHERRYVALE|Postal Community in or bordering Kansas
+CHESTER|Postal Community in or bordering Kansas
+CHETOPA|Postal Community in or bordering Kansas
+CIMARRON|Postal Community in or bordering Kansas
+CIRCLEVILLE|Postal Community in or bordering Kansas
+CLAFLIN|Postal Community in or bordering Kansas
+CLAY CENTER|Postal Community in or bordering Kansas
+CLAYTON|Postal Community in or bordering Kansas
+CLEARWATER|Postal Community in or bordering Kansas
+CLEMENTS|Postal Community in or bordering Kansas
+CLEVELAND|Postal Community in or bordering Kansas
+CLIFTON|Postal Community in or bordering Kansas
+CLIMAX|Postal Community in or bordering Kansas
+CLYDE|Postal Community in or bordering Kansas
+COATS|Postal Community in or bordering Kansas
+CODELL|Postal Community in or bordering Kansas
+COFFEYVILLE|Postal Community in or bordering Kansas
+COLBY|Postal Community in or bordering Kansas
+COLDWATER|Postal Community in or bordering Kansas
+COLLYER|Postal Community in or bordering Kansas
+COLONY|Postal Community in or bordering Kansas
+COLUMBUS|Postal Community in or bordering Kansas
+COLWICH|Postal Community in or bordering Kansas
+CONCORDIA|Postal Community in or bordering Kansas
+CONWAY|Postal Community in or bordering Kansas
+CONWAY SPGS|Postal Community in or bordering Kansas
+CONWAY SPRINGS|Postal Community in or bordering Kansas
+COPAN|Postal Community in or bordering Kansas
+COPELAND|Postal Community in or bordering Kansas
+CORNING|Postal Community in or bordering Kansas
+COTTONWD FLS|Postal Community in or bordering Kansas
+COTTONWOOD FALLS|Postal Community in or bordering Kansas
+COUNCIL GROVE|Postal Community in or bordering Kansas
+COUNTRY CLUB|Postal Community in or bordering Kansas
+COUNTRYSIDE|Postal Community in or bordering Kansas
+COURTLAND|Postal Community in or bordering Kansas
+COYVILLE|Postal Community in or bordering Kansas
+CRAIG|Postal Community in or bordering Kansas
+CRESTLINE|Postal Community in or bordering Kansas
+CUBA|Postal Community in or bordering Kansas
+CULBERTSON|Postal Community in or bordering Kansas
+CULLISON|Postal Community in or bordering Kansas
+CULVER|Postal Community in or bordering Kansas
+CUMMINGS|Postal Community in or bordering Kansas
+CUNNINGHAM|Postal Community in or bordering Kansas
+DAMAR|Postal Community in or bordering Kansas
+DANBURY|Postal Community in or bordering Kansas
+DANVILLE|Postal Community in or bordering Kansas
+DE SOTO|Postal Community in or bordering Kansas
+DEERFIELD|Postal Community in or bordering Kansas
+DELAVAN|Postal Community in or bordering Kansas
+DELIA|Postal Community in or bordering Kansas
+DELPHOS|Postal Community in or bordering Kansas
+DENISON|Postal Community in or bordering Kansas
+DENNIS|Postal Community in or bordering Kansas
+DENSMORE|Postal Community in or bordering Kansas
+DENTON|Postal Community in or bordering Kansas
+DERBY|Postal Community in or bordering Kansas
+DEXTER|Postal Community in or bordering Kansas
+DIGHTON|Postal Community in or bordering Kansas
+DILLER|Postal Community in or bordering Kansas
+DODGE CITY|Postal Community in or bordering Kansas
+DORRANCE|Postal Community in or bordering Kansas
+DOUGLASS|Postal Community in or bordering Kansas
+DOWNS|Postal Community in or bordering Kansas
+DRESDEN|Postal Community in or bordering Kansas
+DREXEL|Postal Community in or bordering Kansas
+DU BOIS|Postal Community in or bordering Kansas
+DULUTH|Postal Community in or bordering Kansas
+DUNDEE|Postal Community in or bordering Kansas
+DUNLAP|Postal Community in or bordering Kansas
+DURHAM|Postal Community in or bordering Kansas
+DWIGHT|Postal Community in or bordering Kansas
+EASTBOROUGH|Postal Community in or bordering Kansas
+EASTON|Postal Community in or bordering Kansas
+EDGERTON|Postal Community in or bordering Kansas
+EDNA|Postal Community in or bordering Kansas
+EDSON|Postal Community in or bordering Kansas
+EDWARDSVILLE|Postal Community in or bordering Kansas
+EFFINGHAM|Postal Community in or bordering Kansas
+EL DORADO|Postal Community in or bordering Kansas
+ELK CITY|Postal Community in or bordering Kansas
+ELK FALLS|Postal Community in or bordering Kansas
+ELKHART|Postal Community in or bordering Kansas
+ELLINWOOD|Postal Community in or bordering Kansas
+ELLIS|Postal Community in or bordering Kansas
+ELLSWORTH|Postal Community in or bordering Kansas
+ELMDALE|Postal Community in or bordering Kansas
+ELSMORE|Postal Community in or bordering Kansas
+EMMETT|Postal Community in or bordering Kansas
+EMPORIA|Postal Community in or bordering Kansas
+ENDICOTT|Postal Community in or bordering Kansas
+ENGLEWOOD|Postal Community in or bordering Kansas
+ENSIGN|Postal Community in or bordering Kansas
+ENTERPRISE|Postal Community in or bordering Kansas
+ERIE|Postal Community in or bordering Kansas
+ESBON|Postal Community in or bordering Kansas
+ESKRIDGE|Postal Community in or bordering Kansas
+EUDORA|Postal Community in or bordering Kansas
+EUREKA|Postal Community in or bordering Kansas
+EVEREST|Postal Community in or bordering Kansas
+FAIRBURY|Postal Community in or bordering Kansas
+FAIRVIEW|Postal Community in or bordering Kansas
+FAIRWAY|Postal Community in or bordering Kansas
+FALL RIVER|Postal Community in or bordering Kansas
+FALLS CITY|Postal Community in or bordering Kansas
+FALUN|Postal Community in or bordering Kansas
+FARLINGTON|Postal Community in or bordering Kansas
+FLORENCE|Postal Community in or bordering Kansas
+FONTANA|Postal Community in or bordering Kansas
+FORAKER|Postal Community in or bordering Kansas
+FORD|Postal Community in or bordering Kansas
+FOREST CITY|Postal Community in or bordering Kansas
+FORGAN|Postal Community in or bordering Kansas
+FORMOSO|Postal Community in or bordering Kansas
+FORT DODGE|Postal Community in or bordering Kansas
+FORT LEAVENWORTH|Postal Community in or bordering Kansas
+FORT RILEY|Postal Community in or bordering Kansas
+FORT SCOTT|Postal Community in or bordering Kansas
+FORTESCUE|Postal Community in or bordering Kansas
+FOSTER|Postal Community in or bordering Kansas
+FOWLER|Postal Community in or bordering Kansas
+FRANKFORT|Postal Community in or bordering Kansas
+FRANKLIN|Postal Community in or bordering Kansas
+FREDONIA|Postal Community in or bordering Kansas
+FREEDOM|Postal Community in or bordering Kansas
+FREEPORT|Postal Community in or bordering Kansas
+FRIEND|Postal Community in or bordering Kansas
+FRONTENAC|Postal Community in or bordering Kansas
+FT LEAVNWRTH|Postal Community in or bordering Kansas
+FT RILEY|Postal Community in or bordering Kansas
+FULTON|Postal Community in or bordering Kansas
+GALATIA|Postal Community in or bordering Kansas
+GALENA|Postal Community in or bordering Kansas
+GALESBURG|Postal Community in or bordering Kansas
+GALVA|Postal Community in or bordering Kansas
+GARDEN CITY|Postal Community in or bordering Kansas
+GARDEN PLAIN|Postal Community in or bordering Kansas
+GARDNER|Postal Community in or bordering Kansas
+GARFIELD|Postal Community in or bordering Kansas
+GARLAND|Postal Community in or bordering Kansas
+GARNETT|Postal Community in or bordering Kansas
+GATE|Postal Community in or bordering Kansas
+GAYLORD|Postal Community in or bordering Kansas
+GEM|Postal Community in or bordering Kansas
+GENESEO|Postal Community in or bordering Kansas
+GEUDA SPRINGS|Postal Community in or bordering Kansas
+GIRARD|Postal Community in or bordering Kansas
+GLADE|Postal Community in or bordering Kansas
+GLADSTONE|Postal Community in or bordering Kansas
+GLASCO|Postal Community in or bordering Kansas
+GLEN ELDER|Postal Community in or bordering Kansas
+GODDARD|Postal Community in or bordering Kansas
+GOESSEL|Postal Community in or bordering Kansas
+GOFF|Postal Community in or bordering Kansas
+GOODLAND|Postal Community in or bordering Kansas
+GOODWELL|Postal Community in or bordering Kansas
+GORHAM|Postal Community in or bordering Kansas
+GOVE|Postal Community in or bordering Kansas
+GRAINFIELD|Postal Community in or bordering Kansas
+GRANTVILLE|Postal Community in or bordering Kansas
+GREAT BEND|Postal Community in or bordering Kansas
+GREELEY|Postal Community in or bordering Kansas
+GREEN|Postal Community in or bordering Kansas
+GREENLEAF|Postal Community in or bordering Kansas
+GREENSBURG|Postal Community in or bordering Kansas
+GREENWICH|Postal Community in or bordering Kansas
+GRENOLA|Postal Community in or bordering Kansas
+GRIDLEY|Postal Community in or bordering Kansas
+GRINNELL|Postal Community in or bordering Kansas
+GUIDE ROCK|Postal Community in or bordering Kansas
+GUYMON|Postal Community in or bordering Kansas
+GYPSUM|Postal Community in or bordering Kansas
+HADDAM|Postal Community in or bordering Kansas
+HAIGLER|Postal Community in or bordering Kansas
+HALE|Postal Community in or bordering Kansas
+HALLOWELL|Postal Community in or bordering Kansas
+HALSTEAD|Postal Community in or bordering Kansas
+HAMILTON|Postal Community in or bordering Kansas
+HANOVER|Postal Community in or bordering Kansas
+HANSTON|Postal Community in or bordering Kansas
+HARDTNER|Postal Community in or bordering Kansas
+HARDY|Postal Community in or bordering Kansas
+HARLAN|Postal Community in or bordering Kansas
+HARPER|Postal Community in or bordering Kansas
+HARTFORD|Postal Community in or bordering Kansas
+HARVEYVILLE|Postal Community in or bordering Kansas
+HAVANA|Postal Community in or bordering Kansas
+HAVEN|Postal Community in or bordering Kansas
+HAVENSVILLE|Postal Community in or bordering Kansas
+HAVILAND|Postal Community in or bordering Kansas
+HAYS|Postal Community in or bordering Kansas
+HAYSVILLE|Postal Community in or bordering Kansas
+HAZELTON|Postal Community in or bordering Kansas
+HEALY|Postal Community in or bordering Kansas
+HEIZER|Postal Community in or bordering Kansas
+HENDLEY|Postal Community in or bordering Kansas
+HEPLER|Postal Community in or bordering Kansas
+HERINGTON|Postal Community in or bordering Kansas
+HERKIMER|Postal Community in or bordering Kansas
+HERNDON|Postal Community in or bordering Kansas
+HESSTON|Postal Community in or bordering Kansas
+HIATTVILLE|Postal Community in or bordering Kansas
+HIAWATHA|Postal Community in or bordering Kansas
+HIGHLAND|Postal Community in or bordering Kansas
+HILL CITY|Postal Community in or bordering Kansas
+HILLSBORO|Postal Community in or bordering Kansas
+HOISINGTON|Postal Community in or bordering Kansas
+HOLCOMB|Postal Community in or bordering Kansas
+HOLLENBERG|Postal Community in or bordering Kansas
+HOLLY|Postal Community in or bordering Kansas
+HOLTON|Postal Community in or bordering Kansas
+HOLYROOD|Postal Community in or bordering Kansas
+HOME|Postal Community in or bordering Kansas
+HOOKER|Postal Community in or bordering Kansas
+HOPE|Postal Community in or bordering Kansas
+HORTON|Postal Community in or bordering Kansas
+HOWARD|Postal Community in or bordering Kansas
+HOXIE|Postal Community in or bordering Kansas
+HOYT|Postal Community in or bordering Kansas
+HUBBELL|Postal Community in or bordering Kansas
+HUDSON|Postal Community in or bordering Kansas
+HUGOTON|Postal Community in or bordering Kansas
+HUMBOLDT|Postal Community in or bordering Kansas
+HUME|Postal Community in or bordering Kansas
+HUNNEWELL|Postal Community in or bordering Kansas
+HUNTER|Postal Community in or bordering Kansas
+HUNTLEY|Postal Community in or bordering Kansas
+HURON|Postal Community in or bordering Kansas
+HUTCHINSON|Postal Community in or bordering Kansas
+IDALIA|Postal Community in or bordering Kansas
+INAVALE|Postal Community in or bordering Kansas
+INDEPENDENCE|Postal Community in or bordering Kansas
+INDUSTRY|Postal Community in or bordering Kansas
+INGALLS|Postal Community in or bordering Kansas
+INMAN|Postal Community in or bordering Kansas
+IOLA|Postal Community in or bordering Kansas
+IONIA|Postal Community in or bordering Kansas
+ISABEL|Postal Community in or bordering Kansas
+IUKA|Postal Community in or bordering Kansas
+JAMESTOWN|Postal Community in or bordering Kansas
+JEFFERSON|Postal Community in or bordering Kansas
+JENNINGS|Postal Community in or bordering Kansas
+JETMORE|Postal Community in or bordering Kansas
+JEWELL|Postal Community in or bordering Kansas
+JOHNSON|Postal Community in or bordering Kansas
+JOPLIN|Postal Community in or bordering Kansas
+JUNCTION CITY|Postal Community in or bordering Kansas
+KALVESTA|Postal Community in or bordering Kansas
+KANOPOLIS|Postal Community in or bordering Kansas
+KANORADO|Postal Community in or bordering Kansas
+KANSAS CITY|Postal Community in or bordering Kansas
+KECHI|Postal Community in or bordering Kansas
+KELLY|Postal Community in or bordering Kansas
+KENDALL|Postal Community in or bordering Kansas
+KENSINGTON|Postal Community in or bordering Kansas
+KEYES|Postal Community in or bordering Kansas
+KINCAID|Postal Community in or bordering Kansas
+KINGMAN|Postal Community in or bordering Kansas
+KINGSDOWN|Postal Community in or bordering Kansas
+KINSLEY|Postal Community in or bordering Kansas
+KIOWA|Postal Community in or bordering Kansas
+KIRWIN|Postal Community in or bordering Kansas
+KISMET|Postal Community in or bordering Kansas
+KNOWLES|Postal Community in or bordering Kansas
+LA CROSSE|Postal Community in or bordering Kansas
+LA HARPE|Postal Community in or bordering Kansas
+LACYGNE|Postal Community in or bordering Kansas
+LAIRD|Postal Community in or bordering Kansas
+LAKE CITY|Postal Community in or bordering Kansas
+LAKE OF THE FOREST|Postal Community in or bordering Kansas
+LAKE QUIVIRA|Postal Community in or bordering Kansas
+LAKIN|Postal Community in or bordering Kansas
+LANCASTER|Postal Community in or bordering Kansas
+LANE|Postal Community in or bordering Kansas
+LANGDON|Postal Community in or bordering Kansas
+LANSING|Postal Community in or bordering Kansas
+LARNED|Postal Community in or bordering Kansas
+LATHAM|Postal Community in or bordering Kansas
+LATIMER|Postal Community in or bordering Kansas
+LAWRENCE|Postal Community in or bordering Kansas
+LAWTON|Postal Community in or bordering Kansas
+LE ROY|Postal Community in or bordering Kansas
+LEAVENWORTH|Postal Community in or bordering Kansas
+LEAWOOD|Postal Community in or bordering Kansas
+LEBANON|Postal Community in or bordering Kansas
+LEBO|Postal Community in or bordering Kansas
+LECOMPTON|Postal Community in or bordering Kansas
+LEHIGH|Postal Community in or bordering Kansas
+LENEXA|Postal Community in or bordering Kansas
+LENORA|Postal Community in or bordering Kansas
+LEON|Postal Community in or bordering Kansas
+LEONA|Postal Community in or bordering Kansas
+LEONARDVILLE|Postal Community in or bordering Kansas
+LEOTI|Postal Community in or bordering Kansas
+LEVANT|Postal Community in or bordering Kansas
+LEWIS|Postal Community in or bordering Kansas
+LIBERAL|Postal Community in or bordering Kansas
+LIBERTY|Postal Community in or bordering Kansas
+LIEBENTHAL|Postal Community in or bordering Kansas
+LINCOLN|Postal Community in or bordering Kansas
+LINCOLNVILLE|Postal Community in or bordering Kansas
+LINDSBORG|Postal Community in or bordering Kansas
+LINN|Postal Community in or bordering Kansas
+LINN VALLEY|Postal Community in or bordering Kansas
+LINWOOD|Postal Community in or bordering Kansas
+LITTLE RIVER|Postal Community in or bordering Kansas
+LOGAN|Postal Community in or bordering Kansas
+LOMA LINDA|Postal Community in or bordering Kansas
+LONG ISLAND|Postal Community in or bordering Kansas
+LONGFORD|Postal Community in or bordering Kansas
+LONGTON|Postal Community in or bordering Kansas
+LORRAINE|Postal Community in or bordering Kansas
+LOST SPRINGS|Postal Community in or bordering Kansas
+LOUISBURG|Postal Community in or bordering Kansas
+LOUISVILLE|Postal Community in or bordering Kansas
+LUCAS|Postal Community in or bordering Kansas
+LUDELL|Postal Community in or bordering Kansas
+LURAY|Postal Community in or bordering Kansas
+LYNDON|Postal Community in or bordering Kansas
+LYONS|Postal Community in or bordering Kansas
+MACKSVILLE|Postal Community in or bordering Kansas
+MADISON|Postal Community in or bordering Kansas
+MAHASKA|Postal Community in or bordering Kansas
+MAIZE|Postal Community in or bordering Kansas
+MANCHESTER|Postal Community in or bordering Kansas
+MANHATTAN|Postal Community in or bordering Kansas
+MANKATO|Postal Community in or bordering Kansas
+MANTER|Postal Community in or bordering Kansas
+MAPLE CITY|Postal Community in or bordering Kansas
+MAPLE HILL|Postal Community in or bordering Kansas
+MAPLETON|Postal Community in or bordering Kansas
+MARIENTHAL|Postal Community in or bordering Kansas
+MARION|Postal Community in or bordering Kansas
+MARQUETTE|Postal Community in or bordering Kansas
+MARYSVILLE|Postal Community in or bordering Kansas
+MATFIELD GREEN|Postal Community in or bordering Kansas
+MATFIELD GRN|Postal Community in or bordering Kansas
+MAX|Postal Community in or bordering Kansas
+MAYETTA|Postal Community in or bordering Kansas
+MAYFIELD|Postal Community in or bordering Kansas
+MC COOK|Postal Community in or bordering Kansas
+MC CRACKEN|Postal Community in or bordering Kansas
+MC CUNE|Postal Community in or bordering Kansas
+MC DONALD|Postal Community in or bordering Kansas
+MC LOUTH|Postal Community in or bordering Kansas
+MC PHERSON|Postal Community in or bordering Kansas
+MCCONNELL AFB|Postal Community in or bordering Kansas
+MCCOOK|Postal Community in or bordering Kansas
+MCPHERSON|Postal Community in or bordering Kansas
+MEADE|Postal Community in or bordering Kansas
+MEDFORD|Postal Community in or bordering Kansas
+MEDICINE LDG|Postal Community in or bordering Kansas
+MEDICINE LODGE|Postal Community in or bordering Kansas
+MEDORA|Postal Community in or bordering Kansas
+MELVERN|Postal Community in or bordering Kansas
+MENLO|Postal Community in or bordering Kansas
+MENTOR|Postal Community in or bordering Kansas
+MERIDEN|Postal Community in or bordering Kansas
+MERRIAM|Postal Community in or bordering Kansas
+MIAMI|Postal Community in or bordering Kansas
+MILAN|Postal Community in or bordering Kansas
+MILFORD|Postal Community in or bordering Kansas
+MILTON|Postal Community in or bordering Kansas
+MILTONVALE|Postal Community in or bordering Kansas
+MINDENMINES|Postal Community in or bordering Kansas
+MINNEAPOLIS|Postal Community in or bordering Kansas
+MINNEOLA|Postal Community in or bordering Kansas
+MISSION|Postal Community in or bordering Kansas
+MISSION HILLS|Postal Community in or bordering Kansas
+MODOC|Postal Community in or bordering Kansas
+MOLINE|Postal Community in or bordering Kansas
+MONTEZUMA|Postal Community in or bordering Kansas
+MONUMENT|Postal Community in or bordering Kansas
+MORAN|Postal Community in or bordering Kansas
+MORGANVILLE|Postal Community in or bordering Kansas
+MORLAND|Postal Community in or bordering Kansas
+MORRILL|Postal Community in or bordering Kansas
+MORROWVILLE|Postal Community in or bordering Kansas
+MOSCOW|Postal Community in or bordering Kansas
+MOUND CITY|Postal Community in or bordering Kansas
+MOUND VALLEY|Postal Community in or bordering Kansas
+MOUNDRIDGE|Postal Community in or bordering Kansas
+MOUNT HOPE|Postal Community in or bordering Kansas
+MULBERRY|Postal Community in or bordering Kansas
+MULLINVILLE|Postal Community in or bordering Kansas
+MULVANE|Postal Community in or bordering Kansas
+MUNDEN|Postal Community in or bordering Kansas
+MURDOCK|Postal Community in or bordering Kansas
+MUSCOTAH|Postal Community in or bordering Kansas
+N KANSAS CITY|Postal Community in or bordering Kansas
+NAPONEE|Postal Community in or bordering Kansas
+NARKA|Postal Community in or bordering Kansas
+NASHVILLE|Postal Community in or bordering Kansas
+NATOMA|Postal Community in or bordering Kansas
+NAVARRE|Postal Community in or bordering Kansas
+NEKOMA|Postal Community in or bordering Kansas
+NEODESHA|Postal Community in or bordering Kansas
+NEOSHO FALLS|Postal Community in or bordering Kansas
+NEOSHO RAPIDS|Postal Community in or bordering Kansas
+NESS CITY|Postal Community in or bordering Kansas
+NETAWAKA|Postal Community in or bordering Kansas
+NEW ALBANY|Postal Community in or bordering Kansas
+NEW ALMELO|Postal Community in or bordering Kansas
+NEW CAMBRIA|Postal Community in or bordering Kansas
+NEW CENTURY|Postal Community in or bordering Kansas
+NEW POINT|Postal Community in or bordering Kansas
+NEW STRAWN|Postal Community in or bordering Kansas
+NEWKIRK|Postal Community in or bordering Kansas
+NEWTON|Postal Community in or bordering Kansas
+NICKERSON|Postal Community in or bordering Kansas
+NIOTAZE|Postal Community in or bordering Kansas
+NORCATUR|Postal Community in or bordering Kansas
+NORTH KANSAS CITY|Postal Community in or bordering Kansas
+NORTH NEWTON|Postal Community in or bordering Kansas
+NORTHMOOR|Postal Community in or bordering Kansas
+NORTON|Postal Community in or bordering Kansas
+NORTONVILLE|Postal Community in or bordering Kansas
+NORWAY|Postal Community in or bordering Kansas
+NORWICH|Postal Community in or bordering Kansas
+NW POINT|Postal Community in or bordering Kansas
+OAKHILL|Postal Community in or bordering Kansas
+OAKLEY|Postal Community in or bordering Kansas
+OBERLIN|Postal Community in or bordering Kansas
+ODELL|Postal Community in or bordering Kansas
+ODIN|Postal Community in or bordering Kansas
+OFFERLE|Postal Community in or bordering Kansas
+OGALLAH|Postal Community in or bordering Kansas
+OGDEN|Postal Community in or bordering Kansas
+OKETO|Postal Community in or bordering Kansas
+OLATHE|Postal Community in or bordering Kansas
+OLIVET|Postal Community in or bordering Kansas
+OLMITZ|Postal Community in or bordering Kansas
+OLPE|Postal Community in or bordering Kansas
+OLSBURG|Postal Community in or bordering Kansas
+ONAGA|Postal Community in or bordering Kansas
+ONEIDA|Postal Community in or bordering Kansas
+OPTIMA|Postal Community in or bordering Kansas
+OREGON|Postal Community in or bordering Kansas
+ORLEANS|Postal Community in or bordering Kansas
+OSAGE CITY|Postal Community in or bordering Kansas
+OSAWATOMIE|Postal Community in or bordering Kansas
+OSBORNE|Postal Community in or bordering Kansas
+OSKALOOSA|Postal Community in or bordering Kansas
+OSWEGO|Postal Community in or bordering Kansas
+OTIS|Postal Community in or bordering Kansas
+OTTAWA|Postal Community in or bordering Kansas
+OVERBROOK|Postal Community in or bordering Kansas
+OVERLAND PARK|Postal Community in or bordering Kansas
+OXFORD|Postal Community in or bordering Kansas
+OZAWKIE|Postal Community in or bordering Kansas
+PALCO|Postal Community in or bordering Kansas
+PALMER|Postal Community in or bordering Kansas
+PAOLA|Postal Community in or bordering Kansas
+PARADISE|Postal Community in or bordering Kansas
+PARK|Postal Community in or bordering Kansas
+PARK CITY|Postal Community in or bordering Kansas
+PARKER|Postal Community in or bordering Kansas
+PARKERFIELD|Postal Community in or bordering Kansas
+PARKS|Postal Community in or bordering Kansas
+PARKVILLE|Postal Community in or bordering Kansas
+PARSONS|Postal Community in or bordering Kansas
+PARTRIDGE|Postal Community in or bordering Kansas
+PAWHUSKA|Postal Community in or bordering Kansas
+PAWNEE CITY|Postal Community in or bordering Kansas
+PAWNEE ROCK|Postal Community in or bordering Kansas
+PAXICO|Postal Community in or bordering Kansas
+PEABODY|Postal Community in or bordering Kansas
+PECK|Postal Community in or bordering Kansas
+PECKHAM|Postal Community in or bordering Kansas
+PENALOSA|Postal Community in or bordering Kansas
+PENOKEE|Postal Community in or bordering Kansas
+PEORIA|Postal Community in or bordering Kansas
+PERRY|Postal Community in or bordering Kansas
+PERU|Postal Community in or bordering Kansas
+PETROLIA|Postal Community in or bordering Kansas
+PFEIFER|Postal Community in or bordering Kansas
+PHILLIPSBURG|Postal Community in or bordering Kansas
+PICHER|Postal Community in or bordering Kansas
+PIEDMONT|Postal Community in or bordering Kansas
+PIERCEVILLE|Postal Community in or bordering Kansas
+PIQUA|Postal Community in or bordering Kansas
+PITTSBURG|Postal Community in or bordering Kansas
+PLAINS|Postal Community in or bordering Kansas
+PLAINVILLE|Postal Community in or bordering Kansas
+PLATTE CITY|Postal Community in or bordering Kansas
+PLEASANTON|Postal Community in or bordering Kansas
+PLEVNA|Postal Community in or bordering Kansas
+POMONA|Postal Community in or bordering Kansas
+PORTIS|Postal Community in or bordering Kansas
+POTTER|Postal Community in or bordering Kansas
+POTWIN|Postal Community in or bordering Kansas
+POWHATTAN|Postal Community in or bordering Kansas
+PRAIRIE VIEW|Postal Community in or bordering Kansas
+PRAIRIE VILLAGE|Postal Community in or bordering Kansas
+PRATT|Postal Community in or bordering Kansas
+PRESCOTT|Postal Community in or bordering Kansas
+PRESTON|Postal Community in or bordering Kansas
+PRETTY PR|Postal Community in or bordering Kansas
+PRETTY PRAIRE|Postal Community in or bordering Kansas
+PRETTY PRAIRIE|Postal Community in or bordering Kansas
+PRINCETON|Postal Community in or bordering Kansas
+PROTECTION|Postal Community in or bordering Kansas
+QUAPAW|Postal Community in or bordering Kansas
+QUENEMO|Postal Community in or bordering Kansas
+QUINTER|Postal Community in or bordering Kansas
+RADIUM|Postal Community in or bordering Kansas
+RADLEY|Postal Community in or bordering Kansas
+RAGO|Postal Community in or bordering Kansas
+RAMONA|Postal Community in or bordering Kansas
+RANDALL|Postal Community in or bordering Kansas
+RANDOLPH|Postal Community in or bordering Kansas
+RANSOM|Postal Community in or bordering Kansas
+RANTOUL|Postal Community in or bordering Kansas
+RAYMOND|Postal Community in or bordering Kansas
+READING|Postal Community in or bordering Kansas
+RED CLOUD|Postal Community in or bordering Kansas
+REDFIELD|Postal Community in or bordering Kansas
+RENFROW|Postal Community in or bordering Kansas
+REPUB CITY|Postal Community in or bordering Kansas
+REPUBLIC|Postal Community in or bordering Kansas
+REPUBLICAN CITY|Postal Community in or bordering Kansas
+RESERVE|Postal Community in or bordering Kansas
+REXFORD|Postal Community in or bordering Kansas
+REYNOLDS|Postal Community in or bordering Kansas
+RICE|Postal Community in or bordering Kansas
+RICHARDS|Postal Community in or bordering Kansas
+RICHFIELD|Postal Community in or bordering Kansas
+RICHMOND|Postal Community in or bordering Kansas
+RILEY|Postal Community in or bordering Kansas
+RIVERSIDE|Postal Community in or bordering Kansas
+RIVERTON|Postal Community in or bordering Kansas
+ROBINSON|Postal Community in or bordering Kansas
+ROCK|Postal Community in or bordering Kansas
+ROLLA|Postal Community in or bordering Kansas
+ROSALIA|Postal Community in or bordering Kansas
+ROSE HILL|Postal Community in or bordering Kansas
+ROSEDALE|Postal Community in or bordering Kansas
+ROSSTON|Postal Community in or bordering Kansas
+ROSSVILLE|Postal Community in or bordering Kansas
+ROXBURY|Postal Community in or bordering Kansas
+ROZEL|Postal Community in or bordering Kansas
+RULO|Postal Community in or bordering Kansas
+RUSH CENTER|Postal Community in or bordering Kansas
+RUSHVILLE|Postal Community in or bordering Kansas
+RUSSELL|Postal Community in or bordering Kansas
+RUSSELL SPRINGS|Postal Community in or bordering Kansas
+S COFFEYVILLE|Postal Community in or bordering Kansas
+S HUTCHINSON|Postal Community in or bordering Kansas
+SABETHA|Postal Community in or bordering Kansas
+SAINT FRANCIS|Postal Community in or bordering Kansas
+SAINT GEORGE|Postal Community in or bordering Kansas
+SAINT JOHN|Postal Community in or bordering Kansas
+SAINT JOSEPH|Postal Community in or bordering Kansas
+SAINT MARYS|Postal Community in or bordering Kansas
+SAINT PAUL|Postal Community in or bordering Kansas
+SALEM|Postal Community in or bordering Kansas
+SALINA|Postal Community in or bordering Kansas
+SATANTA|Postal Community in or bordering Kansas
+SAVONBURG|Postal Community in or bordering Kansas
+SAWYER|Postal Community in or bordering Kansas
+SCAMMON|Postal Community in or bordering Kansas
+SCANDIA|Postal Community in or bordering Kansas
+SCOTT CITY|Postal Community in or bordering Kansas
+SCOTTSVILLE|Postal Community in or bordering Kansas
+SCRANTON|Postal Community in or bordering Kansas
+SEDAN|Postal Community in or bordering Kansas
+SEDGWICK|Postal Community in or bordering Kansas
+SELDEN|Postal Community in or bordering Kansas
+SELMAN|Postal Community in or bordering Kansas
+SENECA|Postal Community in or bordering Kansas
+SEVERANCE|Postal Community in or bordering Kansas
+SEVERY|Postal Community in or bordering Kansas
+SEWARD|Postal Community in or bordering Kansas
+SHARON|Postal Community in or bordering Kansas
+SHARON SPGS|Postal Community in or bordering Kansas
+SHARON SPRINGS|Postal Community in or bordering Kansas
+SHAWNEE|Postal Community in or bordering Kansas
+SHAWNEE MISSION|Postal Community in or bordering Kansas
+SHAWNEE MSN|Postal Community in or bordering Kansas
+SHERIDAN LAKE|Postal Community in or bordering Kansas
+SHIDLER|Postal Community in or bordering Kansas
+SHIELDS|Postal Community in or bordering Kansas
+SILVER LAKE|Postal Community in or bordering Kansas
+SIMPSON|Postal Community in or bordering Kansas
+SMITH CENTER|Postal Community in or bordering Kansas
+SMOLAN|Postal Community in or bordering Kansas
+SOLDIER|Postal Community in or bordering Kansas
+SOLOMON|Postal Community in or bordering Kansas
+SOUTH HAVEN|Postal Community in or bordering Kansas
+SOUTH HUTCHINSON|Postal Community in or bordering Kansas
+SPEARVILLE|Postal Community in or bordering Kansas
+SPIVEY|Postal Community in or bordering Kansas
+SPRING HILL|Postal Community in or bordering Kansas
+ST BENEDICT|Postal Community in or bordering Kansas
+STAFFORD|Postal Community in or bordering Kansas
+STAMFORD|Postal Community in or bordering Kansas
+STANLEY|Postal Community in or bordering Kansas
+STARK|Postal Community in or bordering Kansas
+STEELE CITY|Postal Community in or bordering Kansas
+STERLING|Postal Community in or bordering Kansas
+STILWELL|Postal Community in or bordering Kansas
+STOCKTON|Postal Community in or bordering Kansas
+STONINGTON|Postal Community in or bordering Kansas
+STOTESBURY|Postal Community in or bordering Kansas
+STRATTON|Postal Community in or bordering Kansas
+STRONG CITY|Postal Community in or bordering Kansas
+STUDLEY|Postal Community in or bordering Kansas
+STUTTGART|Postal Community in or bordering Kansas
+SUBLETTE|Postal Community in or bordering Kansas
+SUMMERFIELD|Postal Community in or bordering Kansas
+SUN CITY|Postal Community in or bordering Kansas
+SUPERIOR|Postal Community in or bordering Kansas
+SUSANK|Postal Community in or bordering Kansas
+SYLVAN GROVE|Postal Community in or bordering Kansas
+SYLVIA|Postal Community in or bordering Kansas
+SYRACUSE|Postal Community in or bordering Kansas
+TALMAGE|Postal Community in or bordering Kansas
+TAMPA|Postal Community in or bordering Kansas
+TECUMSEH|Postal Community in or bordering Kansas
+TESCOTT|Postal Community in or bordering Kansas
+THAYER|Postal Community in or bordering Kansas
+TIMKEN|Postal Community in or bordering Kansas
+TIPTON|Postal Community in or bordering Kansas
+TONGANOXIE|Postal Community in or bordering Kansas
+TOPEKA|Postal Community in or bordering Kansas
+TORONTO|Postal Community in or bordering Kansas
+TOWANDA|Postal Community in or bordering Kansas
+TOWNER|Postal Community in or bordering Kansas
+TREECE|Postal Community in or bordering Kansas
+TRENTON|Postal Community in or bordering Kansas
+TRIBUNE|Postal Community in or bordering Kansas
+TROY|Postal Community in or bordering Kansas
+TURON|Postal Community in or bordering Kansas
+TURPIN|Postal Community in or bordering Kansas
+TYRONE|Postal Community in or bordering Kansas
+UDALL|Postal Community in or bordering Kansas
+ULYSSES|Postal Community in or bordering Kansas
+UNIONTOWN|Postal Community in or bordering Kansas
+UTICA|Postal Community in or bordering Kansas
+VALLEY CENTER|Postal Community in or bordering Kansas
+VALLEY FALLS|Postal Community in or bordering Kansas
+VASSAR|Postal Community in or bordering Kansas
+VERMILLION|Postal Community in or bordering Kansas
+VICTORIA|Postal Community in or bordering Kansas
+VILLAGE OF LOCH LLOYD|Postal Community in or bordering Kansas
+VIOLA|Postal Community in or bordering Kansas
+VIRGIL|Postal Community in or bordering Kansas
+VLG LOCH LOYD|Postal Community in or bordering Kansas
+VLIETS|Postal Community in or bordering Kansas
+WA KEENEY|Postal Community in or bordering Kansas
+WAKARUSA|Postal Community in or bordering Kansas
+WAKEENEY|Postal Community in or bordering Kansas
+WAKEFIELD|Postal Community in or bordering Kansas
+WALDO|Postal Community in or bordering Kansas
+WALDRON|Postal Community in or bordering Kansas
+WALLACE|Postal Community in or bordering Kansas
+WALNUT|Postal Community in or bordering Kansas
+WALSH|Postal Community in or bordering Kansas
+WALTON|Postal Community in or bordering Kansas
+WAMEGO|Postal Community in or bordering Kansas
+WANN|Postal Community in or bordering Kansas
+WASHINGTON|Postal Community in or bordering Kansas
+WATERVILLE|Postal Community in or bordering Kansas
+WATHENA|Postal Community in or bordering Kansas
+WAVERLY|Postal Community in or bordering Kansas
+WEBB CITY|Postal Community in or bordering Kansas
+WEBBER|Postal Community in or bordering Kansas
+WEIR|Postal Community in or bordering Kansas
+WELCH|Postal Community in or bordering Kansas
+WELDA|Postal Community in or bordering Kansas
+WELLINGTON|Postal Community in or bordering Kansas
+WELLS|Postal Community in or bordering Kansas
+WELLSVILLE|Postal Community in or bordering Kansas
+WESKAN|Postal Community in or bordering Kansas
+WEST LINE|Postal Community in or bordering Kansas
+WESTFALL|Postal Community in or bordering Kansas
+WESTMORELAND|Postal Community in or bordering Kansas
+WESTON|Postal Community in or bordering Kansas
+WESTPHALIA|Postal Community in or bordering Kansas
+WETMORE|Postal Community in or bordering Kansas
+WHEATON|Postal Community in or bordering Kansas
+WHEELER|Postal Community in or bordering Kansas
+WHITE CITY|Postal Community in or bordering Kansas
+WHITE CLOUD|Postal Community in or bordering Kansas
+WHITEWATER|Postal Community in or bordering Kansas
+WHITING|Postal Community in or bordering Kansas
+WICHITA|Postal Community in or bordering Kansas
+WILLIAMSBURG|Postal Community in or bordering Kansas
+WILLIS|Postal Community in or bordering Kansas
+WILLOWBROOK|Postal Community in or bordering Kansas
+WILMORE|Postal Community in or bordering Kansas
+WILSEY|Postal Community in or bordering Kansas
+WILSON|Postal Community in or bordering Kansas
+WILSONVILLE|Postal Community in or bordering Kansas
+WINCHESTER|Postal Community in or bordering Kansas
+WINDOM|Postal Community in or bordering Kansas
+WINFIELD|Postal Community in or bordering Kansas
+WINONA|Postal Community in or bordering Kansas
+WOODBINE|Postal Community in or bordering Kansas
+WOODSTON|Postal Community in or bordering Kansas
+WRAY|Postal Community in or bordering Kansas
+WRIGHT|Postal Community in or bordering Kansas
+WYMORE|Postal Community in or bordering Kansas
+YATES CENTER|Postal Community in or bordering Kansas
+ZENDA|Postal Community in or bordering Kansas
+ZURICH|Postal Community in or bordering Kansas
+

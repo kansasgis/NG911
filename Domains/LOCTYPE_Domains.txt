@@ -1,0 +1,4 @@
+Values|Definition
+PRIMARY|The point is placed on the structure or site that it represents. This point shall be used in call-routing
+ACCESS|The point is placed on the driveway or other access point. This point shall not be used in call-routing
+OTHER|The point is placed on some other location relative to the site or structure it represents. This point shall not be used in call-routing.

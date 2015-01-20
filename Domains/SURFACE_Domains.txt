@@ -1,0 +1,6 @@
+Values|Definition
+PAVED|Asphalt, Concrete, Composite or Bituminous surface
+GRAVEL|Regularly maintained surface of gravel, rock or sand that has been deliberated placed
+SOIL|Regularly maintained road surface of soil or dirt that contains no deliberately placed material
+PROPOSED|Segment is platted or planned but not yet built
+MINIMUM|Segment has been legally decalred "Minimum Maintenance" by the local authority

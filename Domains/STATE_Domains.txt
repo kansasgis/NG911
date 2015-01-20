@@ -1,0 +1,6 @@
+Values|Definition
+KS|Kansas
+MO|Missouri
+OK|Oklahoma
+CO|Colorado
+NE|Nebraska

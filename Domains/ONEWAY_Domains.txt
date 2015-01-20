@@ -1,0 +1,4 @@
+Values|Definition
+FT|One way travel from FROM or Start node to TO or End node
+TF|One way travel from TO or END node to FROM or Start node
+B|Travel in both directions allowed

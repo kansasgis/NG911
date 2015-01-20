@@ -1,0 +1,35 @@
+Values|Definition
+AIRPORT|A place from which aircrafts operate, such as an airport or heliport.
+ARENA|Enclosed area used for sports events.
+BANK|Business establishment in which money is kept for saving, commercial purposes, is invested, supplied for loans, or exchanged.
+BAR|A bar or saloon.
+BUS_STATION|Terminal that serves bus passengers, such as a bus depot or bus terminal.
+CAFE|Usually a small and informal establishment that serves various refreshments (such as coffee); coffee shop.
+CLASSROOM|Academic classroom or lecture hall.
+CLUB|Dance club, nightclub, or discotheque.
+CONSTRUCTION|Construction site.
+CONVENTION_CENTER|Convention center or exhibition hall.
+GOVERNMENT|Government building, such as those used by the legislative, executive, or judicial branches of governments, including court houses, police stations, and military installations.
+HOSPITAL|Hospital, hospice, medical clinic, mental institution, or doctor's office.
+HOTEL|Hotel, motel, inn, or other lodging establishment.
+INDUSTRIAL|Industrial setting, such as a manufacturing floor or power plant.
+LIBRARY|Library or other public place in which literary and artistic materials, such as books, music, periodicals, newspapers, pamphlets, prints, records, and tapes, are kept for reading, reference, or lending.
+OFFICE|Business setting, such as an office.
+OTHER|A place without a registered place type representation.
+OUTDOORS|Outside a building, in or into the open air, such as a park or city streets.
+PARKING|A parking lot or parking garage.
+PLACE_OF_WORSHIP|A religious site where congregations gather for religious observances, such as a church, chapel, meetinghouse, mosque, shrine, synagogue, or temple.
+PRISON|Correctional institution where persons are confined while on trial or for punishment, such as a prison, penitentiary, jail, brig.
+PUBLIC|Public area such as a shopping mall, street, park, public building, train station, or airport or in public conveyance such as a bus, train, plane, or ship. This general description encompasses the more precise descriptors 'street', 'public-transport', 'aircraft', 'bus', 'bus-station', 'train', 'train-station', 'airport', 'shopping-area', 'outdoors', and 'watercraft'.
+RESIDENCE|A private or residential setting, not necessarily the personal residence of the entity, e.g., including a friend's home.
+RESTAURANT|Restaurant, coffee shop, or other public dining establishment.
+SCHOOL|School or university property, but not necessarily a classroom or library.
+SHOPPING_AREA|Shopping mall or shopping area. This area is a large, often enclosed, shopping complex containing various stores, businesses, and restaurants usually accessible by common passageways.
+STADIUM|Large, usually open structure for sports events, including a racetrack.
+STORE|Place where merchandise is offered for sale, such as a shop.
+STREET|A public thoroughfare, such as an avenue, street, alley, lane, or road, including any sidewalks.
+THEATER|Theater, lecture hall, auditorium, classroom, movie theater, or similar facility designed for presentations, talks, plays, music performances, and other events involving an audience.
+TRAIN_STATION|Terminal where trains load or unload passengers or goods; railway station, railroad station, railroad terminal, train depot.
+UNKNOWN|The type of place is unknown.
+WAREHOUSE|Place in which goods or merchandise are stored, such as a storehouse or self-storage facility.
+WATER|In, on, or above bodies of water, such as an ocean, lake, river, canal, or other waterway.

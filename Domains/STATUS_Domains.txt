@@ -1,0 +1,4 @@
+Values|Definition
+OPEN|Road segment is open to vehicle traffic
+CLOSED|Road segment is closed to vehicle traffic
+NOT BUILT|Road segment has not been built
