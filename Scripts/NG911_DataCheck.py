@@ -626,22 +626,22 @@ def checkRequiredFieldValues(pathsInfoObject):
                     result = GetCount_management(lyr)
                     count = int(result.getOutput(0))
 
+
                     #if count is greater than 0, it means a required value somewhere isn't filled in
                     if count > 0:
                         #make sure the objectID gets included in the search for reporting
                         if id1 not in matchingFields:
                             matchingFields.append(id1)
 
-                        k = 0
-
                         #run a search cursor to get any/all records where a required field value is null
                         with SearchCursor(fullPath, (matchingFields), wc) as rows:
                             for row in rows:
+                                k = 0
                                 #get object ID of the field
                                 oid = str(row[matchingFields.index(id1)])
 
                                 #loop through row
-                                while k < 0:
+                                while k < len(matchingFields):
                                     #see if the value is nothing
                                     if row[k] is None:
                                         #report the value if it is indeed null
@@ -650,8 +650,8 @@ def checkRequiredFieldValues(pathsInfoObject):
                                         val = (today, report, filename, matchingFields[k], oid)
                                         values.append(val)
 
-                                        #iterate!
-                                        k = k + 1
+                                    #iterate!
+                                    k = k + 1
                     else:
                         userMessage( "All required values present for " + filename)
 
