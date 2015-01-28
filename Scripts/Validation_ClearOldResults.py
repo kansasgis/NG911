@@ -8,7 +8,7 @@
 #-------------------------------------------------------------------------------
 
 def main():
-    from arcpy import GetParameterAsText, DeleteRows_management
+    from arcpy import GetParameterAsText, DeleteRows_management, Exists
     from NG911_DataCheck import userMessage
     from os.path import join
 
@@ -18,13 +18,15 @@ def main():
 
     if templateTableClear == "true":
         templateTable = join(gdb, "TemplateCheckResults")
-        DeleteRows_management(templateTable)
-        userMessage("TemplateCheckResults cleared")
+        if Exists(templateTable):
+            DeleteRows_management(templateTable)
+            userMessage("TemplateCheckResults cleared")
 
     if fieldValuesTableClear == "true":
         fieldValuesTable = join(gdb,"FieldValuesCheckResults")
-        DeleteRows_management(fieldValuesTable)
-        userMessage("FieldValuesCheckResults cleared")
+        if Exists(fieldValuesTable):
+            DeleteRows_management(fieldValuesTable)
+            userMessage("FieldValuesCheckResults cleared")
 
 if __name__ == '__main__':
     main()

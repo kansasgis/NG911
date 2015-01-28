@@ -240,11 +240,11 @@ def geocodeAddressPoints(pathsInfoObject):
 ##    if version == "10.1":
 ##        gc_fieldMap = "Street LABEL VISIBLE NONE;City MUNI VISIBLE NONE;State State VISIBLE NONE;ZIP ZIP VISIBLE NONE"
 
-    try:
-        GeocodeAddresses_geocoding(gc_table, Locator, gc_fieldMap, output, "STATIC")
-        i = 1
-    except:
-        userMessage("Cannot complete geocoding")
+##    try:
+    GeocodeAddresses_geocoding(gc_table, Locator, gc_fieldMap, output, "STATIC")
+##        i = 1
+##    except:
+##        userMessage("Cannot complete geocoding")
 
     if i == 1:
         wc = "Status <> 'M'"
@@ -446,6 +446,7 @@ def getRequiredFields(folder):
 
 
 def getFieldDomain(field, folder):
+##    userMessage(field)
 
     docPath = path.join(folder, field + "_Domains.txt")
     ## print docPath
@@ -462,9 +463,10 @@ def getFieldDomain(field, folder):
 
     #parse the text to population the field definition dictionary
     for line in doc.readlines():
-        stuffList = line.split("|")
-        #print stuffList
-        domainDict[stuffList[0]] = stuffList[1].rstrip()
+        if line != "\n":
+            stuffList = line.split("|")
+##            userMessage(stuffList)
+            domainDict[stuffList[0].rstrip().lstrip()] = stuffList[1].rstrip().lstrip()
 
     return domainDict
 

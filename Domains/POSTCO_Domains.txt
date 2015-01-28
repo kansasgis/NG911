@@ -220,6 +220,7 @@ DWIGHT|Postal Community in or bordering Kansas
 EASTBOROUGH|Postal Community in or bordering Kansas
 EASTON|Postal Community in or bordering Kansas
 EDGERTON|Postal Community in or bordering Kansas
+EDMOND|Postal Community in or bordering Kansas
 EDNA|Postal Community in or bordering Kansas
 EDSON|Postal Community in or bordering Kansas
 EDWARDSVILLE|Postal Community in or bordering Kansas
@@ -694,12 +695,13 @@ RUSSELL SPRINGS|Postal Community in or bordering Kansas
 S COFFEYVILLE|Postal Community in or bordering Kansas
 S HUTCHINSON|Postal Community in or bordering Kansas
 SABETHA|Postal Community in or bordering Kansas
-SAINT FRANCIS|Postal Community in or bordering Kansas
-SAINT GEORGE|Postal Community in or bordering Kansas
-SAINT JOHN|Postal Community in or bordering Kansas
-SAINT JOSEPH|Postal Community in or bordering Kansas
-SAINT MARYS|Postal Community in or bordering Kansas
-SAINT PAUL|Postal Community in or bordering Kansas
+ST BENEDICT|Postal Community in or bordering Kansas
+ST FRANCIS|Postal Community in or bordering Kansas
+ST GEORGE|Postal Community in or bordering Kansas
+ST JOHN|Postal Community in or bordering Kansas
+ST JOSEPH|Postal Community in or bordering Kansas
+ST MARYS|Postal Community in or bordering Kansas
+ST PAUL|Postal Community in or bordering Kansas
 SALEM|Postal Community in or bordering Kansas
 SALINA|Postal Community in or bordering Kansas
 SATANTA|Postal Community in or bordering Kansas
