@@ -49,9 +49,11 @@ Values|Definition
 66016|Zip Code in or bordering Kansas
 66017|Zip Code in or bordering Kansas
 66018|Zip Code in or bordering Kansas
+66019|Zip Code in or bordering Kansas
 66020|Zip Code in or bordering Kansas
 66021|Zip Code in or bordering Kansas
 66023|Zip Code in or bordering Kansas
+66024|Zip Code in or bordering Kansas
 66025|Zip Code in or bordering Kansas
 66026|Zip Code in or bordering Kansas
 66027|Zip Code in or bordering Kansas
@@ -60,6 +62,7 @@ Values|Definition
 66032|Zip Code in or bordering Kansas
 66033|Zip Code in or bordering Kansas
 66035|Zip Code in or bordering Kansas
+66036|Zip Code in or bordering Kansas
 66039|Zip Code in or bordering Kansas
 66040|Zip Code in or bordering Kansas
 66041|Zip Code in or bordering Kansas
@@ -72,6 +75,7 @@ Values|Definition
 66048|Zip Code in or bordering Kansas
 66049|Zip Code in or bordering Kansas
 66050|Zip Code in or bordering Kansas
+66051|Zip Code in or bordering Kansas
 66052|Zip Code in or bordering Kansas
 66053|Zip Code in or bordering Kansas
 66054|Zip Code in or bordering Kansas
@@ -80,6 +84,7 @@ Values|Definition
 66060|Zip Code in or bordering Kansas
 66061|Zip Code in or bordering Kansas
 66062|Zip Code in or bordering Kansas
+66063|Zip Code in or bordering Kansas
 66064|Zip Code in or bordering Kansas
 66066|Zip Code in or bordering Kansas
 66067|Zip Code in or bordering Kansas
@@ -111,12 +116,16 @@ Values|Definition
 66105|Zip Code in or bordering Kansas
 66106|Zip Code in or bordering Kansas
 66109|Zip Code in or bordering Kansas
+66110|Zip Code in or bordering Kansas
 66111|Zip Code in or bordering Kansas
 66112|Zip Code in or bordering Kansas
 66113|Zip Code in or bordering Kansas
 66115|Zip Code in or bordering Kansas
+66117|Zip Code in or bordering Kansas
 66118|Zip Code in or bordering Kansas
+66119|Zip Code in or bordering Kansas
 66160|Zip Code in or bordering Kansas
+66201|Zip Code in or bordering Kansas
 66202|Zip Code in or bordering Kansas
 66203|Zip Code in or bordering Kansas
 66204|Zip Code in or bordering Kansas
@@ -137,10 +146,19 @@ Values|Definition
 66219|Zip Code in or bordering Kansas
 66220|Zip Code in or bordering Kansas
 66221|Zip Code in or bordering Kansas
+66222|Zip Code in or bordering Kansas
 66223|Zip Code in or bordering Kansas
 66224|Zip Code in or bordering Kansas
+66225|Zip Code in or bordering Kansas
 66226|Zip Code in or bordering Kansas
 66227|Zip Code in or bordering Kansas
+66250|Zip Code in or bordering Kansas
+66251|Zip Code in or bordering Kansas
+66276|Zip Code in or bordering Kansas
+66282|Zip Code in or bordering Kansas
+66283|Zip Code in or bordering Kansas
+66285|Zip Code in or bordering Kansas
+66286|Zip Code in or bordering Kansas
 66401|Zip Code in or bordering Kansas
 66402|Zip Code in or bordering Kansas
 66403|Zip Code in or bordering Kansas
@@ -158,10 +176,12 @@ Values|Definition
 66417|Zip Code in or bordering Kansas
 66418|Zip Code in or bordering Kansas
 66419|Zip Code in or bordering Kansas
+66420|Zip Code in or bordering Kansas
 66422|Zip Code in or bordering Kansas
 66423|Zip Code in or bordering Kansas
 66424|Zip Code in or bordering Kansas
 66425|Zip Code in or bordering Kansas
+66426|Zip Code in or bordering Kansas
 66427|Zip Code in or bordering Kansas
 66428|Zip Code in or bordering Kansas
 66429|Zip Code in or bordering Kansas
@@ -176,8 +196,10 @@ Values|Definition
 66442|Zip Code in or bordering Kansas
 66449|Zip Code in or bordering Kansas
 66451|Zip Code in or bordering Kansas
+66501|Zip Code in or bordering Kansas
 66502|Zip Code in or bordering Kansas
 66503|Zip Code in or bordering Kansas
+66505|Zip Code in or bordering Kansas
 66506|Zip Code in or bordering Kansas
 66507|Zip Code in or bordering Kansas
 66508|Zip Code in or bordering Kansas
@@ -218,6 +240,7 @@ Values|Definition
 66550|Zip Code in or bordering Kansas
 66552|Zip Code in or bordering Kansas
 66554|Zip Code in or bordering Kansas
+66601|Zip Code in or bordering Kansas
 66603|Zip Code in or bordering Kansas
 66604|Zip Code in or bordering Kansas
 66605|Zip Code in or bordering Kansas
@@ -234,6 +257,19 @@ Values|Definition
 66617|Zip Code in or bordering Kansas
 66618|Zip Code in or bordering Kansas
 66619|Zip Code in or bordering Kansas
+66620|Zip Code in or bordering Kansas
+66621|Zip Code in or bordering Kansas
+66622|Zip Code in or bordering Kansas
+66624|Zip Code in or bordering Kansas
+66625|Zip Code in or bordering Kansas
+66626|Zip Code in or bordering Kansas
+66629|Zip Code in or bordering Kansas
+66636|Zip Code in or bordering Kansas
+66647|Zip Code in or bordering Kansas
+66667|Zip Code in or bordering Kansas
+66675|Zip Code in or bordering Kansas
+66683|Zip Code in or bordering Kansas
+66699|Zip Code in or bordering Kansas
 66701|Zip Code in or bordering Kansas
 66710|Zip Code in or bordering Kansas
 66711|Zip Code in or bordering Kansas
@@ -255,6 +291,7 @@ Values|Definition
 66739|Zip Code in or bordering Kansas
 66740|Zip Code in or bordering Kansas
 66741|Zip Code in or bordering Kansas
+66742|Zip Code in or bordering Kansas
 66743|Zip Code in or bordering Kansas
 66746|Zip Code in or bordering Kansas
 66748|Zip Code in or bordering Kansas
@@ -266,6 +303,8 @@ Values|Definition
 66756|Zip Code in or bordering Kansas
 66757|Zip Code in or bordering Kansas
 66758|Zip Code in or bordering Kansas
+66759|Zip Code in or bordering Kansas
+66760|Zip Code in or bordering Kansas
 66761|Zip Code in or bordering Kansas
 66762|Zip Code in or bordering Kansas
 66763|Zip Code in or bordering Kansas
@@ -282,6 +321,7 @@ Values|Definition
 66779|Zip Code in or bordering Kansas
 66780|Zip Code in or bordering Kansas
 66781|Zip Code in or bordering Kansas
+66782|Zip Code in or bordering Kansas
 66783|Zip Code in or bordering Kansas
 66801|Zip Code in or bordering Kansas
 66830|Zip Code in or bordering Kansas
@@ -301,6 +341,7 @@ Values|Definition
 66852|Zip Code in or bordering Kansas
 66853|Zip Code in or bordering Kansas
 66854|Zip Code in or bordering Kansas
+66855|Zip Code in or bordering Kansas
 66856|Zip Code in or bordering Kansas
 66857|Zip Code in or bordering Kansas
 66858|Zip Code in or bordering Kansas
@@ -308,6 +349,7 @@ Values|Definition
 66860|Zip Code in or bordering Kansas
 66861|Zip Code in or bordering Kansas
 66862|Zip Code in or bordering Kansas
+66863|Zip Code in or bordering Kansas
 66864|Zip Code in or bordering Kansas
 66865|Zip Code in or bordering Kansas
 66866|Zip Code in or bordering Kansas
@@ -359,6 +401,7 @@ Values|Definition
 67008|Zip Code in or bordering Kansas
 67009|Zip Code in or bordering Kansas
 67010|Zip Code in or bordering Kansas
+67012|Zip Code in or bordering Kansas
 67013|Zip Code in or bordering Kansas
 67016|Zip Code in or bordering Kansas
 67017|Zip Code in or bordering Kansas
@@ -380,6 +423,7 @@ Values|Definition
 67037|Zip Code in or bordering Kansas
 67038|Zip Code in or bordering Kansas
 67039|Zip Code in or bordering Kansas
+67041|Zip Code in or bordering Kansas
 67042|Zip Code in or bordering Kansas
 67045|Zip Code in or bordering Kansas
 67047|Zip Code in or bordering Kansas
@@ -449,6 +493,7 @@ Values|Definition
 67155|Zip Code in or bordering Kansas
 67156|Zip Code in or bordering Kansas
 67159|Zip Code in or bordering Kansas
+67201|Zip Code in or bordering Kansas
 67202|Zip Code in or bordering Kansas
 67203|Zip Code in or bordering Kansas
 67204|Zip Code in or bordering Kansas
@@ -477,13 +522,19 @@ Values|Definition
 67232|Zip Code in or bordering Kansas
 67235|Zip Code in or bordering Kansas
 67260|Zip Code in or bordering Kansas
+67275|Zip Code in or bordering Kansas
+67276|Zip Code in or bordering Kansas
+67277|Zip Code in or bordering Kansas
+67278|Zip Code in or bordering Kansas
 67301|Zip Code in or bordering Kansas
 67330|Zip Code in or bordering Kansas
 67332|Zip Code in or bordering Kansas
 67333|Zip Code in or bordering Kansas
+67334|Zip Code in or bordering Kansas
 67335|Zip Code in or bordering Kansas
 67336|Zip Code in or bordering Kansas
 67337|Zip Code in or bordering Kansas
+67340|Zip Code in or bordering Kansas
 67341|Zip Code in or bordering Kansas
 67342|Zip Code in or bordering Kansas
 67344|Zip Code in or bordering Kansas
@@ -500,7 +551,10 @@ Values|Definition
 67357|Zip Code in or bordering Kansas
 67360|Zip Code in or bordering Kansas
 67361|Zip Code in or bordering Kansas
+67363|Zip Code in or bordering Kansas
+67364|Zip Code in or bordering Kansas
 67401|Zip Code in or bordering Kansas
+67402|Zip Code in or bordering Kansas
 67410|Zip Code in or bordering Kansas
 67416|Zip Code in or bordering Kansas
 67417|Zip Code in or bordering Kansas
@@ -559,6 +613,7 @@ Values|Definition
 67492|Zip Code in or bordering Kansas
 67501|Zip Code in or bordering Kansas
 67502|Zip Code in or bordering Kansas
+67504|Zip Code in or bordering Kansas
 67505|Zip Code in or bordering Kansas
 67510|Zip Code in or bordering Kansas
 67511|Zip Code in or bordering Kansas
@@ -610,6 +665,7 @@ Values|Definition
 67581|Zip Code in or bordering Kansas
 67583|Zip Code in or bordering Kansas
 67584|Zip Code in or bordering Kansas
+67585|Zip Code in or bordering Kansas
 67601|Zip Code in or bordering Kansas
 67621|Zip Code in or bordering Kansas
 67622|Zip Code in or bordering Kansas
@@ -648,10 +704,12 @@ Values|Definition
 67663|Zip Code in or bordering Kansas
 67664|Zip Code in or bordering Kansas
 67665|Zip Code in or bordering Kansas
+67667|Zip Code in or bordering Kansas
 67669|Zip Code in or bordering Kansas
 67671|Zip Code in or bordering Kansas
 67672|Zip Code in or bordering Kansas
 67673|Zip Code in or bordering Kansas
+67674|Zip Code in or bordering Kansas
 67675|Zip Code in or bordering Kansas
 67701|Zip Code in or bordering Kansas
 67730|Zip Code in or bordering Kansas
@@ -685,12 +743,14 @@ Values|Definition
 67831|Zip Code in or bordering Kansas
 67834|Zip Code in or bordering Kansas
 67835|Zip Code in or bordering Kansas
+67836|Zip Code in or bordering Kansas
 67837|Zip Code in or bordering Kansas
 67838|Zip Code in or bordering Kansas
 67839|Zip Code in or bordering Kansas
 67840|Zip Code in or bordering Kansas
 67841|Zip Code in or bordering Kansas
 67842|Zip Code in or bordering Kansas
+67843|Zip Code in or bordering Kansas
 67844|Zip Code in or bordering Kansas
 67846|Zip Code in or bordering Kansas
 67849|Zip Code in or bordering Kansas
@@ -719,6 +779,7 @@ Values|Definition
 67880|Zip Code in or bordering Kansas
 67882|Zip Code in or bordering Kansas
 67901|Zip Code in or bordering Kansas
+67905|Zip Code in or bordering Kansas
 67950|Zip Code in or bordering Kansas
 67951|Zip Code in or bordering Kansas
 67952|Zip Code in or bordering Kansas
@@ -801,202 +862,3 @@ Values|Definition
 81047|Zip Code in or bordering Kansas
 81071|Zip Code in or bordering Kansas
 81090|Zip Code in or bordering Kansas
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
