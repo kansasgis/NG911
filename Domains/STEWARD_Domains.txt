@@ -68,6 +68,7 @@ Values|Definition
 485017|Lincoln County Sheriff's Office Data Steward
 485018|Linn County Sheriff's Department Data Steward
 2395293|Logan-Gove County 911 (Oakley Police Department) Data Steward
+485020|Lyon County Communications Center Data Steward
 485022|Marion County Emergency Communications Data Steward
 485023|Marshall County Sheriff's Office Data Steward
 485021|McPherson County Communications Data Steward

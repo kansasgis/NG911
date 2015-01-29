@@ -67,6 +67,7 @@ psap.lenexa.ks.us|A PSAP ID in Kansas
 psap.liberal.ks.us|A PSAP ID in Kansas
 psap.lc.ks.us|A PSAP ID in Kansas
 psap.ln.ks.us|A PSAP ID in Kansas
+psap.ly.ks.us|A PSAP ID in Kansas
 psap.oakley.ks.us|A PSAP ID in Kansas
 psap.mn.ks.us|A PSAP ID in Kansas
 psap.ms.ks.us|A PSAP ID in Kansas
