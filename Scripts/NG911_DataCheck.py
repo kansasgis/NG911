@@ -226,26 +226,30 @@ def geocodeAddressPoints(pathsInfoObject):
         CreateAddressLocator_geocoding("US Address - Dual Ranges", streetPath + " 'Primary Table';" + roadAliasPath + " 'Alternate Name Table'", fieldMap, Locator, "")
 
     userMessage("Geocoding addresses...")
+
     #geocode table address
     if Exists(output):
         Delete_management(output)
 
     i = 0
 
-    #test ArcGIS version
-    #if it's 10.1, set field mapping differently
+    #set up geocoding
     gc_fieldMap = "Street LABEL VISIBLE NONE;City MUNI VISIBLE NONE;State State VISIBLE NONE;ZIP ZIP VISIBLE NONE"
 
-##    version = GetInstallInfo()["Version"]
-##    if version == "10.1":
-##        gc_fieldMap = "Street LABEL VISIBLE NONE;City MUNI VISIBLE NONE;State State VISIBLE NONE;ZIP ZIP VISIBLE NONE"
+    #geocode addresses
+    try:
+        GeocodeAddresses_geocoding(gc_table, Locator, gc_fieldMap, output, "STATIC")
+        i = 1
+    except:
+        gc_fieldMap = "Street LABEL VISIBLE NONE;City MUNI VISIBLE NONE;State State VISIBLE NONE"
 
-##    try:
-    GeocodeAddresses_geocoding(gc_table, Locator, gc_fieldMap, output, "STATIC")
-##        i = 1
-##    except:
-##        userMessage("Cannot complete geocoding")
+        try:
+            GeocodeAddresses_geocoding(gc_table, Locator, gc_fieldMap, output, "STATIC")
+            i = 1
+        except:
+            userMessage("Could not geocode address points")
 
+    #report records that didn't geocode
     if i == 1:
         wc = "Status <> 'M'"
         lyr = "lyr"
@@ -256,7 +260,7 @@ def geocodeAddressPoints(pathsInfoObject):
         rCount = int(rStatus.getOutput(0))
 
         if rCount > 0:
-            #set up parameters to report duplicate records
+            #set up parameters to report records that didn't geocode
             values = []
             recordType = "fieldValues"
             today = strftime("%m/%d/%y")
@@ -270,16 +274,16 @@ def geocodeAddressPoints(pathsInfoObject):
                     val = (today, report, filename, "", fID)
                     values.append(val)
 
-            #report duplicate records
+            #report records
             if values != []:
                 RecordResults(recordType, values, gdb)
 
             userMessage("Completed geocoding with " + str(rCount) + " errors.")
 
         else:
+            #this means all the records geocoded
             userMessage("All records geocoded successfully.")
             Delete_management(output)
-##            Delete_management(gc_table)
 
 def checkFrequency(fc, freq, fields, wc, gdb):
     fl = "fl"
