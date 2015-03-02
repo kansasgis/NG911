@@ -31,6 +31,7 @@ def main():
     fcList = []
 
     for e in esbList:
+        e = e.replace("'", "")
         fcList.append(e)
         e1 = basename(e)
         esb.append(e1)
