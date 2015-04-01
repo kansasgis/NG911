@@ -298,11 +298,11 @@ KINSLEY|Municipality in Kansas
 KIOWA|Municipality in Kansas
 KIRWIN|Municipality in Kansas
 KISMET|Municipality in Kansas
-LACROSSE|Municipality in Kansas
-LACYGNE|Municipality in Kansas
-LAHARPE|Municipality in Kansas
+LA CROSSE|Municipality in Kansas
+LA CYGNE|Municipality in Kansas
+LA HARPE|Municipality in Kansas
 LABETTE|Municipality in Kansas
-LAKEQUIVIRA|Municipality in Kansas
+LAKE QUIVIRA|Municipality in Kansas
 LAKIN|Municipality in Kansas
 LANCASTER|Municipality in Kansas
 LANE|Municipality in Kansas

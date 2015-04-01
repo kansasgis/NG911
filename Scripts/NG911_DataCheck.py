@@ -209,7 +209,7 @@ def geocodeAddressPoints(pathsInfoObject):
         fieldMap = """'Primary Table:Feature ID' <None> VISIBLE NONE;'*Primary Table:From Left' RoadCenterline:L_F_ADD VISIBLE NONE;
         '*Primary Table:To Left' RoadCenterline:L_T_ADD VISIBLE NONE;'*Primary Table:From Right' RoadCenterline:R_F_ADD VISIBLE NONE;
         '*Primary Table:To Right' RoadCenterline:R_T_ADD VISIBLE NONE;'Primary Table:Prefix Direction' RoadCenterline:PRD VISIBLE NONE;
-        'Primary Table:Prefix Type' <None> VISIBLE NONE;'*Primary Table:Street Name' RoadCenterline:RD VISIBLE NONE;
+        'Primary Table:Prefix Type' RoadCenterline:STP VISIBLE NONE;'*Primary Table:Street Name' RoadCenterline:RD VISIBLE NONE;
         'Primary Table:Suffix Type' RoadCenterline:STS VISIBLE NONE;'Primary Table:Suffix Direction' RoadCenterline:POD VISIBLE NONE;
         'Primary Table:Left City or Place' RoadCenterline:MUNI_L VISIBLE NONE;
         'Primary Table:Right City or Place' RoadCenterline:MUNI_R VISIBLE NONE;
@@ -236,7 +236,7 @@ def geocodeAddressPoints(pathsInfoObject):
                     fieldMap = """'Primary Table:Feature ID' <None> VISIBLE NONE;'*Primary Table:From Left' RoadCenterline:L_F_ADD VISIBLE NONE;
                     '*Primary Table:To Left' RoadCenterline:L_T_ADD VISIBLE NONE;'*Primary Table:From Right' RoadCenterline:R_F_ADD VISIBLE NONE;
                     '*Primary Table:To Right' RoadCenterline:R_T_ADD VISIBLE NONE;'Primary Table:Prefix Direction' RoadCenterline:PRD VISIBLE NONE;
-                    'Primary Table:Prefix Type' <None> VISIBLE NONE;'*Primary Table:Street Name' RoadCenterline:RD VISIBLE NONE;
+                    'Primary Table:Prefix Type' RoadCenterline:STP VISIBLE NONE;'*Primary Table:Street Name' RoadCenterline:RD VISIBLE NONE;
                     'Primary Table:Suffix Type' RoadCenterline:STS VISIBLE NONE;'Primary Table:Suffix Direction' RoadCenterline:POD VISIBLE NONE;
                     'Primary Table:Left City or Place' RoadCenterline:MUNI_L VISIBLE NONE;
                     'Primary Table:Right City or Place' RoadCenterline:MUNI_R VISIBLE NONE;
@@ -570,7 +570,14 @@ def checkValuesAgainstDomain(pathsInfoObject):
                 fieldNames.append((field.name).upper())
 
             #see if fields from complete list have domains
-            for fieldN in fieldNames:
+            for fieldName in fieldNames:
+                if "_" in fieldName:
+                    fieldN = fieldName.split("_")[0]
+                else:
+                    fieldN = fieldName
+
+##                #edit so this accounts for road fields with _L & _R
+##                roadfields = ["MUNI_L", "MUNI_R", "POSTCO_L", "POSTCO_R", "ZIP_L", "ZIP_R", "COUNTY_R", "COUNTY_L", "STATE_L", "STATE_R"]
 
                 #if field has a domain
                 if fieldN in fieldsWDoms:
@@ -600,8 +607,8 @@ def checkValuesAgainstDomain(pathsInfoObject):
                                 i += 1
 
                         #loop through records for that particular field to see if all values match domain
-                        wc = fieldN + " is not null"
-                        with SearchCursor(fullPath, (id1, fieldN), wc) as rows:
+                        wc = fieldName + " is not null"
+                        with SearchCursor(fullPath, (id1, fieldName), wc) as rows:
                             for row in rows:
                                 if row[1] is not None:
                                     fID = row[0]
@@ -609,18 +616,18 @@ def checkValuesAgainstDomain(pathsInfoObject):
                                     if fieldN == "HNO":
                                         hno = row[1]
                                         if hno > 999999 or hno < 0:
-                                            report = "Value " + str(row[1]) + " not in approved domain for field " + fieldN
-                                            val = (today, report, fc, fieldN, fID)
+                                            report = "Value " + str(row[1]) + " not in approved domain for field " + fieldName
+                                            val = (today, report, fc, fieldName, fID)
                                             values.append(val)
                                     #otherwise, compare row value to domain list
                                     else:
                                         if row[1].upper() not in domainList:
-                                            report = "Value " + str(row[1]) + " not in approved domain for field " + fieldN
-                                            val = (today, report, fc, fieldN, fID)
+                                            report = "Value " + str(row[1]) + " not in approved domain for field " + fieldName
+                                            val = (today, report, fc, fieldName, fID)
                                             values.append(val)
 
                     else:
-                        userMessage("Could not compare domain for " + fieldN)
+                        userMessage("Could not compare domain for " + fieldName)
 
     if values != []:
         RecordResults(resultType, values, gdb)
