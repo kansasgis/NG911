@@ -17,7 +17,7 @@ ALTON|Municipality in Kansas
 ALTOONA|Municipality in Kansas
 AMERICUS|Municipality in Kansas
 ANDALE|Municipality in Kansas
-ANDOVER|Municipality in Kansas
+ANDOVER |Municipality in Kansas
 ANTHONY|Municipality in Kansas
 ARCADIA|Municipality in Kansas
 ARGONIA|Municipality in Kansas
@@ -44,7 +44,7 @@ BASSETT|Municipality in Kansas
 BAXTER SPRINGS|Municipality in Kansas
 BAZINE|Municipality in Kansas
 BEATTIE|Municipality in Kansas
-BELAIRE|Municipality in Kansas
+BEL AIRE|Municipality in Kansas
 BELLE PLAINE|Municipality in Kansas
 BELLEVILLE|Municipality in Kansas
 BELOIT|Municipality in Kansas
@@ -62,7 +62,7 @@ BLUE MOUND|Municipality in Kansas
 BLUE RAPIDS|Municipality in Kansas
 BLUFF CITY|Municipality in Kansas
 BOGUE|Municipality in Kansas
-BONNER SPRINGS|Municipality in Kansas
+BONNER SPRINGS |Municipality in Kansas
 BREWSTER|Municipality in Kansas
 BRONSON|Municipality in Kansas
 BROOKVILLE|Municipality in Kansas
@@ -76,7 +76,7 @@ BURDETT|Municipality in Kansas
 BURLINGAME|Municipality in Kansas
 BURLINGTON|Municipality in Kansas
 BURNS|Municipality in Kansas
-BURROAK|Municipality in Kansas
+BURR OAK|Municipality in Kansas
 BURRTON|Municipality in Kansas
 BUSHONG|Municipality in Kansas
 BUSHTON|Municipality in Kansas
@@ -91,7 +91,7 @@ CASSODAY|Municipality in Kansas
 CAWKER CITY|Municipality in Kansas
 CEDAR|Municipality in Kansas
 CEDAR POINT|Municipality in Kansas
-CEDARVALE|Municipality in Kansas
+CEDAR VALE|Municipality in Kansas
 CENTRALIA|Municipality in Kansas
 CHANUTE|Municipality in Kansas
 CHAPMAN|Municipality in Kansas
@@ -105,9 +105,9 @@ CIMARRON|Municipality in Kansas
 CIRCLEVILLE|Municipality in Kansas
 CLAFLIN|Municipality in Kansas
 CLAY CENTER|Municipality in Kansas
-CLAYTON|Municipality in Kansas
+CLAYTON |Municipality in Kansas
 CLEARWATER|Municipality in Kansas
-CLIFTON|Municipality in Kansas
+CLIFTON |Municipality in Kansas
 CLIMAX|Municipality in Kansas
 CLYDE|Municipality in Kansas
 COATS|Municipality in Kansas
@@ -133,7 +133,7 @@ CULVER|Municipality in Kansas
 CUNNINGHAM|Municipality in Kansas
 DAMAR|Municipality in Kansas
 DANVILLE|Municipality in Kansas
-DESOTO|Municipality in Kansas
+DE SOTO |Municipality in Kansas
 DEARING|Municipality in Kansas
 DEERFIELD|Municipality in Kansas
 DELIA|Municipality in Kansas
@@ -210,11 +210,11 @@ GAS|Municipality in Kansas
 GAYLORD|Municipality in Kansas
 GEM|Municipality in Kansas
 GENESEO|Municipality in Kansas
-GEUDA SPRINGS|Municipality in Kansas
+GEUDA SPRINGS |Municipality in Kansas
 GIRARD|Municipality in Kansas
 GLADE|Municipality in Kansas
 GLASCO|Municipality in Kansas
-GLENELDER|Municipality in Kansas
+GLEN ELDER|Municipality in Kansas
 GODDARD|Municipality in Kansas
 GOESSEL|Municipality in Kansas
 GOFF|Municipality in Kansas
@@ -250,7 +250,7 @@ HAYS|Municipality in Kansas
 HAYSVILLE|Municipality in Kansas
 HAZELTON|Municipality in Kansas
 HEPLER|Municipality in Kansas
-HERINGTON|Municipality in Kansas
+HERINGTON |Municipality in Kansas
 HERNDON|Municipality in Kansas
 HESSTON|Municipality in Kansas
 HIAWATHA|Municipality in Kansas
@@ -302,7 +302,7 @@ LA CROSSE|Municipality in Kansas
 LA CYGNE|Municipality in Kansas
 LA HARPE|Municipality in Kansas
 LABETTE|Municipality in Kansas
-LAKE QUIVIRA|Municipality in Kansas
+LAKE QUIVIRA |Municipality in Kansas
 LAKIN|Municipality in Kansas
 LANCASTER|Municipality in Kansas
 LANE|Municipality in Kansas
@@ -337,7 +337,7 @@ LINN VALLEY|Municipality in Kansas
 LINWOOD|Municipality in Kansas
 LITTLE RIVER|Municipality in Kansas
 LOGAN|Municipality in Kansas
-LONEELM|Municipality in Kansas
+LONE ELM|Municipality in Kansas
 LONG ISLAND|Municipality in Kansas
 LONGFORD|Municipality in Kansas
 LONGTON|Municipality in Kansas
@@ -354,7 +354,7 @@ MADISON|Municipality in Kansas
 MAHASKA|Municipality in Kansas
 MAIZE|Municipality in Kansas
 MANCHESTER|Municipality in Kansas
-MANHATTAN|Municipality in Kansas
+MANHATTAN |Municipality in Kansas
 MANKATO|Municipality in Kansas
 MANTER|Municipality in Kansas
 MAPLE HILL|Municipality in Kansas
@@ -397,10 +397,10 @@ MOSCOW|Municipality in Kansas
 MOUND CITY|Municipality in Kansas
 MOUND VALLEY|Municipality in Kansas
 MOUNDRIDGE|Municipality in Kansas
-MOUNTHOPE|Municipality in Kansas
+MOUNT HOPE|Municipality in Kansas
 MULBERRY|Municipality in Kansas
 MULLINVILLE|Municipality in Kansas
-MULVANE|Municipality in Kansas
+MULVANE |Municipality in Kansas
 MUNDEN|Municipality in Kansas
 MUSCOTAH|Municipality in Kansas
 NARKA|Municipality in Kansas
@@ -422,8 +422,8 @@ NORTH NEWTON|Municipality in Kansas
 NORTON|Municipality in Kansas
 NORTONVILLE|Municipality in Kansas
 NORWICH|Municipality in Kansas
-OAKHILL|Municipality in Kansas
-OAKLEY|Municipality in Kansas
+OAK HILL|Municipality in Kansas
+OAKLEY |Municipality in Kansas
 OBERLIN|Municipality in Kansas
 OFFERLE|Municipality in Kansas
 OGDEN|Municipality in Kansas
@@ -457,7 +457,7 @@ PARKERFIELD|Municipality in Kansas
 PARKERVILLE|Municipality in Kansas
 PARSONS|Municipality in Kansas
 PARTRIDGE|Municipality in Kansas
-PAWNEEROCK|Municipality in Kansas
+PAWNEE ROCK|Municipality in Kansas
 PAXICO|Municipality in Kansas
 PEABODY|Municipality in Kansas
 PENALOSA|Municipality in Kansas
@@ -508,7 +508,7 @@ ROZEL|Municipality in Kansas
 RUSH CENTER|Municipality in Kansas
 RUSSELL|Municipality in Kansas
 RUSSELL SPRINGS|Municipality in Kansas
-SABETHA|Municipality in Kansas
+SABETHA |Municipality in Kansas
 SALINA|Municipality in Kansas
 SATANTA|Municipality in Kansas
 SAVONBURG|Municipality in Kansas
@@ -520,7 +520,7 @@ SCOTT CITY|Municipality in Kansas
 SCOTTSVILLE|Municipality in Kansas
 SCRANTON|Municipality in Kansas
 SEDAN|Municipality in Kansas
-SEDGWICK|Municipality in Kansas
+SEDGWICK |Municipality in Kansas
 SELDEN|Municipality in Kansas
 SENECA|Municipality in Kansas
 SEVERANCE|Municipality in Kansas
@@ -530,22 +530,22 @@ SHARON|Municipality in Kansas
 SHARON SPRINGS|Municipality in Kansas
 SHAWNEE|Municipality in Kansas
 SILVER LAKE|Municipality in Kansas
-SIMPSON|Municipality in Kansas
+SIMPSON |Municipality in Kansas
 SMITH CENTER|Municipality in Kansas
 SMOLAN|Municipality in Kansas
 SOLDIER|Municipality in Kansas
-SOLOMON|Municipality in Kansas
-SOUTHHAVEN|Municipality in Kansas
+SOLOMON |Municipality in Kansas
+SOUTH HAVEN|Municipality in Kansas
 SOUTH HUTCHINSON|Municipality in Kansas
 SPEARVILLE|Municipality in Kansas
 SPEED|Municipality in Kansas
 SPIVEY|Municipality in Kansas
-SPRING HILL|Municipality in Kansas
-ST FRANCIS|Municipality in Kansas
-ST GEORGE|Municipality in Kansas
-ST JOHN|Municipality in Kansas
-ST MARYS|Municipality in Kansas
-ST PAUL|Municipality in Kansas
+SPRING HILL |Municipality in Kansas
+ST. FRANCIS|Municipality in Kansas
+ST. GEORGE|Municipality in Kansas
+ST. JOHN|Municipality in Kansas
+ST. MARYS |Municipality in Kansas
+ST. PAUL|Municipality in Kansas
 STAFFORD|Municipality in Kansas
 STARK|Municipality in Kansas
 STERLING|Municipality in Kansas
@@ -579,7 +579,7 @@ VALLEY CENTER|Municipality in Kansas
 VALLEY FALLS|Municipality in Kansas
 VERMILLION|Municipality in Kansas
 VICTORIA|Municipality in Kansas
-VINING|Municipality in Kansas
+VINING |Municipality in Kansas
 VIOLA|Municipality in Kansas
 VIRGIL|Municipality in Kansas
 WAKEENEY|Municipality in Kansas
@@ -598,7 +598,7 @@ WEBBER|Municipality in Kansas
 WEIR|Municipality in Kansas
 WELLINGTON|Municipality in Kansas
 WELLSVILLE|Municipality in Kansas
-WESTMINERAL|Municipality in Kansas
+WEST MINERAL|Municipality in Kansas
 WESTMORELAND|Municipality in Kansas
 WESTPHALIA|Municipality in Kansas
 WESTWOOD|Municipality in Kansas
@@ -607,10 +607,10 @@ WETMORE|Municipality in Kansas
 WHEATON|Municipality in Kansas
 WHITE CITY|Municipality in Kansas
 WHITE CLOUD|Municipality in Kansas
-WHITE WATER|Municipality in Kansas
+WHITEWATER|Municipality in Kansas
 WHITING|Municipality in Kansas
 WICHITA|Municipality in Kansas
-WILLARD|Municipality in Kansas
+WILLARD |Municipality in Kansas
 WILLIAMSBURG|Municipality in Kansas
 WILLIS|Municipality in Kansas
 WILLOWBROOK|Municipality in Kansas

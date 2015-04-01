@@ -1,0 +1,5 @@
+Values|Definition
+EXCEPTION DANGLES|Feature is an exception to the "Must Not Have Dangles" topology rule
+EXCEPTION INSIDE|Feature is an exception to the "Must be Inside Authoritative Boundary" topology rule
+EXCEPTION BOTH|Feature is an exception to both toplogy rules
+NOT EXCEPTION|Feature is not an exception to the topology rules

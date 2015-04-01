@@ -1,0 +1,3 @@
+Values|Definition
+Y|For Submission to Master Repository
+N|Not for Submission to Master Repository
