@@ -22,6 +22,7 @@ def main():
     domainsFolder = GetParameterAsText(1)
     checkValuesAgainstDomain = GetParameterAsText(2)
     checkFeatureLocations = GetParameterAsText(3)
+    template10 = GetParameterAsText(4)
 
     #create check list
     checkList = [checkValuesAgainstDomain,checkFeatureLocations]
@@ -40,6 +41,11 @@ def main():
 
     currentPathSettings.fcList = fcList
     currentPathSettings.checkList = checkList
+
+    if template10 == 'true':
+        currentPathSettings.gdbVersion = "10"
+    else:
+        currentPathSettings.gdbVersion = "11"
 
     #launch the data check
     main_check(checkType, currentPathSettings)

@@ -21,6 +21,7 @@ RoadCenterline|UPDATEBY
 RoadCenterline|STATUS
 RoadCenterline|ELEV_F
 RoadCenterline|ELEV_T
+RoadCenterline|EXCEPTION
 AddressPoints|STEWARD
 AddressPoints|L_UPDATE
 AddressPoints|EFF_DATE

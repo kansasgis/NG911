@@ -36,5 +36,6 @@ class pathInformationClass():
         self.DOTRoads = DOTRoads
         self.checkList = []
         self.fcList = []
+        self.gdbVersion = "11"
 
 currentPathSettings = pathInformationClass()

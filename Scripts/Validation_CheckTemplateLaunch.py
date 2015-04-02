@@ -24,6 +24,7 @@ def main():
     checkLayerList = GetParameterAsText(3)
     checkRequiredFields = GetParameterAsText(4)
     checkRequiredFieldValues = GetParameterAsText(5)
+    template10 = GetParameterAsText(6)
 
     #create esb list
     esb = []
@@ -41,6 +42,11 @@ def main():
     currentPathSettings.domainsFolderPath = domainsFolder
     currentPathSettings.esbList = esb
     currentPathSettings.checkList = checkList
+
+    if template10 == 'true':
+        currentPathSettings.gdbVersion = "10"
+    else:
+        currentPathSettings.gdbVersion = "11"
 
     #launch the data check
     main_check(checkType, currentPathSettings)

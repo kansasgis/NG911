@@ -11,14 +11,16 @@
 # NG911_Config as the default variable passed to several Data
 # Check functions, modifications to the functions to allow
 # them to use that variable as a data source.
+#Modified: 02/04/2014 by Kristen
+#Changes include: modifying format so the checks work with the 1.1 template
 #-------------------------------------------------------------------------------
 
 
-from arcpy import (AddField_management, AddMessage, CalculateField_management,  CopyRows_management, CreateAddressLocator_geocoding, # @UnusedImport
-                   CreateTable_management, Delete_management, Exists, GeocodeAddresses_geocoding, GetCount_management, FieldInfo, # @UnusedImport
-                   ListFields, MakeFeatureLayer_management, MakeTableView_management, SelectLayerByAttribute_management, # @UnusedImport
-                   SelectLayerByLocation_management, RebuildAddressLocator_geocoding, Frequency_analysis, DeleteRows_management, GetInstallInfo, env) # @UnusedImport
-from arcpy.da import Walk, InsertCursor, ListDomains, SearchCursor  # @UnresolvedImport
+from arcpy import (AddField_management, AddMessage, CalculateField_management,  CopyRows_management, CreateAddressLocator_geocoding,
+                   CreateTable_management, Delete_management, Exists, GeocodeAddresses_geocoding, GetCount_management, FieldInfo,
+                   ListFields, MakeFeatureLayer_management, MakeTableView_management, SelectLayerByAttribute_management,
+                   SelectLayerByLocation_management, RebuildAddressLocator_geocoding, Frequency_analysis, DeleteRows_management, GetInstallInfo, env)
+from arcpy.da import Walk, InsertCursor, ListDomains, SearchCursor
 
 from os import path
 from os.path import basename, dirname, join
@@ -38,19 +40,27 @@ def userMessage(msg):
     AddMessage(msg)
 
 
-def getCurrentDomainList():
+def getCurrentDomainList(version):
     domainList = ["AddressNumbers", "AddressParity", "AgencyID", "Counties", "Country",
                     "ESBType", "Municipality", "OneWay", "PlaceType", "PointLocation", "PostalCodes",
                     "PostalCommunities", "RoadClass", "RoadDirectionals", "RoadModifier", "RoadStatus",
-                    "RoadSurface", "RoadTypes", "States", "Stewards"]
+                    "RoadSurface", "RoadTypes", "States", "Stewards", "Exception", "Submit"]
     #or get domain list from approved source
+
+    if version == "10":
+        domainList.remove("Exception")
+        domainList.remove("Submit")
 
     return domainList
 
 
-def fieldsWithDomains():
+def fieldsWithDomains(version):
     #list of all the fields that have a domain
-    fieldList = ["LOCTYPE", "STATUS", "SURFACE", "STEWARD", "AGENCYID","PLC", "RDCLASS", "PARITY", "ONEWAY", "MUNI", "COUNTY", "COUNTRY","PRD", "ZIP", "POSTCO", "STATE", "STS"]
+    fieldList = ["LOCTYPE", "STATUS", "SURFACE", "STEWARD", "AGENCYID","PLC", "RDCLASS", "PARITY", "ONEWAY", "MUNI", "COUNTY", "COUNTRY","PRD", "ZIP", "POSTCO", "STATE", "STS", "EXCEPTION", "SUBMIT"]
+
+    if version == "10":
+        fieldList.remove("EXCEPTION")
+        fieldList.remove("SUBMIT")
 
     return fieldList
 
@@ -323,7 +333,7 @@ def geocodeAddressPoints(pathsInfoObject):
         else:
             userMessage("Could not geocode addresses")
 
-def checkFrequency(fc, freq, fields, wc, gdb):
+def checkFrequency(fc, freq, fields, wc, gdb, version):
     fl = "fl"
     fl1 = "fl1"
 
@@ -344,6 +354,9 @@ def checkFrequency(fc, freq, fields, wc, gdb):
             elif freq == join(gdb, "Road_Freq"):
                 filename = "RoadCenterline"
                 wc1 = "L_F_ADD <> 0 AND L_T_ADD <> 0 AND R_F_ADD <> 0 AND R_T_ADD <> 0"
+
+            if version != "10":
+                wc1 = wc1 + " AND SUBMIT = 'Y'"
 
             #run query on fc to make sure 0's are ignored
             MakeTableView_management(fc, fl1, wc1)
@@ -433,23 +446,34 @@ def checkFrequency(fc, freq, fields, wc, gdb):
 
 def checkLayerList(pathsInfoObject):
     gdb = pathsInfoObject.gdbPath
-    esb = pathsInfoObject.esbList # Not currently dynamic.
+    esb = pathsInfoObject.esbList
+
+    values = []
+    today = strftime("%m/%d/%y")
 
     userMessage("Checking geodatabase layers...")
     #get current layer list
     layerList = getCurrentLayerList(esb)
     layers = []
-    for dirpath, dirnames, filenames in Walk(gdb, True, '', False, ["Table","FeatureClass"]):  # @UnusedVariable
-        ignoreList = ("gc_test", "TemplateCheckResults", "FieldValuesCheckResults", "GeocodeTable")
-        for filename in filenames:
-            if not filename in ignoreList:
-                if filename not in layerList:
-                    userMessage( filename + " not in geodatabase layer list template")
-                else:
-                    layers.append(filename)
+    for dirpath, dirnames, filenames in Walk(gdb, True, '', False, ["Table","FeatureClass"]):
+##        ignoreList = ("gc_test", "TemplateCheckResults", "FieldValuesCheckResults", "GeocodeTable")
+        for fn in filenames:
+            name = basename(fn)
+            layers.append(name)
 
-    userMessage("Finished checking layers: ")
-    userMessage(layers)
+##    userMessage(layers)
+
+    #report any required layers that are not present
+    for l in layerList:
+        if l not in layers:
+            report = "Required layer " + l + " is not in geodatabase."
+            userMessage(report)
+            val = (today, report, "Layer")
+            values.append(val)
+
+    #record issues if any exist
+    if values != []:
+        RecordResults("template", values, gdb)
 
 
 def getKeyword(layer, esb):
@@ -461,7 +485,7 @@ def getKeyword(layer, esb):
     return keyword
 
 
-def getRequiredFields(folder):
+def getRequiredFields(folder, version):
     path1 = path.join(folder, "NG911_RequiredFields.txt")
 
     #create a field definition dictionary
@@ -477,8 +501,8 @@ def getRequiredFields(folder):
         ## print valueList
 
         #get field indexes
-        fcIndex = valueList.index("FeatureClass")  # @UnusedVariable
-        fieldIndex = valueList.index("Field\n")  # @UnusedVariable
+        fcIndex = valueList.index("FeatureClass")
+        fieldIndex = valueList.index("Field\n")
 
         #parse the text to populate the field definition dictionary
         for line in fieldDefDoc.readlines():
@@ -494,6 +518,10 @@ def getRequiredFields(folder):
 
             #append new value onto list
             fieldList.append(field)
+
+            if version == "10":
+                if "EXCEPTION" in fieldList:
+                    fieldList.remove("EXCEPTION")
             #set value as list
             rfDict[fc] = fieldList
     else:
@@ -517,8 +545,8 @@ def getFieldDomain(field, folder):
         headerLine = doc.readline()
         valueList = headerLine.split("|")
 
-        valueIndex = valueList.index("Values")  # @UnusedVariable
-        defIndex = valueList.index("Definition\n")  # @UnusedVariable
+        valueIndex = valueList.index("Values")
+        defIndex = valueList.index("Definition\n")
 
 
         #parse the text to population the field definition dictionary
@@ -539,6 +567,7 @@ def checkValuesAgainstDomain(pathsInfoObject):
     folder = pathsInfoObject.domainsFolderPath
     fcList = pathsInfoObject.fcList
     esb = pathsInfoObject.esbList
+    version = pathsInfoObject.gdbVersion
 
     userMessage("Checking field values against approved domains...")
     #set up parameters to report duplicate records
@@ -551,7 +580,7 @@ def checkValuesAgainstDomain(pathsInfoObject):
     env.workspace = gdb
 
     #get list of fields with domains
-    fieldsWDoms = fieldsWithDomains()
+    fieldsWDoms = fieldsWithDomains(version)
 
     for fullPath in fcList:
         fc = basename(fullPath).replace("'", "")
@@ -575,9 +604,6 @@ def checkValuesAgainstDomain(pathsInfoObject):
                     fieldN = fieldName.split("_")[0]
                 else:
                     fieldN = fieldName
-
-##                #edit so this accounts for road fields with _L & _R
-##                roadfields = ["MUNI_L", "MUNI_R", "POSTCO_L", "POSTCO_R", "ZIP_L", "ZIP_R", "COUNTY_R", "COUNTY_L", "STATE_L", "STATE_R"]
 
                 #if field has a domain
                 if fieldN in fieldsWDoms:
@@ -639,6 +665,7 @@ def checkRequiredFieldValues(pathsInfoObject):
     gdb = pathsInfoObject.gdbPath
     folder = pathsInfoObject.domainsFolderPath
     esb = pathsInfoObject.esbList
+    version = pathsInfoObject.gdbVersion
 
     userMessage("Checking that required fields have all values...")
 
@@ -646,14 +673,14 @@ def checkRequiredFieldValues(pathsInfoObject):
     today = strftime("%m/%d/%y")
 
     #get required fields
-    rfDict = getRequiredFields(folder)
+    rfDict = getRequiredFields(folder, version)
 
     if rfDict != {}:
 
         values = []
 
         #walk through the tables/feature classes
-        for dirpath, dirnames, filenames in Walk(gdb, True, '', False, ["Table","FeatureClass"]):  # @UnusedVariable
+        for dirpath, dirnames, filenames in Walk(gdb, True, '', False, ["Table","FeatureClass"]):
             for filename in filenames:
                 if filename.upper() not in ("FIELDVALUESCHECKRESULTS", "TEMPLATECHECKRESULTS"):
                     fullPath = path.join(gdb, filename)
@@ -691,6 +718,14 @@ def checkRequiredFieldValues(pathsInfoObject):
                         #get the set of fields that are the same
                         matchingFields = list(set1 & set2)
 
+                        #only work with records that are for submission
+                        lyr2 = "lyr2"
+                        if version == "10":
+                            MakeTableView_management(fullPath, lyr2)
+                        else:
+                            wc2 = "SUBMIT = 'Y'"
+                            MakeTableView_management(fullPath, lyr2, wc2)
+
                         #create where clause to select any records where required values aren't populated
                         wc = ""
 
@@ -701,7 +736,7 @@ def checkRequiredFieldValues(pathsInfoObject):
 
                         #make table view using where clause
                         lyr = "lyr"
-                        MakeTableView_management(fullPath, lyr, wc)
+                        MakeTableView_management(lyr2, lyr, wc)
 
                         #get count of the results
                         result = GetCount_management(lyr)
@@ -737,6 +772,7 @@ def checkRequiredFieldValues(pathsInfoObject):
                             userMessage( "All required values present for " + filename)
 
                         Delete_management(lyr)
+                        Delete_management(lyr2)
 
         if values != []:
             RecordResults("fieldValues", values, gdb)
@@ -751,6 +787,7 @@ def checkRequiredFields(pathsInfoObject):
     gdb = pathsInfoObject.gdbPath
     folder = pathsInfoObject.domainsFolderPath
     esb = pathsInfoObject.esbList
+    version = pathsInfoObject.gdbVersion
 
     userMessage("Checking that required fields exist...")
 
@@ -759,12 +796,12 @@ def checkRequiredFields(pathsInfoObject):
     values = []
 
     #get required fields
-    rfDict = getRequiredFields(folder)
+    rfDict = getRequiredFields(folder, version)
 
     if rfDict != {}:
 
         #walk through the tables/feature classes
-        for dirpath, dirnames, filenames in Walk(gdb, True, '', False, ["Table","FeatureClass"]):  # @UnusedVariable
+        for dirpath, dirnames, filenames in Walk(gdb, True, '', False, ["Table","FeatureClass"]):
             for filename in filenames:
                 fields = []
                 fullPath = path.join(gdb, filename)
@@ -806,6 +843,7 @@ def checkFeatureLocations(pathsInfoObject):
     gdb = pathsInfoObject.gdbPath
     fcList = pathsInfoObject.fcList
     esb = pathsInfoObject.esbList
+    version = pathsInfoObject.gdbVersion
 
     RoadAlias = join(gdb, "RoadAlias")
 
@@ -828,7 +866,14 @@ def checkFeatureLocations(pathsInfoObject):
 
     for fullPath in fcList:
         fl = "fl"
-        MakeFeatureLayer_management(fullPath, fl)
+        if version == "10":
+            MakeFeatureLayer_management(fullPath, fl)
+        else:
+            if "RoadCenterline" in fullPath:
+                wc = "SUBMIT = 'Y' AND EXCEPTION not in ('EXCEPTION INSIDE', 'EXCEPTION BOTH')"
+            else:
+                wc = "SUBMIT = 'Y'"
+            MakeFeatureLayer_management(fullPath, fl, wc)
 
         try:
 
@@ -908,7 +953,7 @@ def main_check(checkType, currentPathSettings):
             AP_freq = join(currentPathSettings.gdbPath, "AP_Freq")
             AP_fields = "MUNI;HNO;HNS;PRD;STP;RD;STS;POD;POM;ZIP;BLD;FLR;UNIT;ROOM;SEAT;LOC;LOCTYPE"
             AP_wc = "Frequency = 1 or LOCTYPE <> 'Primary'"
-            checkFrequency(addressPoints, AP_freq, AP_fields, AP_wc, currentPathSettings.gdbPath)
+            checkFrequency(addressPoints, AP_freq, AP_fields, AP_wc, currentPathSettings.gdbPath, currentPathSettings.gdbVersion)
 
     #check roads
     elif checkType == "Roads":
@@ -925,7 +970,7 @@ def main_check(checkType, currentPathSettings):
             PARITY_L;PARITY_R;POSTCO_L;POSTCO_R;ZIP_L;ZIP_R;ESN_L;ESN_R;MSAGCO_L;MSAGCO_R;PRD;STP;RD;STS;POD;
             POM;SPDLIMIT;ONEWAY;RDCLASS;LABEL;ELEV_F;ELEV_T;ESN_C;SURFACE;STATUS;TRAVEL;LRSKEY"""
             road_wc = "Frequency = 1"
-            checkFrequency(roads, road_freq, road_fields, road_wc, currentPathSettings.gdbPath)
+            checkFrequency(roads, road_freq, road_fields, road_wc, currentPathSettings.gdbPath, currentPathSettings.gdbVersion)
 
     #check boundaries or ESB
     elif checkType in ("admin", "ESB"):

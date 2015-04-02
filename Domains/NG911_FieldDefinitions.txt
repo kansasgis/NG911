@@ -42,6 +42,11 @@ RoadCenterline|ELEV_F|(Elevation at From Node) - Elevation of the start node of 
 RoadCenterline|ELEV_T|(Elevation at To Node) - Elevation of the end node of the segment with relation to other road features.  Ground level roads have elevation of '0'.  Overpasses have elevation of '1'.
 RoadCenterline|TRAVEL|Direction of travel on divided roadways.  Example:  WB for the westbound lane of Interstate 70.
 RoadCenterline|LRSKEY|(Linear Reference System Key) Unique identifier within the KDOT road network allowing the centerline segment to be related back to the KDOT LRS.
+RoadCenterline|UNINC_L|(Unincorporated Community Left) - The name of the unincorporated community where the address is located on the Left side of the road segment. 
+RoadCenterline|UNINC_R|(Unincorporated Community Right) - The name of the unincorporated community where the address is located on the Right side of the road segment. 
+RoadCenterline|EXCEPTION|Status of the feature as an Exception to the standard.
+RoadCenterline|SUBMIT|Flag to show if the feature is intended for use in call routing or a "Local Only" feature that is not intended for use in call routing. 
+RoadCenterline|NOTES|Notes about the feature, primarily used for communication between the Local Data Maintainer and the Data Aggregator.
 AddressPoints|STEWARD|GNIS/INCITS code for the agency responsible for maintenance of the data.
 AddressPoints|L_UPDATE|The date of the last update of the record.
 AddressPoints|EFF_DATE|The date the record is or was scheduled to take effect.  For agencies not recording this information previously, the date of January 1, 2014 (20140101) can be used for all currently effective records.
@@ -80,6 +85,10 @@ AddressPoints|UPDATEBY|The person who last updated the record.  The format of th
 AddressPoints|LOCTYPE|(Point location type) - The location of the point relative to the structure in question selected from the following domain:  PRIMARY (on the structure or the site), SECONDARY-ACCESS (on driveway or other access point), SECONDARY-OTHER. Note:  Only the points attributed as 'Primary' will be included in the call-routing database.
 AddressPoints|USNGRID|The US National Grid coordinates to 10 digits (1 meter).
 AddressPoints|KSPID|The 19 character parcel ID or 'CAMA' number for the parcel on which the address point sits.  This attribute has been included to insure the Place Type attribute can be populated as economically as possible, should it be retained as a required attribute in the final NENA NG9-1-1 Data Model.
+AddressPoints|ADDURI|(Additional Data URI) URI for accessing additional information about the address. Information on how to appropriately populate this attribute is not yet available. This document will be updated when that information becomes available. 
+AddressPoints|UNINC|(Unincorporated Community) The name of the unincorporated community where the address point is located. This could be an unincorporated town name, a subdivision name, or a plat name.
+AddressPoints|SUBMIT|Status of the feature as a "Local Only" feature that is not intended for submission to the Master GIS Repository.
+AddressPoints|NOTES|Notes about the feature, primarily used for communication between the Local Data Maintainer and the Data Aggregator
 AuthoritativeBoundary|STEWARD|The GNIS/INCITS code for the agency responsible for maintenance of the data.
 AuthoritativeBoundary|L_UPDATE|The date of the last update of the record.
 AuthoritativeBoundary|EFF_DATE|The date the record is or was scheduled to take effect.  For agencies not recording this information previously, the date of January 1, 2014 (20140101) can be used for all currently effective records.
@@ -89,12 +98,16 @@ AuthoritativeBoundary|STATE|Two-character abbreviation for the state where the a
 AuthoritativeBoundary|AGENCYID|Unique ID for the PSAP created by combining the LCPA PSAP Code from the Kansas NG911 Strategic Plan 2014-2017 with '.ks.us' to create an identifier that will be unique even if combined with data from other states.  This field shall be stored as lower case characters.  Example:  The LCPA PSAP Code for Dickinson County Emergency Communication is 'dk'.  The [AGENCYID] for that PSAP is psap.dk.ks.us.
 AuthoritativeBoundary|DISPLAY|(Display Name) - The Display Name of the authoritative source entity.  Examples:  ROOKS COUNTY KS, ANDOVER KS.
 AuthoritativeBoundary|UPDATEBY|The person who last updated the record.  The format of this can be set by the data steward, but it should be sufficient to identify the specific individual.  First and last name are recommended.  The purpose of this field is to allow the data aggregator to contact the specific person who made a change if there is a question about the edit.
+AuthoritativeBoundary|SUBMIT|Status of the feature as a "Local Only" feature that is not intended for submission to the Master GIS Repository.
+AuthoritativeBoundary|NOTES|Notes about the feature, primarily used for communication between the Local Data Maintainer and the Data Aggregator
 CountyBoundary|STEWARD|The GNIS/INCITS code for the agency responsible for maintenance of the data.
 CountyBoundary|L_UPDATE|The date of the last update of the record.
 CountyBoundary|COUNTYID|The identifier used for tracking County polygons within the local dataset.
 CountyBoundary|STATE|Two-character state abbreviation for the state where the ESB is located.
 CountyBoundary|COUNTY|County name spelled out for the county where the data is located.
 CountyBoundary|UPDATEBY|The person who last updated the record.  The format of this can be set by the data steward, but it should be sufficient to identify the specific individual.  First and last name are recommended.  The purpose of this field is to allow the data aggregator to contact the specific person who made a change if there is a question about the edit.
+CountyBoundary|SUBMIT|Status of the feature as a "Local Only" feature that is not intended for submission to the Master GIS Repository.
+CountyBoundary|NOTES|Notes about the feature, primarily used for communication between the Local Data Maintainer and the Data Aggregator
 MunicipalBoundary|STEWARD|The GNIS/INCITS code for the agency responsible for maintenance of the data.
 MunicipalBoundary|L_UPDATE|The date of the last update of the record.
 MunicipalBoundary|EFF_DATE|The date the record is or was scheduled to take effect.  For agencies not recording this information previously, the date of January 1, 2014 (20140101) can be used for all currently effective records.
@@ -104,6 +117,8 @@ MunicipalBoundary|STATE|Two-character state abbreviation for the state where the
 MunicipalBoundary|COUNTY|County name spelled out for the county where the data is located.
 MunicipalBoundary|MUNI|(Municipality) - The name of the incorporated municipality where the data is located.  Only used if a named municipality exists, otherwise use 'Unincorporated'.
 MunicipalBoundary|UPDATEBY|The person who last updated the record.  The format of this can be set by the data steward, but it should be sufficient to identify the specific individual.  First and last name are recommended.  The purpose of this field is to allow the data aggregator to contact the specific person who made a change if there is a question about the edit.
+MunicipalBoundary|SUBMIT|Status of the feature as a "Local Only" feature that is not intended for submission to the Master GIS Repository.
+MunicipalBoundary|NOTES|Notes about the feature, primarily used for communication between the Local Data Maintainer and the Data Aggregator
 EmergencyBoundary|STEWARD|The GNIS/INCITS code for the agency responsible for maintenance of the data.
 EmergencyBoundary|L_UPDATE|The date of the last update of the record.
 EmergencyBoundary|EFF_DATE|The date the record is or was scheduled to take effect.  For agencies not recording this information previously, the date of January 1, 2014 (20140101) can be used for all currently effective records.
@@ -123,6 +138,8 @@ EmergencyBoundary|COUNTY|County name spelled out for the county where the data i
 EmergencyBoundary|MUNI|(Municipality) - The name of the incorporated municipality where the data is located.  Only used if a named municipality exists, otherwise use 'Unincorporated'.
 EmergencyBoundary|COUNTY_ID|The identifier used for tracking County polygons within the local dataset.
 EmergencyBoundary|MUNI_ID|The identifier used for tracking Municipal polygons within the local dataset.
+EmergencyBoundary|SUBMIT|Status of the feature as a "Local Only" feature that is not intended for submission to the Master GIS Repository.
+EmergencyBoundary|NOTES|Notes about the feature, primarily used for communication between the Local Data Maintainer and the Data Aggregator
 ESZ|STEWARD|The GNIS/INCITS code for the agency responsible for maintenance of the data.
 ESZ|L_UPDATE|The date of the last update of the record.
 ESZ|EFF_DATE|The date the record is or was scheduled to take effect.  For agencies not recording this information previously, the date of January 1, 2014 (20140101) can be used for all currently effective records.
@@ -132,6 +149,8 @@ ESZ|STATE|Two-character abbreviation for the state where the address point is lo
 ESZ|AGENCYID|Unique ID for the PSAP created by combining the LCPA PSAP Code from the Kansas NG911 Strategic Plan 2014-2017 with '.ks.us' to create an identifier that will be unique even if combined with data from other states.  This field shall be stored as lower case characters.  Example:  The LCPA PSAP Code for Dickinson County Emergency Communication is 'dk'.  The [AGENCYID] for that PSAP is psap.dk.ks.us.
 ESZ|ESN|The Emergency Service Number assigned to the ESZ.
 ESZ|UPDATEBY|The person who last updated the record.  The format of this can be set by the data steward, but it should be sufficient to identify the specific individual.  First and last name are recommended.  The purpose of this field is to allow the data aggregator to contact the specific person who made a change if there is a question about the edit.
+ESZ|SUBMIT|Status of the feature as a "Local Only" feature that is not intended for submission to the Master GIS Repository.
+ESZ|NOTES|Notes about the feature, primarily used for communication between the Local Data Maintainer and the Data Aggregator
 RoadAlias|STEWARD|The GNIS/INCITS code for the agency responsible for maintenance of the data.
 RoadAlias|L_UPDATE|The date of the last update of the record.
 RoadAlias|EFF_DATE|The date the record is or was scheduled to take effect.  For agencies not recording this information previously, the date of January 1, 2014 (20140101) can be used for all currently effective records.
@@ -150,3 +169,5 @@ RoadAlias|A_L_FROM|'Left From' address for the alias road name.
 RoadAlias|A_L_TO|'Left To' address for the alias road name.
 RoadAlias|A_R_FROM|'Right From' address for the alias road name.
 RoadAlias|A_R_TO|'Right To' address for the alias road name.
+RoadAlias|SUBMIT|Status of the feature as a "Local Only" feature that is not intended for submission to the Master GIS Repository.
+RoadAlias|NOTES|Notes about the feature, primarily used for communication between the Local Data Maintainer and the Data Aggregator

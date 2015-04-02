@@ -24,6 +24,7 @@ def main():
     checkFeatureLocations = GetParameterAsText(3)
     geocodeAddressPoints = GetParameterAsText(4)
     checkAddressPointFrequency = GetParameterAsText(5)
+    template10 = GetParameterAsText(6)
 
     #create check list
     checkList = [checkValuesAgainstDomain,checkFeatureLocations,geocodeAddressPoints,checkAddressPointFrequency]
@@ -35,6 +36,11 @@ def main():
     currentPathSettings.addressPointsPath = join(gdb, "AddressPoints")
     currentPathSettings.fcList = [currentPathSettings.addressPointsPath]
     currentPathSettings.checkList = checkList
+
+    if template10 == 'true':
+        currentPathSettings.gdbVersion = "10"
+    else:
+        currentPathSettings.gdbVersion = "11"
 
     #launch the data check
     main_check(checkType, currentPathSettings)

@@ -38,9 +38,14 @@ def getFC_definition(FC, esb):
 
     return defFc
 
-def fieldsWithDomains():
+def fieldsWithDomains(version):
     #list of all the fields that have a domain
-    fieldList = ["LOCTYPE", "STATUS", "SURFACE", "STEWARD", "AGENCYID","PLC", "RDCLASS", "PARITY", "ONEWAY", "MUNI", "COUNTY", "COUNTRY","PRD", "ZIP", "POSTCO", "STATE", "STS"]
+    fieldList = ["LOCTYPE", "STATUS", "SURFACE", "STEWARD", "AGENCYID","PLC", "RDCLASS", "PARITY", "ONEWAY", "MUNI", "COUNTY", "COUNTRY","PRD", "ZIP", "POSTCO", "STATE", "STS", "EXCEPTTION", "SUBMIT"]
+
+    if version == "10":
+        fieldList.remove("EXCEPTION")
+        fieldList.remove("SUBMIT")
+
     return fieldList
 
 def getDomainSource(domain):
@@ -82,25 +87,26 @@ def getRoadFieldDefinition(fieldName):
     fieldDef = ""
 
 def listmetadatafiles(folder):
-    import os
+    from os import listdir
     mList = []
-    list = os.listdir(folder)
+    list = listdir(folder)
     for names in list:
         if names.endswith(".xml"):
             mList.append(names)
     return mList
 
 def cleanUp(gdb):
-    import os
+    from os.path import join, dirname
+    from os import listdir, remove
 
-    folder = os.path.dirname(gdb)
+    folder = dirname(gdb)
     mList = []
-    list = os.listdir(folder)
+    list = listdir(folder)
     for names in list:
         if names.endswith(".log"):
             if "_export" in names:
-                path = os.path.join(folder, names)
-                os.remove(path)
+                path = join(folder, names)
+                remove(path)
 
 def getKeyword(layer, esb):
     if layer in esb:
@@ -111,9 +117,9 @@ def getKeyword(layer, esb):
     return keyword
 
 def getFieldDomain(field, folder):
-    import os
+    from os.path import join
 
-    docPath = os.path.join(folder, field + "_Domains.txt")
+    docPath = join(folder, field + "_Domains.txt")
 ##    print docPath
 
     doc = open(docPath, "r")
@@ -135,9 +141,9 @@ def getFieldDomain(field, folder):
     return domainDict
 
 def parseFieldDefs(keyword, folder):
-    import os
+    from os.path import join
 
-    path = os.path.join(folder, "NG911_FieldDefinitions.txt")
+    path = join(folder, "NG911_FieldDefinitions.txt")
     fieldDefDoc = open(path, "r")
 
     #get the header information
@@ -242,12 +248,17 @@ def editDomain(metadataPath, fieldName, fldDomSource, fldDomainDict):
                     edomvds.text = fldDomSource
                 xml1.write(metadataPath)
 
-def updateMetadata(layer, pathList, folder, esb):
-    import os
+def updateMetadata(layer, pathList, folder, esb, template10):
+    from arcpy import ImportMetadata_conversion, AddMessage, ListFields
+    from os import remove
 
     #get paths
     metadataPath = pathList[1]
     gdbPath = pathList[0]
+
+    version = "11"
+    if template10 == "true":
+        version = "10"
 
     #for layer name, get FC_definition & definition source
     fcDef = getFC_definition(layer, esb)
@@ -266,16 +277,21 @@ def updateMetadata(layer, pathList, folder, esb):
     fieldDefDict = parseFieldDefs(keyword, folder)
 
     #create complete field list
-    fields = arcpy.ListFields(gdbPath)
+    fields = ListFields(gdbPath)
     fieldNames = []
     for field in fields:
         fieldNames.append((field.name).upper())
 
     #get list of fields with domains
-    fieldsWDoms = fieldsWithDomains()
+    fieldsWDoms = fieldsWithDomains(version)
 
     #see if fields from complete list have domains
-    for fieldN in fieldNames:
+    for fieldName in fieldNames:
+
+        if "_" in fieldName:
+            fieldN = fieldName.split("_")[0]
+        else:
+            fieldN = fieldName
 
         #get field definition
         if fieldN in fieldDefDict:
@@ -295,28 +311,30 @@ def updateMetadata(layer, pathList, folder, esb):
                 editDomain(metadataPath, fieldN, fldDomSource, fldDomainDict)
 
     #import metadata back to layer
-    arcpy.ImportMetadata_conversion (metadataPath, "FROM_FGDC", gdbPath, "DISABLED")
+    ImportMetadata_conversion (metadataPath, "FROM_FGDC", gdbPath, "DISABLED")
 
-    arcpy.AddMessage("Metadata successfully updated for " + layer)
+    AddMessage("Metadata successfully updated for " + layer)
 
     #delete metadata file
-    os.remove(metadataPath)
+    remove(metadataPath)
 
-def main(gdb, domainFolder, ESBlist):
-    import arcpy, os
+def main(gdb, domainFolder, ESBlist, version):
+    from os.path import dirname, join
+    from arcpy import GetInstallInfo, env, ExportMetadataMultiple_conversion
+    from arcpy.da import Walk
 
-    workingF = os.path.dirname(gdb)
-    dir = arcpy.GetInstallInfo("desktop")["InstallDir"]
+    workingF = dirname(gdb)
+    dir = GetInstallInfo("desktop")["InstallDir"]
     translator = dir + "Metadata/Translator/ARCGIS2FGDC.xml"
 
     #loop through geodatabase to get each layer
-    arcpy.env.workspace = gdb
+    env.workspace = gdb
     fcs = [] #feature class and table paths
     esb = []
 
-    for dirpath, dirnames, filenames in arcpy.da.Walk(gdb, True, '', False, ["Table","FeatureClass"]):
+    for dirpath, dirnames, filenames in Walk(gdb, True, '', False, ["Table","FeatureClass"]):
         for filename in filenames:
-            fc_path = os.path.join(dirpath,filename)
+            fc_path = join(dirpath,filename)
             fcs.append(fc_path)
             if fc_path in ESBlist:
                 esb.append(filename)
@@ -326,7 +344,7 @@ def main(gdb, domainFolder, ESBlist):
     fcString = ";".join(fcs)
 
     #export metadata layer
-    arcpy.ExportMetadataMultiple_conversion(fcString, translator, workingF)
+    ExportMetadataMultiple_conversion(fcString, translator, workingF)
 
     #get list of metadata files
     metadatas = listmetadatafiles(workingF)
@@ -335,7 +353,7 @@ def main(gdb, domainFolder, ESBlist):
     mDict = {}
     for metadata in metadatas:
         #get complete path names
-        fullPath = os.path.join(workingF, metadata)
+        fullPath = join(workingF, metadata)
 
         #and get the little name
         layerName = metadata.split("_export")[0]
@@ -348,16 +366,17 @@ def main(gdb, domainFolder, ESBlist):
     #loop through metadata dictionary
     for key, list1 in mDict.iteritems():
         print key
-        updateMetadata(key, list1, domainFolder, esb)
+        updateMetadata(key, list1, domainFolder, esb, version)
 
     #clean up log files
     cleanUp(gdb)
 
 if __name__ == '__main__':
-    import arcpy
-    gdb = arcpy.GetParameterAsText(0)
-    domainFolder = arcpy.GetParameterAsText(1)
-    ESBlist = arcpy.GetParameterAsText(2)
+    from arcpy import GetParameterAsText
+    gdb = GetParameterAsText(0)
+    domainFolder = GetParameterAsText(1)
+    ESBlist = GetParameterAsText(2)
+    template10 = GetParameterAsText(3)
 
 ##    gdb = r"E:\Kristen\Data\NG911\RSDigital_SF_NG911_psap.gdb"
-    main(gdb, domainFolder, ESBlist)
+    main(gdb, domainFolder, ESBlist, template10)
