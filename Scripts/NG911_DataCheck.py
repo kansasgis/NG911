@@ -18,7 +18,7 @@
 
 from arcpy import (AddField_management, AddMessage, CalculateField_management,  CopyRows_management, CreateAddressLocator_geocoding,
                    CreateTable_management, Delete_management, Exists, GeocodeAddresses_geocoding, GetCount_management, FieldInfo,
-                   ListFields, MakeFeatureLayer_management, MakeTableView_management, SelectLayerByAttribute_management,
+                   ListFields, MakeFeatureLayer_management, MakeTableView_management, SelectLayerByAttribute_management, Statistics_analysis,
                    SelectLayerByLocation_management, RebuildAddressLocator_geocoding, Frequency_analysis, DeleteRows_management, GetInstallInfo, env)
 from arcpy.da import Walk, InsertCursor, ListDomains, SearchCursor
 
@@ -332,6 +332,103 @@ def geocodeAddressPoints(pathsInfoObject):
                         userMessage("Geocoding table could not be deleted")
         else:
             userMessage("Could not geocode addresses")
+
+def checkUniqueIDFrequency(currentPathSettings):
+    gdb = currentPathSettings.gdbPath
+    esbList = currentPathSettings.esbList
+
+    env.workspace = gdb
+
+    #create temp table of esbID's
+    table = "ESB_IDS"
+
+    if Exists(table):
+        Delete_management(table)
+
+    CreateTable_management(gdb, table)
+
+    AddField_management(table, "ESBID", "TEXT", "", "", 38)
+    AddField_management(table, "ESB_LYR", "TEXT", "", "", 15)
+
+    esbFields = ("ESBID")
+
+    #copy ID's & esb layer type into the table
+    for esb in esbList:
+        with SearchCursor(esb, esbFields) as rows:
+            for row in rows:
+                cursor = InsertCursor(table, ('ESBID', 'ESB_LYR'))
+                cursor.insertRow((row[0], esb))
+
+    try:
+        #clean up
+        del rows, row, cursor
+    except:
+        print "objects cannot be deleted, they don't exist"
+
+    #loop through layers in the gdb that aren't esb & ESB_IDS
+    layers = getCurrentLayerList(esb)
+    layers.append("ESB_IDS")
+
+    values = []
+    recordType = "fieldValues"
+    today = strftime("%m/%d/%y")
+
+    for layer in layers:
+        if layer not in esb:
+            if layer != "ESB_IDS":
+                #for each layer, get the unique ID field
+                uniqueID = getUniqueIDField(layer.upper())
+
+            else:
+                #for esb layers, get the unique ID field
+                uniqueID = "ESBID"
+
+            Statistics_analysis(layer, layer + "_freq", [[uniqueID,"COUNT"]], uniqueID)
+
+            #set parameters for the search cursor
+            where_clause = "FREQUENCY > 1"
+            fields = (uniqueID, "FREQUENCY")
+
+            fl = "fl"
+
+            MakeTableView_management(layer + "_freq", fl, where_clause)
+
+            result = GetCount_management(fl)
+            count = int(result.getOutput(0))
+
+            if count > 0:
+
+                #set a search cursor with just the unique ID field
+                with SearchCursor(layer + "_freq", fields, where_clause) as rows2:
+                    stringESBReport = ""
+                    for row2 in rows2:
+                        if layer == "ESB_IDS":
+                            stringEsbInfo = []
+                            wc2 = "ESBID = " + row2[0]
+                            with SearchCursor("ESB_IDS", ("ESB_LYR"), wc2) as esbRows:
+                                for esbRow in esbRows:
+                                    stringEsbInfo.append(esbRow[0])
+
+                            stringESBReport = " and ".join(stringEsbInfo)
+                        else:
+                            lyr = layer
+
+                        #report duplicate IDs
+                        report = str(row2[0]) + " is a duplicate ID"
+                        if stringESBReport != "":
+                            report = report + " in " + stringESBReport
+                        val = (today, report, lyr, uniqueID, row2[0])
+                        values.append(val)
+
+            Delete_management(layer + "_freq")
+            Delete_management(fl)
+
+    #report duplicate records
+    if values != []:
+        RecordResults(recordType, values, gdb)
+        userMessage("Checked unique ID frequency. Results are in table FieldValuesCheckResults")
+
+    Delete_management(table)
 
 def checkFrequency(fc, freq, fields, wc, gdb, version):
     fl = "fl"
@@ -980,6 +1077,9 @@ def main_check(checkType, currentPathSettings):
 
         if checkList[1] == "true":
             checkFeatureLocations(currentPathSettings)
+
+    elif checkType == "UniqueID":
+        checkUniqueIDFrequency(currentPathSettings)
 
 if __name__ == '__main__':
     main()
