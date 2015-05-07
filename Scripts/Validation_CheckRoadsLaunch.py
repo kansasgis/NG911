@@ -23,10 +23,11 @@ def main():
     checkValuesAgainstDomain = GetParameterAsText(2)
     checkFeatureLocations = GetParameterAsText(3)
     checkRoadFrequency = GetParameterAsText(4)
-    template10 = GetParameterAsText(5)
+    checkUniqueIDs = GetParameterAsText(5)
+    template10 = GetParameterAsText(6)
 
     #create check list
-    checkList = [checkValuesAgainstDomain,checkFeatureLocations,checkRoadFrequency]
+    checkList = [checkValuesAgainstDomain,checkFeatureLocations,checkRoadFrequency,checkUniqueIDs]
 
     roadFile = join(gdb, "RoadCenterline")
     aliasFile = join(gdb, "RoadAlias")
@@ -38,6 +39,7 @@ def main():
     currentPathSettings.gdbPath = gdb
     currentPathSettings.domainsFolderPath = domainsFolder
     currentPathSettings.fcList = fcList
+    currentPathSettings.esbList = []
     currentPathSettings.checkList = checkList
 
     if template10 == 'true':

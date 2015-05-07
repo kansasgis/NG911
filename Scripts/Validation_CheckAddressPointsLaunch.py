@@ -24,10 +24,11 @@ def main():
     checkFeatureLocations = GetParameterAsText(3)
     geocodeAddressPoints = GetParameterAsText(4)
     checkAddressPointFrequency = GetParameterAsText(5)
-    template10 = GetParameterAsText(6)
+    checkUniqueIDs = GetParameterAsText(6)
+    template10 = GetParameterAsText(7)
 
     #create check list
-    checkList = [checkValuesAgainstDomain,checkFeatureLocations,geocodeAddressPoints,checkAddressPointFrequency]
+    checkList = [checkValuesAgainstDomain,checkFeatureLocations,geocodeAddressPoints,checkAddressPointFrequency,checkUniqueIDs]
 
     #set object parameters
     checkType = "AddressPoints"
@@ -35,6 +36,7 @@ def main():
     currentPathSettings.domainsFolderPath = domainsFolder
     currentPathSettings.addressPointsPath = join(gdb, "AddressPoints")
     currentPathSettings.fcList = [currentPathSettings.addressPointsPath]
+    currentPathSettings.esbList = []
     currentPathSettings.checkList = checkList
 
     if template10 == 'true':

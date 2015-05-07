@@ -22,10 +22,11 @@ def main():
     domainsFolder = GetParameterAsText(1)
     checkValuesAgainstDomain = GetParameterAsText(2)
     checkFeatureLocations = GetParameterAsText(3)
-    template10 = GetParameterAsText(4)
+    checkUniqueIDs = GetParameterAsText(4)
+    template10 = GetParameterAsText(5)
 
     #create check list
-    checkList = [checkValuesAgainstDomain,checkFeatureLocations]
+    checkList = [checkValuesAgainstDomain,checkFeatureLocations,checkUniqueIDs]
 
     #set object parameters
     checkType = "admin"
@@ -40,6 +41,7 @@ def main():
             fcList.append(path)
 
     currentPathSettings.fcList = fcList
+    currentPathSettings.esbList = []
     currentPathSettings.checkList = checkList
 
     if template10 == 'true':

@@ -46,7 +46,6 @@ The project consists of:
 		Validation_CheckESBLaunch.py
 		Validation_CheckRoadsLaunch.py
 		Validation_CheckTemplateLaunch.py
-		Validation_CheckUniqueIDs.py
 		Validation_ClearOldResults.py
 		Validation_UpdateDomains.py
 		

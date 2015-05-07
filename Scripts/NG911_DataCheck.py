@@ -19,7 +19,7 @@
 from arcpy import (AddField_management, AddMessage, CalculateField_management,  CopyRows_management, CreateAddressLocator_geocoding,
                    CreateTable_management, Delete_management, Exists, GeocodeAddresses_geocoding, GetCount_management, FieldInfo,
                    ListFields, MakeFeatureLayer_management, MakeTableView_management, SelectLayerByAttribute_management, Statistics_analysis,
-                   SelectLayerByLocation_management, RebuildAddressLocator_geocoding, Frequency_analysis, DeleteRows_management, GetInstallInfo, env)
+                   SelectLayerByLocation_management, RebuildAddressLocator_geocoding, DeleteRows_management, GetInstallInfo, env)
 from arcpy.da import Walk, InsertCursor, ListDomains, SearchCursor
 
 from os import path
@@ -336,103 +336,118 @@ def geocodeAddressPoints(pathsInfoObject):
 def checkUniqueIDFrequency(currentPathSettings):
     gdb = currentPathSettings.gdbPath
     esbList = currentPathSettings.esbList
+    fcList = currentPathSettings.fcList
+
+    layerList = []
 
     env.workspace = gdb
-
-    #create temp table of esbID's
     table = "ESB_IDS"
 
-    if Exists(table):
-        Delete_management(table)
+    #create temp table of esbID's
+    if esbList <> []:
+        layerList = ["ESB_IDS"]
 
-    CreateTable_management(gdb, table)
+        if Exists(table):
+            Delete_management(table)
 
-    AddField_management(table, "ESBID", "TEXT", "", "", 38)
-    AddField_management(table, "ESB_LYR", "TEXT", "", "", 15)
+        CreateTable_management(gdb, table)
 
-    esbFields = ("ESBID")
+        AddField_management(table, "ESBID", "TEXT", "", "", 38)
+        AddField_management(table, "ESB_LYR", "TEXT", "", "", 15)
 
-    #copy ID's & esb layer type into the table
-    for esb in esbList:
-        with SearchCursor(esb, esbFields) as rows:
-            for row in rows:
-                cursor = InsertCursor(table, ('ESBID', 'ESB_LYR'))
-                cursor.insertRow((row[0], esb))
+        esbFields = ("ESBID")
 
-    try:
-        #clean up
-        del rows, row, cursor
-    except:
-        print "objects cannot be deleted, they don't exist"
+        #copy ID's & esb layer type into the table
+        for esb in esbList:
+            with SearchCursor(esb, esbFields) as rows:
+                for row in rows:
+                    cursor = InsertCursor(table, ('ESBID', 'ESB_LYR'))
+                    cursor.insertRow((row[0], esb))
+
+        try:
+            #clean up
+            del rows, row, cursor
+        except:
+            print "objects cannot be deleted, they don't exist"
+
+    else:
+        for fc in fcList:
+            fc = basename(fc)
+            layerList.append(fc)
 
     #loop through layers in the gdb that aren't esb & ESB_IDS
-    layers = getCurrentLayerList(esb)
-    layers.append("ESB_IDS")
+##    layers = getCurrentLayerList(esb)
+##    layers.append("ESB_IDS")
 
     values = []
     recordType = "fieldValues"
     today = strftime("%m/%d/%y")
 
-    for layer in layers:
-        if layer not in esb:
-            if layer != "ESB_IDS":
-                #for each layer, get the unique ID field
-                uniqueID = getUniqueIDField(layer.upper())
+    for layer in layerList:
+##        if layer not in esb:
+        if layer != "ESB_IDS":
+            #for each layer, get the unique ID field
+            uniqueID = getUniqueIDField(layer.upper())
 
-            else:
-                #for esb layers, get the unique ID field
-                uniqueID = "ESBID"
+        else:
+            #for esb layers, get the unique ID field
+            uniqueID = "ESBID"
 
-            Statistics_analysis(layer, layer + "_freq", [[uniqueID,"COUNT"]], uniqueID)
+        Statistics_analysis(layer, layer + "_freq", [[uniqueID,"COUNT"]], uniqueID)
 
-            #set parameters for the search cursor
-            where_clause = "FREQUENCY > 1"
-            fields = (uniqueID, "FREQUENCY")
+        #set parameters for the search cursor
+        where_clause = "FREQUENCY > 1"
+        fields = (uniqueID, "FREQUENCY")
 
-            fl = "fl"
+        fl = "fl"
 
-            MakeTableView_management(layer + "_freq", fl, where_clause)
+        MakeTableView_management(layer + "_freq", fl, where_clause)
 
-            result = GetCount_management(fl)
-            count = int(result.getOutput(0))
+        result = GetCount_management(fl)
+        count = int(result.getOutput(0))
 
-            if count > 0:
+        if count > 0:
 
-                #set a search cursor with just the unique ID field
-                with SearchCursor(layer + "_freq", fields, where_clause) as rows2:
-                    stringESBReport = ""
-                    for row2 in rows2:
-                        if layer == "ESB_IDS":
-                            stringEsbInfo = []
-                            wc2 = "ESBID = " + row2[0]
-                            with SearchCursor("ESB_IDS", ("ESB_LYR"), wc2) as esbRows:
-                                for esbRow in esbRows:
-                                    stringEsbInfo.append(esbRow[0])
+            #set a search cursor with just the unique ID field
+            with SearchCursor(layer + "_freq", fields, where_clause) as rows2:
+                stringESBReport = ""
+                for row2 in rows2:
+                    if layer == "ESB_IDS":
+                        stringEsbInfo = []
+                        wc2 = "ESBID = " + row2[0]
+                        with SearchCursor("ESB_IDS", ("ESB_LYR"), wc2) as esbRows:
+                            for esbRow in esbRows:
+                                stringEsbInfo.append(esbRow[0])
 
-                            stringESBReport = " and ".join(stringEsbInfo)
-                        else:
-                            lyr = layer
+                        stringESBReport = " and ".join(stringEsbInfo)
+                    else:
+                        lyr = layer
 
-                        #report duplicate IDs
-                        report = str(row2[0]) + " is a duplicate ID"
-                        if stringESBReport != "":
-                            report = report + " in " + stringESBReport
-                        val = (today, report, lyr, uniqueID, row2[0])
-                        values.append(val)
+                    #report duplicate IDs
+                    report = str(row2[0]) + " is a duplicate ID"
+                    if stringESBReport != "":
+                        report = report + " in " + stringESBReport
+                    val = (today, report, lyr, uniqueID, row2[0])
+                    values.append(val)
 
-            Delete_management(layer + "_freq")
-            Delete_management(fl)
+        Delete_management(layer + "_freq")
+        Delete_management(fl)
 
     #report duplicate records
     if values != []:
         RecordResults(recordType, values, gdb)
-        userMessage("Checked unique ID frequency. Results are in table FieldValuesCheckResults")
+        userMessage("Checked unique ID frequency. Results are in table FieldValuesCheckResults.")
+    else:
+        userMessage("All ID's are unique.")
 
-    Delete_management(table)
+    #if it exists, clean up table
+    if Exists(table):
+        Delete_management(table)
 
-def checkFrequency(fc, freq, fields, wc, gdb, version):
+def checkFrequency(fc, freq, fields, gdb, version):
     fl = "fl"
     fl1 = "fl1"
+    wc = "FREQUENCY > 1"
 
     #remove the frequency table if it exists already
     if Exists(freq):
@@ -458,14 +473,18 @@ def checkFrequency(fc, freq, fields, wc, gdb, version):
             #run query on fc to make sure 0's are ignored
             MakeTableView_management(fc, fl1, wc1)
 
+            #split field names
+            fieldsList = fields.split(";")
+            fieldCountList = []
+            fl_fields = []
+            for f in fieldsList:
+                f = f.strip()
+                fList = [f,"COUNT"]
+                fieldCountList.append(fList)
+                fl_fields.append(f)
+
             #run frequency analysis
-            Frequency_analysis(fl1, freq, fields, "")
-
-            #get count of records
-            rFreq = GetCount_management(freq)
-            rCount = int(rFreq.getOutput(0))
-
-            #delete records
+            Statistics_analysis(fl1, freq, fieldCountList, fields)
 
             #make feature layer
             MakeTableView_management(freq, fl, wc)
@@ -474,9 +493,7 @@ def checkFrequency(fc, freq, fields, wc, gdb, version):
             result = GetCount_management(fl)
             count = int(result.getOutput(0))
 
-            if rCount != count:
-                #Delete
-                DeleteRows_management(fl)
+            if count > 0:
 
                 #set up parameters to report duplicate records
                 values = []
@@ -484,12 +501,6 @@ def checkFrequency(fc, freq, fields, wc, gdb, version):
                 today = strftime("%m/%d/%y")
 
                 #add information to FieldValuesCheckResults for all duplicates
-                #get fields
-                fl_fields1 = fields.split(";")
-                fl_fields = []
-                for f1 in fl_fields1:
-                    f = f1.strip()
-                    fl_fields.append(f)
 
                 #get field count
                 fCount = len(fl_fields)
@@ -498,7 +509,7 @@ def checkFrequency(fc, freq, fields, wc, gdb, version):
                 id1 = getUniqueIDField(filename.upper())
 
                 #run a search on the frequency table to report duplicate records
-                with SearchCursor(freq, fl_fields) as rows:
+                with SearchCursor(freq, fl_fields, wc) as rows:
                     for row in rows:
                         i = 0
                         #generate where clause to find duplicate ID's
@@ -517,7 +528,6 @@ def checkFrequency(fc, freq, fields, wc, gdb, version):
 
                         #trim last "and " off where clause
                         wc = wc[0:-5]
-        ##                userMessage(wc)
 
                         #find records with duplicates to get their unique ID's
                         with SearchCursor(fl1, (id1), wc) as sRows:
@@ -531,8 +541,13 @@ def checkFrequency(fc, freq, fields, wc, gdb, version):
                 if values != []:
                     RecordResults(recordType, values, gdb)
                     userMessage("Checked frequency. Results are in table FieldValuesCheckResults")
-            elif rCount == count:
-                userMessage("All records are unique.")
+
+            elif count == 0:
+                userMessage("Checked frequency. All records are unique.")
+
+            #clean up
+            Delete_management(fl)
+            Delete_management(fl1)
 
             try:
                 Delete_management(freq)
@@ -1050,8 +1065,10 @@ def main_check(checkType, currentPathSettings):
             addressPoints = join(currentPathSettings.gdbPath, "AddressPoints")
             AP_freq = join(currentPathSettings.gdbPath, "AP_Freq")
             AP_fields = "MUNI;HNO;HNS;PRD;STP;RD;STS;POD;POM;ZIP;BLD;FLR;UNIT;ROOM;SEAT;LOC;LOCTYPE"
-            AP_wc = "Frequency = 1 or LOCTYPE <> 'Primary'"
-            checkFrequency(addressPoints, AP_freq, AP_fields, AP_wc, currentPathSettings.gdbPath, currentPathSettings.gdbVersion)
+            checkFrequency(addressPoints, AP_freq, AP_fields, currentPathSettings.gdbPath, currentPathSettings.gdbVersion)
+
+        if checkList[4] == "true":
+            checkUniqueIDFrequency(currentPathSettings)
 
     #check roads
     elif checkType == "Roads":
@@ -1067,8 +1084,10 @@ def main_check(checkType, currentPathSettings):
             road_fields = """STATE_L;STATE_R;COUNTY_L;COUNTY_R;MUNI_L;MUNI_R;L_F_ADD;L_T_ADD;R_F_ADD;R_T_ADD;
             PARITY_L;PARITY_R;POSTCO_L;POSTCO_R;ZIP_L;ZIP_R;ESN_L;ESN_R;MSAGCO_L;MSAGCO_R;PRD;STP;RD;STS;POD;
             POM;SPDLIMIT;ONEWAY;RDCLASS;LABEL;ELEV_F;ELEV_T;ESN_C;SURFACE;STATUS;TRAVEL;LRSKEY"""
-            road_wc = "Frequency = 1"
-            checkFrequency(roads, road_freq, road_fields, road_wc, currentPathSettings.gdbPath, currentPathSettings.gdbVersion)
+            checkFrequency(roads, road_freq, road_fields, currentPathSettings.gdbPath, currentPathSettings.gdbVersion)
+
+        if checkList[3] == "true":
+            checkUniqueIDFrequency(currentPathSettings)
 
     #check boundaries or ESB
     elif checkType in ("admin", "ESB"):
@@ -1078,8 +1097,9 @@ def main_check(checkType, currentPathSettings):
         if checkList[1] == "true":
             checkFeatureLocations(currentPathSettings)
 
-    elif checkType == "UniqueID":
-        checkUniqueIDFrequency(currentPathSettings)
+        if checkList[2] == "true":
+            checkUniqueIDFrequency(currentPathSettings)
+
 
 if __name__ == '__main__':
     main()

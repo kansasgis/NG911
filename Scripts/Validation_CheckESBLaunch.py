@@ -25,7 +25,8 @@ def main():
     esbList = GetParameterAsText(2).split(";")
     checkValuesAgainstDomain = GetParameterAsText(3)
     checkFeatureLocations = GetParameterAsText(4)
-    template10 = GetParameterAsText(5)
+    checkUniqueIDs = GetParameterAsText(5)
+    template10 = GetParameterAsText(6)
 
     #create esb list
     esb = []
@@ -38,7 +39,7 @@ def main():
         esb.append(e1)
 
     #create check list
-    checkList = [checkValuesAgainstDomain,checkFeatureLocations]
+    checkList = [checkValuesAgainstDomain,checkFeatureLocations,checkUniqueIDs]
 
     #set object parameters
     checkType = "ESB"
