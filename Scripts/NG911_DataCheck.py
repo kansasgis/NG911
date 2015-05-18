@@ -729,7 +729,7 @@ def checkValuesAgainstDomain(pathsInfoObject):
                         domainList = []
 
                         for val in domainDict.iterkeys():
-                            domainList.append(val.upper())
+                            domainList.append(val)
 
                         #add values for some CAD users of blank and space (edit suggested by Sherry M. & Keith S. Dec 2014)
                         domainList.append('')
@@ -760,7 +760,7 @@ def checkValuesAgainstDomain(pathsInfoObject):
                                             values.append(val)
                                     #otherwise, compare row value to domain list
                                     else:
-                                        if row[1].upper() not in domainList:
+                                        if row[1] not in domainList:
                                             report = "Value " + str(row[1]) + " not in approved domain for field " + fieldName
                                             val = (today, report, fc, fieldName, fID)
                                             values.append(val)
