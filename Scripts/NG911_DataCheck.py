@@ -708,7 +708,7 @@ def checkValuesAgainstDomain(pathsInfoObject):
             fieldNames = []
 
             for field in fields:
-                if field.name not in ("MUNI_ID"):
+                if field.name <> "MUNI_ID":
                     fieldNames.append((field.name).upper())
 
             #see if fields from complete list have domains
@@ -718,6 +718,7 @@ def checkValuesAgainstDomain(pathsInfoObject):
                 else:
                     fieldN = fieldName
 
+                userMessage(fieldN)
                 #if field has a domain
                 if fieldN in fieldsWDoms:
 
