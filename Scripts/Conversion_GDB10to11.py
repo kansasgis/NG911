@@ -49,14 +49,16 @@ def main():
             Copy_management(fc10, fc11)
 
             #add new fields necessary for the 1.1 template
-            AddField_management(fc11, "SUBMIT", "TEXT", "", "", 1, "SUBMIT", "", "", "Submit")
-            AssignDefaultToField_management(fc11, "SUBMIT", "Y")
+            if fc <> "CountyBoundary":
+                AddField_management(fc11, "SUBMIT", "TEXT", "", "", 1, "SUBMIT", "", "", "Submit")
+                AssignDefaultToField_management(fc11, "SUBMIT", "Y")
 
-            AddField_management(fc11, "NOTES", "TEXT", "", "", 255)
+                AddField_management(fc11, "NOTES", "TEXT", "", "", 255)
 
         #fill in default values
-        #SUBMIT for all
-        CalculateField_management(fc11, "SUBMIT", '"Y"', "PYTHON_9.3")
+        #SUBMIT for all except county boundary
+        if fc <> "CountyBoundary":
+            CalculateField_management(fc11, "SUBMIT", '"Y"', "PYTHON_9.3")
 
         #EXCEPTION if it's a road feature
         if fc == 'RoadCenterline':

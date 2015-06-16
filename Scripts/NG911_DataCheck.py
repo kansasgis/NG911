@@ -700,6 +700,10 @@ def checkValuesAgainstDomain(pathsInfoObject):
         if fc in esb:
             layer = "ESB"
 
+        #remove "STATUS" field if we aren't working with road centerline- edit suggested by Sherry M., 6/16/2015
+        if layer != "ROADCENTERLINE":
+            fieldsWDoms.remove("STATUS")
+
         id1 = getUniqueIDField(layer)
         if id1 != "":
             fields = []
@@ -718,7 +722,7 @@ def checkValuesAgainstDomain(pathsInfoObject):
                 else:
                     fieldN = fieldName
 
-                userMessage(fieldN)
+                #userMessage(fieldN)
                 #if field has a domain
                 if fieldN in fieldsWDoms:
 
