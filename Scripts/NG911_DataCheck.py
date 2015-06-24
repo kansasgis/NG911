@@ -56,7 +56,7 @@ def getCurrentDomainList(version):
 
 def fieldsWithDomains(version):
     #list of all the fields that have a domain
-    fieldList = ["LOCTYPE", "STATUS", "SURFACE", "STEWARD", "AGENCYID","PLC", "RDCLASS", "PARITY", "ONEWAY", "MUNI", "COUNTY", "COUNTRY","PRD", "ZIP", "POSTCO", "STATE", "STS", "EXCEPTION", "SUBMIT"]
+    fieldList = ["LOCTYPE", "STATUS", "SURFACE", "STEWARD", "AGENCYID","PLC", "RDCLASS", "PARITY", "ONEWAY", "MUNI", "COUNTY", "COUNTRY","PRD", "ZIP", "POSTCO", "STATE", "STS", "EXCEPTION", "SUBMIT", "POD"]
 
     if version == "10":
         fieldList.remove("EXCEPTION")
@@ -702,7 +702,8 @@ def checkValuesAgainstDomain(pathsInfoObject):
 
         #remove "STATUS" field if we aren't working with road centerline- edit suggested by Sherry M., 6/16/2015
         if layer != "ROADCENTERLINE":
-            fieldsWDoms.remove("STATUS")
+            if "STATUS" in fieldsWDoms:
+                fieldsWDoms.remove("STATUS")
 
         id1 = getUniqueIDField(layer)
         if id1 != "":
