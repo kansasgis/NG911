@@ -54,13 +54,33 @@ def getCurrentDomainList(version):
     return domainList
 
 
-def fieldsWithDomains(version):
+def fieldsWithDomains(version, layer):
     #list of all the fields that have a domain
-    fieldList = ["LOCTYPE", "STATUS", "SURFACE", "STEWARD", "AGENCYID","PLC", "RDCLASS", "PARITY", "PARITY_L", "PARITY_R", "ONEWAY", "MUNI", "MUNI_L", "MUNI_R", "COUNTY", "COUNTY_L", "COUNTY_R", "COUNTRY", "PRD", "ZIP", "ZIP_L", "ZIP_R", "POSTCO", "POSTCO_L", "POSTCO_R", "STATE", "STATE_L", "STATE_R", "STS", "EXCEPTION", "SUBMIT", "POD"]
+    if layer == "ADDRESSPOINTS":
+        fieldList = ["STEWARD", "STATE", "COUNTY", "MUNI", "PRD", "STS", "POD", "POSTCO", "ZIP", "PLC", "LOCTYPE", "EXCEPTION", "SUBMIT"]
+    elif layer == "ROADCENTERLINE":
+        fieldList = ["STEWARD", "STATE_L", "STATE_R", "COUNTY_L", "COUNTY_R", "MUNI_L", "MUNI_R", "PARITY_L", "PARITY_R", "POSTCO_L", "POSTCO_R", "ZIP_L", "ZIP_R", "PRD", "STS", "POD", "ONEWAY", "RDCLASS", "SURFACE", "STATUS", "EXCEPTION", "SUBMIT"]
+    elif layer == "ESB":
+        fieldList = ["STEWARD", "STATE", "AGENCYID", "SUBMIT"]
+    elif layer == "AUTHORITATIVEBOUNDARY":
+        fieldList = ["STEWARD", "AGENCYID", "SUBMIT"]
+    elif layer == "ROADALIAS":
+        fieldList = ["STEWARD", "A_PRD", "A_STS", "A_POD", "SUBMIT"]
+    elif layer == "COUNTYBOUNDARY":
+        fieldList = ["STEWARD", "STATE", "COUNTY"]
+    elif layer == "MUNICIPALBOUNDARY":
+        fieldList = ["STEWARD", "STATE", "COUNTY", "MUNI", "SUBMIT"]
+    elif layer == "ESZ":
+        fieldList = ["STEWARD", "AGENCYID", "SUBMIT"]
+    elif layer == "PSAP":
+        fieldList = ["STEWARD", "STATE", "AGENCYID", "SUBMIT"]
 
+    #take out fields if it's a different version of geodatabase
     if version == "10":
-        fieldList.remove("EXCEPTION")
-        fieldList.remove("SUBMIT")
+        removeList = ["EXCEPTION", "SUBMIT"]
+        for rL in removeList:
+            if rL in fieldList:
+                fieldList.remove(rL)
 
     return fieldList
 
@@ -691,19 +711,19 @@ def checkValuesAgainstDomain(pathsInfoObject):
     #set environment
     env.workspace = gdb
 
-    #get list of fields with domains
-    fieldsWDoms = fieldsWithDomains(version)
-
     for fullPath in fcList:
         fc = basename(fullPath).replace("'", "")
         layer = fc.upper()
         if fc in esb:
             layer = "ESB"
 
-        #remove "STATUS" field if we aren't working with road centerline- edit suggested by Sherry M., 6/16/2015
-        if layer != "ROADCENTERLINE":
-            if "STATUS" in fieldsWDoms:
-                fieldsWDoms.remove("STATUS")
+        #get list of fields with domains
+        fieldsWDoms = fieldsWithDomains(version, layer)
+
+##        #remove "STATUS" field if we aren't working with road centerline- edit suggested by Sherry M., 6/16/2015
+##        if layer != "ROADCENTERLINE":
+##            if "STATUS" in fieldsWDoms:
+##                fieldsWDoms.remove("STATUS")
 
         id1 = getUniqueIDField(layer)
         if id1 != "":
