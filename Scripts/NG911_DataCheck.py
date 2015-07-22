@@ -56,7 +56,7 @@ def getCurrentDomainList(version):
 
 def fieldsWithDomains(version):
     #list of all the fields that have a domain
-    fieldList = ["LOCTYPE", "STATUS", "SURFACE", "STEWARD", "AGENCYID","PLC", "RDCLASS", "PARITY", "ONEWAY", "MUNI", "COUNTY", "COUNTRY","PRD", "ZIP", "POSTCO", "STATE", "STS", "EXCEPTION", "SUBMIT", "POD"]
+    fieldList = ["LOCTYPE", "STATUS", "SURFACE", "STEWARD", "AGENCYID","PLC", "RDCLASS", "PARITY", "PARITY_L", "PARITY_R", "ONEWAY", "MUNI", "MUNI_L", "MUNI_R", "COUNTY", "COUNTY_L", "COUNTY_R", "COUNTRY", "PRD", "ZIP", "ZIP_L", "ZIP_R", "POSTCO", "POSTCO_L", "POSTCO_R", "STATE", "STATE_L", "STATE_R", "STS", "EXCEPTION", "SUBMIT", "POD"]
 
     if version == "10":
         fieldList.remove("EXCEPTION")
@@ -712,16 +712,8 @@ def checkValuesAgainstDomain(pathsInfoObject):
             fields = ListFields(fc)
             fieldNames = []
 
-            for field in fields:
-                if field.name <> "MUNI_ID":
-                    fieldNames.append((field.name).upper())
-
             #see if fields from complete list have domains
-            for fieldName in fieldNames:
-                if "_" in fieldName:
-                    fieldN = fieldName.split("_")[0]
-                else:
-                    fieldN = fieldName
+            for fieldN in fieldNames:
 
                 #userMessage(fieldN)
                 #if field has a domain
