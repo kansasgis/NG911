@@ -29,7 +29,7 @@ from time import strftime
 
 
 def getCurrentLayerList(esb):
-    layerList = ["RoadAlias", "AddressPoints", "RoadCenterline", "AuthoritativeBoundary", "CountyBoundary", "ESZ", "PSAP", "MunicipalBoundary"]
+    layerList = ["RoadAlias", "AddressPoints", "RoadCenterline", "AuthoritativeBoundary", "CountyBoundary", "ESZ", "MunicipalBoundary"]
     for e in esb:
         layerList.append(e)
     return layerList
@@ -664,6 +664,9 @@ def getRequiredFields(folder, version):
 
 def getFieldDomain(field, folder):
 ##    userMessage(field)
+    if "_" in field:
+        f = field.split("_")
+        field = f[0]
 
     docPath = path.join(folder, field + "_Domains.txt")
     ## print docPath
@@ -732,13 +735,16 @@ def checkValuesAgainstDomain(pathsInfoObject):
             fields = ListFields(fc)
             fieldNames = []
 
+            for f in fields:
+                fieldNames.append(f.name)
+
             #see if fields from complete list have domains
             for fieldN in fieldNames:
 
                 #userMessage(fieldN)
                 #if field has a domain
                 if fieldN in fieldsWDoms:
-
+                    userMessage("Checking: " + fieldN)
                     #get the full domain dictionary
                     domainDict = getFieldDomain(fieldN, folder)
 
@@ -764,8 +770,8 @@ def checkValuesAgainstDomain(pathsInfoObject):
                                 i += 1
 
                         #loop through records for that particular field to see if all values match domain
-                        wc = fieldName + " is not null"
-                        with SearchCursor(fullPath, (id1, fieldName), wc) as rows:
+                        wc = fieldN + " is not null"
+                        with SearchCursor(fullPath, (id1, fieldN), wc) as rows:
                             for row in rows:
                                 if row[1] is not None:
                                     fID = row[0]
@@ -773,18 +779,20 @@ def checkValuesAgainstDomain(pathsInfoObject):
                                     if fieldN == "HNO":
                                         hno = row[1]
                                         if hno > 999999 or hno < 0:
-                                            report = "Value " + str(row[1]) + " not in approved domain for field " + fieldName
-                                            val = (today, report, fc, fieldName, fID)
+                                            report = "Value " + str(row[1]) + " not in approved domain for field " + fieldN
+                                            val = (today, report, fc, fieldN, fID)
                                             values.append(val)
                                     #otherwise, compare row value to domain list
                                     else:
+                                        userMessage("Checking value: " + row[1])
                                         if row[1] not in domainList:
-                                            report = "Value " + str(row[1]) + " not in approved domain for field " + fieldName
-                                            val = (today, report, fc, fieldName, fID)
+                                            report = "Value " + str(row[1]) + " not in approved domain for field " + fieldN
+                                            val = (today, report, fc, fieldN, fID)
                                             values.append(val)
 
                     else:
-                        userMessage("Could not compare domain for " + fieldName)
+                        userMessage("Could not compare domain for " + fieldN)
+        userMessage("Checked " + layer)
 
     if values != []:
         RecordResults(resultType, values, gdb)

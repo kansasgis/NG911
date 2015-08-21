@@ -118,3 +118,4 @@ psap.ws.ks.us|A PSAP ID in Kansas
 psap.wh.ks.us|A PSAP ID in Kansas
 psap.wl.ks.us|A PSAP ID in Kansas
 psap.wo.ks.us|A PSAP ID in Kansas
+psap.ftleavenworth.ks.ku|A PSAP ID in Kansas

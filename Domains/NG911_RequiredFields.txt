@@ -41,7 +41,6 @@ AuthoritativeBoundary|STEWARD
 AuthoritativeBoundary|L_UPDATE
 AuthoritativeBoundary|EFF_DATE
 AuthoritativeBoundary|ABID
-AuthoritativeBoundary|STATE
 AuthoritativeBoundary|AGENCYID
 AuthoritativeBoundary|DISPLAY
 AuthoritativeBoundary|UPDATEBY
@@ -72,7 +71,6 @@ ESZ|STEWARD
 ESZ|L_UPDATE
 ESZ|EFF_DATE
 ESZ|ESZID
-ESZ|STATE
 ESZ|AGENCYID
 ESZ|ESN
 ESZ|UPDATEBY
