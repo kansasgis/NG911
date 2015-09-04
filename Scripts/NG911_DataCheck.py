@@ -19,7 +19,7 @@
 from arcpy import (AddField_management, AddMessage, CalculateField_management,  CopyRows_management, CreateAddressLocator_geocoding,
                    CreateTable_management, Delete_management, Exists, GeocodeAddresses_geocoding, GetCount_management, FieldInfo,
                    ListFields, MakeFeatureLayer_management, MakeTableView_management, SelectLayerByAttribute_management, Statistics_analysis,
-                   SelectLayerByLocation_management, RebuildAddressLocator_geocoding, DeleteRows_management, GetInstallInfo, env)
+                   SelectLayerByLocation_management, RebuildAddressLocator_geocoding, DeleteRows_management, GetInstallInfo, env, ListDatasets)
 from arcpy.da import Walk, InsertCursor, ListDomains, SearchCursor
 
 from os import path
@@ -583,6 +583,18 @@ def checkLayerList(pathsInfoObject):
     values = []
     today = strftime("%m/%d/%y")
 
+    #make sure the NG911 feature dataset exists
+    userMessage("Checking feature dataset name...")
+    env.workspace = gdb
+
+    datasets = ListDatasets()
+
+    if "NG911" not in datasets:
+        dataset_report = "No feature dataset named 'NG911' exists"
+        val = (today, dataset_report, "Template")
+        values.append(val)
+        userMessage(dataset_report)
+
     userMessage("Checking geodatabase layers...")
     #get current layer list
     layerList = getCurrentLayerList(esb)
@@ -1064,6 +1076,14 @@ def main_check(checkType, currentPathSettings):
 ##        userMessage( "Copy config file into command line")
 
     checkList = currentPathSettings.checkList
+
+    #give user a warning if they didn't select any validation checks
+    stuffToCheck = 0
+    for cI in checkList:
+        if cI == "true":
+            stuffToCheck = stuffToCheck + 1
+    if stuffToCheck == 0:
+        userMessage("Warning: you choose no validation checks.")
 
     #check geodatabase template
     if checkType == "template":

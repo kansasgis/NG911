@@ -36,6 +36,7 @@ The project consists of:
 	Scripts
 		Conversion_GDB10to11.py
 		Conversion_GDBtoShapefile.py
+		Conversion_ZipNG911Geodatabase.py
 		CoordConvertor.py
 		Enhancement_AssignID.py
 		Enhancement_USNGCalc.py
