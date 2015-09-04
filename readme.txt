@@ -22,6 +22,7 @@ The project consists of:
 		ONEWAY_Domains.txt
 		PARITY_Domains.txt
 		PLC_Domains.txt
+		POD_Domains.txt
 		POSTCO_Domains.txt
 		PRD_Domains.txt
 		RDCLASS_Domains.txt
@@ -38,6 +39,7 @@ The project consists of:
 		CoordConvertor.py
 		Enhancement_AssignID.py
 		Enhancement_USNGCalc.py
+		Enhancement_CheckTN.py
 		Metadata_EnhanceMetadata.py
 		NG911_Config.py
 		NG911_DataCheck.py
@@ -48,6 +50,7 @@ The project consists of:
 		Validation_CheckTemplateLaunch.py
 		Validation_ClearOldResults.py
 		Validation_UpdateDomains.py
+		Validation_VerifyTopologyExceptions.py
 		
 The official repository for this project is on the KansasGIS GitHub account.
 
@@ -55,7 +58,7 @@ The tool will be available as a package download from the Kansas Data Access and
 
 Support: for questions or issues, email a full description to Kristen: kristen at kgs.ku.edu
 
-Credits: Scripts written by Sherry Massey with Dickinson County, Kristen Jordan with DASC, and Kyle Gonterwitz and Dirk Talley with Kansas Department of Transportation
+Credits: Scripts written by Sherry Massey with Dickinson County, Kristen Jordan-Koenig with DASC, and Kyle Gonterwitz and Dirk Talley with Kansas Department of Transportation
 
 Disclaimer: The Kansas NG9-1-1 GIS Toolbox is provided by the Kansas 911 Coordinating Council, Kansas GIS Policy Board’s Data Access & Support Center (DASC), 
 and associated contributors "as is" and any express or implied warranties, including, but not limited to, the implied warranties of merchantability and fitness 

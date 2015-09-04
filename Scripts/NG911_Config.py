@@ -7,6 +7,7 @@
 # Created:     24/09/2014
 # Modified:    31/10/2014 by dirktall04
 #-------------------------------------------------------------------------------
+from os.path import join
 
 esb = ["EMS", "FIRE", "LAW"] #list of layers that are emergency services boundaries
 gdb = r"R:\BigDrives\internal\internal1\NG911_Pilot_Agg\Final_GIS_Data\Region1_PR_Final_KJ.gdb" #full path of the NG911 geodatabase
@@ -39,3 +40,26 @@ class pathInformationClass():
         self.gdbVersion = "11"
 
 currentPathSettings = pathInformationClass()
+
+def getGDBObject(gdb):
+
+    # This is a class used represent the NG911 geodatabase
+    class NG911_GDB_Object():
+        def __init__(self):
+            self.gdbPath = gdb
+            self.AddressPoints = join(gdb, "NG911", "AddressPoints")
+            self.RoadCenterline = join(gdb, "NG911", "RoadCenterline")
+            self.RoadAlias = join(gdb, "RoadAlias")
+            self.AuthoritativeBoundary = join(gdb, "NG911", "AuthoritativeBoundary")
+            self.MunicipalBoundary = join(gdb, "NG911", "MunicipalBoundary")
+            self.Topology = join(gdb, "NG911", "NG911_Topology")
+            self.Locator = join(gdb, "Locator")
+            self.gc_test = join(gdb, "gc_test")
+            self.GeocodeTable = join(gdb, "GeocodeTable")
+            self.FieldValuesCheckResults = join(gdb, "FieldValuesCheckResults")
+            self.TemplateCheckResults = join(gdb, "TemplateCheckResults")
+            self.ProjectionFile = r"\\stewie\c$\hp\ftp\ftp2\ftp_users\GISSubcommittee_NG911\KDOTprojectionfile\KDOT_Lambert.prj"
+
+    NG911_GDB = NG911_GDB_Object()
+
+    return NG911_GDB
