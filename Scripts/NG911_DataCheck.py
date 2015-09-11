@@ -756,9 +756,15 @@ def checkValuesAgainstDomain(pathsInfoObject):
                 #userMessage(fieldN)
                 #if field has a domain
                 if fieldN in fieldsWDoms:
+                    domain = ""
+                    if fieldN[0:2] == "A_":
+                        domain = fieldN[2:]
+                    else:
+                        domain = fieldN
+
                     userMessage("Checking: " + fieldN)
                     #get the full domain dictionary
-                    domainDict = getFieldDomain(fieldN, folder)
+                    domainDict = getFieldDomain(domain, folder)
 
                     if domainDict != {}:
                         #put domain values in a list
@@ -796,7 +802,7 @@ def checkValuesAgainstDomain(pathsInfoObject):
                                             values.append(val)
                                     #otherwise, compare row value to domain list
                                     else:
-                                        userMessage("Checking value: " + row[1])
+##                                        userMessage("Checking value: " + row[1])
                                         if row[1] not in domainList:
                                             report = "Value " + str(row[1]) + " not in approved domain for field " + fieldN
                                             val = (today, report, fc, fieldN, fID)

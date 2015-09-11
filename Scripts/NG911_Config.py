@@ -52,6 +52,7 @@ def getGDBObject(gdb):
             self.RoadAlias = join(gdb, "RoadAlias")
             self.AuthoritativeBoundary = join(gdb, "NG911", "AuthoritativeBoundary")
             self.MunicipalBoundary = join(gdb, "NG911", "MunicipalBoundary")
+            self.ESZ = join(gdb, "NG911", "ESZ")
             self.Topology = join(gdb, "NG911", "NG911_Topology")
             self.Locator = join(gdb, "Locator")
             self.gc_test = join(gdb, "gc_test")

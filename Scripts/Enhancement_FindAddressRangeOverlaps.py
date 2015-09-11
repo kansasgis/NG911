@@ -48,6 +48,10 @@ try:
     # Allow arcpy to overwrite something if it's already there
     env.overwriteOutput = True
 
+    # --- Parity check ---
+##    parity_sql = left_from + " <> " + left_to + " or " + right_from +" <> " + right_to
+    parity_sql = "PARITY_L in ('E','O') AND PARITY_R in ('E','O')"
+
     # Create search cursor to loop through unique road names
     overlap_list = []   # List to store the OIDs of overlapping segments
     overlap_error_count = 0
@@ -58,10 +62,10 @@ try:
     dictionary = {}     # Place to store data before heavy lifting
 
     #set up data for search cursor
-    fields = (name_field, OID_field, left_from, left_to, right_from, right_to)
+    fields = (name_field, OID_field, left_from, left_to, right_from, right_to, "MUNI_L", "MUNI_R")
     userMessage("Loading data into a dictionary")
 
-    with SearchCursor(input_fc, fields) as segments:
+    with SearchCursor(input_fc, fields, parity_sql) as segments:
         for segment in segments:
 
             # get the highest and lowest values from the four address values
@@ -79,7 +83,7 @@ try:
                 if (curaddr < lowval and curaddr <> 0):
                     lowval = curaddr
                     cur_road_LOW = lowval
-            cur_road_name = segment[0]
+            cur_road_name = segment[0] + segment[6] + segment[7]
             cur_road_OID = segment[1]
             # print cur_road_name, cur_road_LOW, cur_road_HIGH
             if cur_road_HIGH > 0:   # drop dumb record that fouls up things anyways :)
@@ -98,7 +102,7 @@ try:
 
     userMessage("Sorting address ranges")
     lyr = "lyr"
-    MakeFeatureLayer_management(input_fc, lyr)
+    MakeFeatureLayer_management(input_fc, lyr, parity_sql)
     for key, value in dictionary.iteritems():
         # dictionary {} is structured thusly:
         # ... {STOVER CREEK: [241, 3700, 3713, 214, 3800, 3809] ... }
