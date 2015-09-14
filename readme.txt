@@ -39,6 +39,9 @@ The project consists of:
 		Conversion_ZipNG911Geodatabase.py
 		CoordConvertor.py
 		Enhancement_AssignID.py
+		Enhancement_CalculateLabel.py
+		Enhancement_CheckESNAttribute.py
+		Enhancement_CheckRoadElevationDirection.py
 		Enhancement_CheckTN.py
 		Enhancement_FindAddressRangeOverlaps.py
 		Enhancement_USNGCalc.py
