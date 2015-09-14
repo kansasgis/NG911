@@ -53,7 +53,7 @@ def main():
                         segID = row[1]
 
                         report = "Address point ESN does not match ESN in ESZ layer"
-                        val = (today, report, filename, "", segID)
+                        val = (today, report, filename, "ESN", segID)
                         values.append(val)
 
 
