@@ -40,7 +40,6 @@ The project consists of:
 		CoordConvertor.py
 		Enhancement_AssignID.py
 		Enhancement_CalculateLabel.py
-		Enhancement_CheckESNAttribute.py
 		Enhancement_CheckRoadElevationDirection.py
 		Enhancement_CheckTN.py
 		Enhancement_FindAddressRangeOverlaps.py
@@ -51,6 +50,7 @@ The project consists of:
 		Validation_CheckAddressPointsLaunch.py
 		Validation_CheckyAdminBndLaunch.py
 		Validation_CheckESBLaunch.py
+		Validation_CheckESNAttribute.py
 		Validation_CheckRoadsLaunch.py
 		Validation_CheckTemplateLaunch.py
 		Validation_ClearOldResults.py
