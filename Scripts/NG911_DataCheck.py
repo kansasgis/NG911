@@ -482,7 +482,7 @@ def checkFrequency(fc, freq, fields, gdb, version):
             filename = ""
             if freq == join(gdb, "AP_Freq"):
                 filename = "AddressPoints"
-                wc1 = "HNO <> 0"
+                wc1 = "HNO <> 0 and LOC = 'PRIMARY'"
             elif freq == join(gdb, "Road_Freq"):
                 filename = "RoadCenterline"
                 wc1 = "L_F_ADD <> 0 AND L_T_ADD <> 0 AND R_F_ADD <> 0 AND R_T_ADD <> 0"
@@ -907,7 +907,7 @@ def checkRequiredFieldValues(pathsInfoObject):
                                 matchingFields.append(id1)
 
                             #run a search cursor to get any/all records where a required field value is null
-                            with SearchCursor(fullPath, (matchingFields), wc) as rows:
+                            with SearchCursor(lyr, (matchingFields), wc) as rows:
                                 for row in rows:
                                     k = 0
                                     #get object ID of the field
