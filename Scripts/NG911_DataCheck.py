@@ -27,6 +27,7 @@ from os.path import basename, dirname, join
 
 from time import strftime
 
+from NG911_Config import getGDBObject
 
 def getCurrentLayerList(esb):
     layerList = ["RoadAlias", "AddressPoints", "RoadCenterline", "AuthoritativeBoundary", "CountyBoundary", "ESZ", "MunicipalBoundary"]
@@ -883,52 +884,61 @@ def checkRequiredFieldValues(pathsInfoObject):
                             wc2 = "SUBMIT = 'Y'"
                             MakeTableView_management(fullPath, lyr2, wc2)
 
-                        #create where clause to select any records where required values aren't populated
-                        wc = ""
-
-                        for field in matchingFields:
-                            wc = wc + " " + field + " is null or "
-
-                        wc = wc[0:-4]
-
-                        #make table view using where clause
-                        lyr = "lyr"
-                        MakeTableView_management(lyr2, lyr, wc)
-
                         #get count of the results
-                        result = GetCount_management(lyr)
-                        count = int(result.getOutput(0))
+                        result2 = GetCount_management(lyr2)
+                        count2 = int(result2.getOutput(0))
+
+                        if count2 > 0:
+
+                            #create where clause to select any records where required values aren't populated
+                            wc = ""
+
+                            for field in matchingFields:
+                                wc = wc + " " + field + " is null or "
+
+                            wc = wc[0:-4]
+
+                            #make table view using where clause
+                            lyr = "lyr"
+                            MakeTableView_management(lyr2, lyr, wc)
+
+                            #get count of the results
+                            result = GetCount_management(lyr)
+                            count = int(result.getOutput(0))
 
 
-                        #if count is greater than 0, it means a required value somewhere isn't filled in
-                        if count > 0:
-                            #make sure the objectID gets included in the search for reporting
-                            if id1 not in matchingFields:
-                                matchingFields.append(id1)
+                            #if count is greater than 0, it means a required value somewhere isn't filled in
+                            if count > 0:
+                                #make sure the objectID gets included in the search for reporting
+                                if id1 not in matchingFields:
+                                    matchingFields.append(id1)
 
-                            #run a search cursor to get any/all records where a required field value is null
-                            with SearchCursor(lyr, (matchingFields), wc) as rows:
-                                for row in rows:
-                                    k = 0
-                                    #get object ID of the field
-                                    oid = str(row[matchingFields.index(id1)])
+                                #run a search cursor to get any/all records where a required field value is null
+                                with SearchCursor(lyr, (matchingFields), wc) as rows:
+                                    for row in rows:
+                                        k = 0
+                                        #get object ID of the field
+                                        oid = str(row[matchingFields.index(id1)])
 
-                                    #loop through row
-                                    while k < len(matchingFields):
-                                        #see if the value is nothing
-                                        if row[k] is None:
-                                            #report the value if it is indeed null
-                                            report = matchingFields[k] + " is null for Feature ID " + oid
-                                            userMessage(report)
-                                            val = (today, report, filename, matchingFields[k], oid)
-                                            values.append(val)
+                                        #loop through row
+                                        while k < len(matchingFields):
+                                            #see if the value is nothing
+                                            if row[k] is None:
+                                                #report the value if it is indeed null
+                                                report = matchingFields[k] + " is null for Feature ID " + oid
+                                                userMessage(report)
+                                                val = (today, report, filename, matchingFields[k], oid)
+                                                values.append(val)
 
-                                        #iterate!
-                                        k = k + 1
+                                            #iterate!
+                                            k = k + 1
+                            else:
+                                userMessage( "All required values present for " + filename)
+
+                            Delete_management(lyr)
+
                         else:
-                            userMessage( "All required values present for " + filename)
-
-                        Delete_management(lyr)
+                            userMessage(filename + " has no records marked for submission. Data will not be verified.")
                         Delete_management(lyr2)
 
         if values != []:
@@ -995,6 +1005,48 @@ def checkRequiredFields(pathsInfoObject):
     else:
         userMessage("Could not check for required fields.")
 
+def checkSubmissionNumbers(pathsInfoObject):
+    #set variables
+    gdb = pathsInfoObject.gdbPath
+    esb = pathsInfoObject.esbList
+    version = pathsInfoObject.gdbVersion
+    gdbObject = getGDBObject(gdb)
+
+    #create list of feature classes & tables to check
+    fcList = [gdbObject.AddressPoints, gdbObject.RoadCenterline, gdbObject.RoadAlias, gdbObject.AuthoritativeBoundary, gdbObject.MunicipalBoundary]
+    for e in esb:
+        full_path = join(gdb, "NG911", e)
+        fcList.append(full_path)
+
+    today = strftime("%m/%d/%y")
+    values = []
+
+    for fc in fcList:
+        #count records that are for submission
+        lyr2 = "lyr2"
+        if version == "10":
+            MakeTableView_management(fc, lyr2)
+        else:
+            wc2 = "SUBMIT = 'Y'"
+            MakeTableView_management(fc, lyr2, wc2)
+
+        #get count of the results
+        result = GetCount_management(lyr2)
+        count = int(result.getOutput(0))
+
+        userMessage(basename(fc) + ": " + str(count) + " records marked for submission")
+
+        if count == 0:
+            report = basename(fc) + " has 0 records for submission"
+            #add issue to list of values
+            val = (today, report, "Submission")
+            values.append(val)
+
+        Delete_management(lyr2)
+
+    #record issues if any exist
+    if values != []:
+        RecordResults("template", values, gdb)
 
 def checkFeatureLocations(pathsInfoObject):
     gdb = pathsInfoObject.gdbPath
@@ -1101,6 +1153,9 @@ def main_check(checkType, currentPathSettings):
 
         if checkList[2] == "true":
             checkRequiredFieldValues(currentPathSettings)
+
+        if checkList[3] == "true":
+            checkSubmissionNumbers(currentPathSettings)
 
     #check address points
     elif checkType == "AddressPoints":

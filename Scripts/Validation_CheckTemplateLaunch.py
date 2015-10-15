@@ -24,7 +24,8 @@ def main():
     checkLayerList = GetParameterAsText(3)
     checkRequiredFields = GetParameterAsText(4)
     checkRequiredFieldValues = GetParameterAsText(5)
-    template10 = GetParameterAsText(6)
+    checkSubmissionNumbers = GetParameterAsText(6)
+    template10 = GetParameterAsText(7)
 
     #create esb list
     esb = []
@@ -34,7 +35,7 @@ def main():
         esb.append(e1)
 
     #create check list
-    checkList = [checkLayerList,checkRequiredFields,checkRequiredFieldValues]
+    checkList = [checkLayerList,checkRequiredFields,checkRequiredFieldValues, checkSubmissionNumbers]
 
     #set object parameters
     checkType = "template"
