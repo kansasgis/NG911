@@ -6,15 +6,19 @@
 #
 # Created:     09/12/2014
 #-------------------------------------------------------------------------------
+from arcpy import GetParameterAsText, DeleteRows_management, Exists
+from NG911_DataCheck import userMessage
+from os.path import join
 
 def main():
-    from arcpy import GetParameterAsText, DeleteRows_management, Exists
-    from NG911_DataCheck import userMessage
-    from os.path import join
 
     gdb = GetParameterAsText(0)
     templateTableClear = GetParameterAsText(1)
     fieldValuesTableClear = GetParameterAsText(2)
+
+    ClearOldResults(gdb, templateTableClear, fieldValuesTableClear)
+
+def ClearOldResults(gdb, templateTableClear, fieldValuesTableClear):
 
     if templateTableClear == "true":
         templateTable = join(gdb, "TemplateCheckResults")

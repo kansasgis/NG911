@@ -9,6 +9,7 @@ The project consists of:
 		ConversionTools.docx
 		EnhancementTools.docx
 		MetadataTools.docx
+		SubmissionTools.docx
 		ValidationTools.docx
 	Domains
 		AGENCYID_Domains.txt
@@ -47,10 +48,11 @@ The project consists of:
 		Metadata_EnhanceMetadata.py
 		NG911_Config.py
 		NG911_DataCheck.py
+		Submission_CheckAllAndZip.py
 		Validation_CheckAddressPointsLaunch.py
 		Validation_CheckyAdminBndLaunch.py
+		Validation_CheckAll.py
 		Validation_CheckESBLaunch.py
-		Validation_CheckESNAttribute.py
 		Validation_CheckRoadsLaunch.py
 		Validation_CheckTemplateLaunch.py
 		Validation_ClearOldResults.py

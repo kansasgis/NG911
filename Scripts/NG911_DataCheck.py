@@ -140,6 +140,8 @@ def getAddFieldInfo(table):
         fieldInfo = [(table, "DateFlagged", "DATE", "", "", ""),(table, "Description", "TEXT", "", "", 250),(table, "Category", "TEXT", "", "", 25)]
     elif lyr == "FieldValuesCheckResults":
         fieldInfo = [(table, "DateFlagged", "DATE", "", "", ""),(table, "Description", "TEXT", "", "", 250),(table, "Layer", "TEXT", "", "", 25),(table, "Field", "TEXT", "", "", 25),(table, "FeatureID", "TEXT", "", "", 38)]
+    elif lyr == "DASC_Communication":
+        fieldInfo = [(table, "NoteDate", "DATE", "", "", ""),(table, "Description", "TEXT", "", "", 250)]
 
     return fieldInfo
 
@@ -161,6 +163,8 @@ def RecordResults(resultType, values, gdb): # Guessed on whitespace formatting h
         tbl = "TemplateCheckResults"
     elif resultType == "fieldValues":
         tbl = "FieldValuesCheckResults"
+    elif resultType == "DASCmessage":
+        tbl = "DASC_Communication"
 
     table = join(gdb, tbl)
     fieldList = []
@@ -188,6 +192,8 @@ def RecordResults(resultType, values, gdb): # Guessed on whitespace formatting h
 
 def geocodeAddressPoints(pathsInfoObject):
     gdb = pathsInfoObject.gdbPath
+
+    version = pathsInfoObject.gdbVersion
 
     env.workspace = gdb
     addressPointPath = "AddressPoints"
@@ -217,7 +223,11 @@ def geocodeAddressPoints(pathsInfoObject):
 
     userMessage("Preparing addresses...")
     # The created addyview layer will have fields as set in fieldinfo object
-    MakeTableView_management(addressPointPath, addyview, "", "", fieldinfo)
+    if version == "10":
+        MakeTableView_management(addressPointPath, addyview, "", "", fieldinfo)
+    else:
+        wc = "SUBMIT = 'Y'"
+        MakeTableView_management(addressPointPath, addyview, wc, "", fieldinfo)
 
     # To persist the layer on disk make a copy of the view
     if Exists(gc_table):
@@ -354,6 +364,59 @@ def geocodeAddressPoints(pathsInfoObject):
         else:
             userMessage("Could not geocode addresses")
 
+def checkESNAttribute(currentPathSettings):
+
+    NG911gdb = currentPathSettings.gdbPath
+    esz = currentPathSettings.ESZ
+
+    gdb_object = getGDBObject(NG911gdb)
+
+    address_points = gdb_object.AddressPoints
+
+    addy_lyr = "addy_lyr"
+    MakeFeatureLayer_management(address_points, addy_lyr)
+
+    values = []
+    recordType = "fieldValues"
+    today = strftime("%m/%d/%y")
+    filename = "AddressPoints"
+
+    with SearchCursor(esz, ("ESN", "OBJECTID")) as polys:
+        for poly in polys:
+            esn = poly[0]
+
+            #make feature layer
+            esz_lyr = "esz_lyr"
+            qry = "OBJECTID = " + str(poly[1])
+            MakeFeatureLayer_management(esz, esz_lyr, qry)
+
+            #select by location
+            SelectLayerByLocation_management(addy_lyr, "INTERSECT", esz_lyr)
+
+            #loop through address points
+            with SearchCursor(addy_lyr, ("ESN", "ADDID")) as rows:
+                for row in rows:
+                    #get ESN
+                    esn_addy = row[0]
+
+                    #see if the esns match
+                    if esn_addy != esn:
+                        segID = row[1]
+
+                        report = "Address point ESN does not match ESN in ESZ layer"
+                        val = (today, report, filename, "ESN", segID)
+                        values.append(val)
+
+
+            Delete_management(esz_lyr)
+
+    #report records
+    if values != []:
+        RecordResults(recordType, values, NG911gdb)
+        userMessage("Address point ESN check complete. " + str(len(values)) + " issues found. Results are in the FieldValuesCheckResults table.")
+    else:
+        userMessage("Address point ESN check complete. No issues found.")
+
 def checkUniqueIDFrequency(currentPathSettings):
     gdb = currentPathSettings.gdbPath
     esbList = currentPathSettings.esbList
@@ -374,7 +437,7 @@ def checkUniqueIDFrequency(currentPathSettings):
         CreateTable_management(gdb, table)
 
         AddField_management(table, "ESBID", "TEXT", "", "", 38)
-        AddField_management(table, "ESB_LYR", "TEXT", "", "", 15)
+        AddField_management(table, "ESB_LYR", "TEXT", "", "", 30)
 
         esbFields = ("ESBID")
 
@@ -414,7 +477,12 @@ def checkUniqueIDFrequency(currentPathSettings):
             #for esb layers, get the unique ID field
             uniqueID = "ESBID"
 
-        Statistics_analysis(layer, layer + "_freq", [[uniqueID,"COUNT"]], uniqueID)
+        freq_table = layer + "_freq"
+
+        if Exists(freq_table):
+            Delete_management(freq_table)
+
+        Statistics_analysis(layer, freq_table, [[uniqueID,"COUNT"]], uniqueID)
 
         #set parameters for the search cursor
         where_clause = "FREQUENCY > 1"
@@ -422,7 +490,7 @@ def checkUniqueIDFrequency(currentPathSettings):
 
         fl = "fl"
 
-        MakeTableView_management(layer + "_freq", fl, where_clause)
+        MakeTableView_management(freq_table, fl, where_clause)
 
         result = GetCount_management(fl)
         count = int(result.getOutput(0))
@@ -430,28 +498,26 @@ def checkUniqueIDFrequency(currentPathSettings):
         if count > 0:
 
             #set a search cursor with just the unique ID field
-            with SearchCursor(layer + "_freq", fields, where_clause) as rows2:
+            with SearchCursor(freq_table, fields, where_clause) as rows2:
                 stringESBReport = ""
                 for row2 in rows2:
                     if layer == "ESB_IDS":
                         stringEsbInfo = []
-                        wc2 = "ESBID = " + row2[0]
+                        wc2 = "ESBID = '" + str(row2[0]) + "'"
                         with SearchCursor("ESB_IDS", ("ESB_LYR"), wc2) as esbRows:
                             for esbRow in esbRows:
                                 stringEsbInfo.append(esbRow[0])
 
                         stringESBReport = " and ".join(stringEsbInfo)
-                    else:
-                        lyr = layer
 
                     #report duplicate IDs
                     report = str(row2[0]) + " is a duplicate ID"
                     if stringESBReport != "":
                         report = report + " in " + stringESBReport
-                    val = (today, report, lyr, uniqueID, row2[0])
+                    val = (today, report, "ESB", uniqueID, row2[0])
                     values.append(val)
 
-        Delete_management(layer + "_freq")
+        Delete_management(freq_table)
         Delete_management(fl)
 
     #report duplicate records
@@ -1011,12 +1077,13 @@ def checkSubmissionNumbers(pathsInfoObject):
     esb = pathsInfoObject.esbList
     version = pathsInfoObject.gdbVersion
     gdbObject = getGDBObject(gdb)
+    fcList = pathsInfoObject.fcList
 
-    #create list of feature classes & tables to check
-    fcList = [gdbObject.AddressPoints, gdbObject.RoadCenterline, gdbObject.RoadAlias, gdbObject.AuthoritativeBoundary, gdbObject.MunicipalBoundary]
-    for e in esb:
-        full_path = join(gdb, "NG911", e)
-        fcList.append(full_path)
+##    #create list of feature classes & tables to check
+##    fcList = [gdbObject.AddressPoints, gdbObject.RoadCenterline, gdbObject.RoadAlias, gdbObject.AuthoritativeBoundary, gdbObject.MunicipalBoundary]
+##    for e in esb:
+##        full_path = join(gdb, "NG911", e)
+##        fcList.append(full_path)
 
     today = strftime("%m/%d/%y")
     values = []
@@ -1126,6 +1193,74 @@ def checkFeatureLocations(pathsInfoObject):
 
     userMessage("Completed check on feature locations: " + str(len(values)) + " issues found")
 
+def sanityCheck(currentPathSettings):
+    from Validation_ClearOldResults import ClearOldResults
+    from NG911_Config import getGDBObject
+    #fcList will contain all layers in GDB so everything will be checked
+
+    #clear out template check results & field check results
+    gdb = currentPathSettings.gdbPath
+    ClearOldResults(gdb, "true", "true")
+
+    gdbObject = getGDBObject(gdb)
+
+    #check template
+    checkLayerList(currentPathSettings)
+    checkRequiredFields(currentPathSettings)
+    checkRequiredFieldValues(currentPathSettings)
+    checkSubmissionNumbers(currentPathSettings)
+
+    #common layer checks
+    checkValuesAgainstDomain(currentPathSettings)
+    checkFeatureLocations(currentPathSettings)
+    checkUniqueIDFrequency(currentPathSettings)
+
+    #check address points
+    geocodeAddressPoints(currentPathSettings)
+    addressPoints = join(currentPathSettings.gdbPath, "AddressPoints")
+    AP_freq = join(currentPathSettings.gdbPath, "AP_Freq")
+    AP_fields = "MUNI;HNO;HNS;PRD;STP;RD;STS;POD;POM;ZIP;BLD;FLR;UNIT;ROOM;SEAT;LOC;LOCTYPE"
+    checkFrequency(addressPoints, AP_freq, AP_fields, currentPathSettings.gdbPath, currentPathSettings.gdbVersion)
+    if Exists(currentPathSettings.ESZ):
+        checkESNAttribute(currentPathSettings)
+    else:
+        userMessage("ESZ layer does not exist. Cannot complete check.")
+
+    #check roads
+    roads = join(currentPathSettings.gdbPath, "RoadCenterline")
+    road_freq = join(currentPathSettings.gdbPath, "Road_Freq")
+    road_fields = """STATE_L;STATE_R;COUNTY_L;COUNTY_R;MUNI_L;MUNI_R;L_F_ADD;L_T_ADD;R_F_ADD;R_T_ADD;
+    PARITY_L;PARITY_R;POSTCO_L;POSTCO_R;ZIP_L;ZIP_R;ESN_L;ESN_R;MSAGCO_L;MSAGCO_R;PRD;STP;RD;STS;POD;
+    POM;SPDLIMIT;ONEWAY;RDCLASS;LABEL;ELEV_F;ELEV_T;ESN_C;SURFACE;STATUS;TRAVEL;LRSKEY"""
+    checkFrequency(roads, road_freq, road_fields, currentPathSettings.gdbPath, currentPathSettings.gdbVersion)
+
+    #verify that the check resulted in 0 issues
+    sanity = 0 #flag to return at end
+    numErrors = 0 #the total number of errors
+
+    fieldCheckResults = gdbObject.FieldValuesCheckResults
+    templateResults = gdbObject.TemplateCheckResults
+
+    for table in [fieldCheckResults, templateResults]:
+        if Exists(table):
+            tbl = "tbl"
+            MakeTableView_management(table, tbl)
+            result = GetCount_management(tbl)
+            count = int(result.getOutput(0))
+            numErrors = numErrors + count
+            Delete_management(tbl)
+
+    #change result = 1
+    if numErrors == 0:
+        sanity = 1
+        today = strftime("%m/%d/%y")
+        values = [(today, "Passed all checks")]
+        RecordResults("DASCmessage", values, gdb)
+        userMessage("Geodatabase passed all data checks.")
+    else:
+        userMessage("There were " + str(numErrors) + " issues with the data. Please view errors in the TemplateCheckResults and:or FieldValuesCheckResults tables.")
+
+    return sanity
 
 def main_check(checkType, currentPathSettings):
 ##    try:
@@ -1176,6 +1311,12 @@ def main_check(checkType, currentPathSettings):
 
         if checkList[4] == "true":
             checkUniqueIDFrequency(currentPathSettings)
+
+        if checkList[5] == "true":
+            if Exists(currentPathSettings.ESZ):
+                checkESNAttribute(currentPathSettings)
+            else:
+                userMessage("ESZ layer does not exist, cannot complete check.")
 
     #check roads
     elif checkType == "Roads":

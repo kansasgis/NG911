@@ -25,10 +25,12 @@ def main():
     geocodeAddressPoints = GetParameterAsText(4)
     checkAddressPointFrequency = GetParameterAsText(5)
     checkUniqueIDs = GetParameterAsText(6)
-    template10 = GetParameterAsText(7)
+    checkESZ = GetParameterAsText(7)
+    ESZlayer = GetParameterAsText(8)
+    template10 = GetParameterAsText(9)
 
     #create check list
-    checkList = [checkValuesAgainstDomain,checkFeatureLocations,geocodeAddressPoints,checkAddressPointFrequency,checkUniqueIDs]
+    checkList = [checkValuesAgainstDomain,checkFeatureLocations,geocodeAddressPoints,checkAddressPointFrequency,checkUniqueIDs,checkESZ]
 
     #set object parameters
     checkType = "AddressPoints"
@@ -38,6 +40,7 @@ def main():
     currentPathSettings.fcList = [currentPathSettings.addressPointsPath]
     currentPathSettings.esbList = []
     currentPathSettings.checkList = checkList
+    currentPathSettings.ESZ = ESZlayer
 
     if template10 == 'true':
         currentPathSettings.gdbVersion = "10"

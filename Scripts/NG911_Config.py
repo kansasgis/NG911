@@ -38,6 +38,7 @@ class pathInformationClass():
         self.checkList = []
         self.fcList = []
         self.gdbVersion = "11"
+        self.ESZ = ""
 
 currentPathSettings = pathInformationClass()
 

@@ -112,6 +112,7 @@ psap.sv.ks.us|A PSAP ID in Kansas
 psap.su.ks.us|A PSAP ID in Kansas
 psap.colby.ks.us|A PSAP ID in Kansas
 psap.tr.ks.us|A PSAP ID in Kansas
+psap.wa.ku.us|A PSAP ID in Kansas
 psap.wb.ks.us|A PSAP ID in Kansas
 psap.wamego.ks.us|A PSAP ID in Kansas
 psap.ws.ks.us|A PSAP ID in Kansas
