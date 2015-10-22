@@ -6,6 +6,7 @@ The project consists of:
 	readme.txt
 	Kansas NG911 GIS Tools.tbx
 	Doc
+		AdjustmentTools.docx
 		ConversionTools.docx
 		EnhancementTools.docx
 		MetadataTools.docx
@@ -35,6 +36,9 @@ The project consists of:
 		SURFACE_Domains.txt
 		ZIP_Domains.txt
 	Scripts
+		Adjustment_CreateGeocodeExceptions.py
+		Adjustment_FixDomainCase.py
+		Adjustment_FixDuplicateESBIDs.py
 		Conversion_GDB10to11.py
 		Conversion_GDBtoShapefile.py
 		Conversion_ZipNG911Geodatabase.py
@@ -48,6 +52,7 @@ The project consists of:
 		Metadata_EnhanceMetadata.py
 		NG911_Config.py
 		NG911_DataCheck.py
+		NG911_DataFixes.py
 		Submission_CheckAllAndZip.py
 		Validation_CheckAddressPointsLaunch.py
 		Validation_CheckyAdminBndLaunch.py

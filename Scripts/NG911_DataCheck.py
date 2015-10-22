@@ -305,6 +305,9 @@ def geocodeAddressPoints(pathsInfoObject):
             if Exists(output):
                 Delete_management(output)
 
+            #define geocoding exception table
+            ge = join(gdb, "GeocodeExceptions")
+
             i = 0
 
             #set up geocoding
@@ -344,15 +347,38 @@ def geocodeAddressPoints(pathsInfoObject):
                     with SearchCursor(output, rfields, wc) as rRows:
                         for rRow in rRows:
                             fID = rRow[0]
-                            report = str(fID) + " did not geocode against centerline"
-                            val = (today, report, filename, "", fID)
-                            values.append(val)
 
-                    #report records
-                    if values != []:
-                        RecordResults(recordType, values, gdb)
+                            #see if the fID exists as an exception
+                            if Exists(ge):
+                                wcGE = "ADDID = '" + fID + "'"
+                                tblGE = "tblGE"
+                                MakeTableView_management(ge, tblGE, wcGE)
 
-                    userMessage("Completed geocoding with " + str(rCount) + " errors.")
+                                geStatus = GetCount_management(tblGE)
+                                geCount = int(geStatus.getOutput(0))
+
+                                if geCount != 0:
+                                    userMessage(fID + " has already been marked as a geocoding exception")
+                                    rCount = rCount - 1
+                                else:
+                                    #report as an error
+                                    report = str(fID) + " did not geocode against centerline"
+                                    val = (today, report, filename, "", fID)
+                                    values.append(val)
+                                Delete_management(tblGE)
+
+                            else:
+                                report = str(fID) + " did not geocode against centerline"
+                                val = (today, report, filename, "", fID)
+                                values.append(val)
+
+                    if rCount > 0:
+                        userMessage("Completed geocoding with " + str(rCount) + " errors.")
+                        #report records
+                        if values != []:
+                            RecordResults(recordType, values, gdb)
+                    else:
+                        userMessage("Some records did not geocode, but they are marked as exceptions.")
 
                 else:
                     #this means all the records geocoded
