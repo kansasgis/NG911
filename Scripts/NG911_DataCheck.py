@@ -29,8 +29,13 @@ from time import strftime
 
 from NG911_Config import getGDBObject
 
-def getCurrentLayerList(esb):
+def getLayerList():
     layerList = ["RoadAlias", "AddressPoints", "RoadCenterline", "AuthoritativeBoundary", "CountyBoundary", "ESZ", "MunicipalBoundary"]
+    return layerList
+
+
+def getCurrentLayerList(esb):
+    layerList = getLayerList()
     for e in esb:
         layerList.append(e)
     return layerList
@@ -390,7 +395,7 @@ def geocodeAddressPoints(pathsInfoObject):
         else:
             userMessage("Could not geocode addresses")
 
-def checkESNAttribute(currentPathSettings):
+def checkESNandMuniAttribute(currentPathSettings):
 
     NG911gdb = currentPathSettings.gdbPath
     esz = currentPathSettings.ESZ
@@ -398,6 +403,7 @@ def checkESNAttribute(currentPathSettings):
     gdb_object = getGDBObject(NG911gdb)
 
     address_points = gdb_object.AddressPoints
+    muni = gdb_object.MunicipalBoundary
 
     addy_lyr = "addy_lyr"
     MakeFeatureLayer_management(address_points, addy_lyr)
@@ -407,41 +413,49 @@ def checkESNAttribute(currentPathSettings):
     today = strftime("%m/%d/%y")
     filename = "AddressPoints"
 
-    with SearchCursor(esz, ("ESN", "OBJECTID")) as polys:
-        for poly in polys:
-            esn = poly[0]
+    searchDict = {esz: ("ESN", "OBJECTID"), muni: ("MUNI", "OBJECTID")}
 
-            #make feature layer
-            esz_lyr = "esz_lyr"
-            qry = "OBJECTID = " + str(poly[1])
-            MakeFeatureLayer_management(esz, esz_lyr, qry)
+    for layer, fieldList in searchDict.iteritems():
 
-            #select by location
-            SelectLayerByLocation_management(addy_lyr, "INTERSECT", esz_lyr)
+        with SearchCursor(layer, fieldList) as polys:
+            for poly in polys:
+                feature = fieldList[0]
+                feature_value = poly[0]
 
-            #loop through address points
-            with SearchCursor(addy_lyr, ("ESN", "ADDID")) as rows:
-                for row in rows:
-                    #get ESN
-                    esn_addy = row[0]
+                #make feature layer
+                lyr1 = "lyr1"
+                qry = "OBJECTID = " + str(poly[1])
+                MakeFeatureLayer_management(layer, lyr1, qry)
 
-                    #see if the esns match
-                    if esn_addy != esn:
-                        segID = row[1]
+                #select by location
+                SelectLayerByLocation_management(addy_lyr, "INTERSECT", lyr1)
 
-                        report = "Address point ESN does not match ESN in ESZ layer"
-                        val = (today, report, filename, "ESN", segID)
-                        values.append(val)
+                #loop through address points
+                with SearchCursor(addy_lyr, (feature, "ADDID")) as rows:
+                    for row in rows:
+                        #get value
+                        value_addy = row[0]
+
+                        #see if the values match
+                        if value_addy != feature_value:
+                            segID = row[1]
+
+                            report = "Address point " + feature + " does not match " + feature + " in " + basename(layer) + " layer"
+                            val = (today, report, filename, feature, segID)
+                            values.append(val)
 
 
-            Delete_management(esz_lyr)
+                Delete_management(lyr1)
+                del lyr1
+
+        del poly, polys
 
     #report records
     if values != []:
         RecordResults(recordType, values, NG911gdb)
-        userMessage("Address point ESN check complete. " + str(len(values)) + " issues found. Results are in the FieldValuesCheckResults table.")
+        userMessage("Address point ESN/Municipality check complete. " + str(len(values)) + " issues found. Results are in the FieldValuesCheckResults table.")
     else:
-        userMessage("Address point ESN check complete. No issues found.")
+        userMessage("Address point ESN/Municipality check complete. No issues found.")
 
 def checkUniqueIDFrequency(currentPathSettings):
     gdb = currentPathSettings.gdbPath
@@ -454,7 +468,7 @@ def checkUniqueIDFrequency(currentPathSettings):
     table = "ESB_IDS"
 
     #create temp table of esbID's
-    if esbList <> []:
+    if esbList <> [] and esbList[0] != esbList[1]:
         layerList = ["ESB_IDS"]
 
         if Exists(table):
@@ -1248,7 +1262,7 @@ def sanityCheck(currentPathSettings):
     AP_fields = "MUNI;HNO;HNS;PRD;STP;RD;STS;POD;POM;ZIP;BLD;FLR;UNIT;ROOM;SEAT;LOC;LOCTYPE"
     checkFrequency(addressPoints, AP_freq, AP_fields, currentPathSettings.gdbPath, currentPathSettings.gdbVersion)
     if Exists(currentPathSettings.ESZ):
-        checkESNAttribute(currentPathSettings)
+        checkESNandMuniAttribute(currentPathSettings)
     else:
         userMessage("ESZ layer does not exist. Cannot complete check.")
 
@@ -1340,7 +1354,7 @@ def main_check(checkType, currentPathSettings):
 
         if checkList[5] == "true":
             if Exists(currentPathSettings.ESZ):
-                checkESNAttribute(currentPathSettings)
+                checkESNandMuniAttribute(currentPathSettings)
             else:
                 userMessage("ESZ layer does not exist, cannot complete check.")
 

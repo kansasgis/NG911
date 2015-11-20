@@ -7,8 +7,8 @@
 # Created:     20/10/2015
 #-------------------------------------------------------------------------------
 from NG911_Config import getGDBObject, currentPathSettings
-from NG911_DataCheck import sanityCheck, userMessage
-from arcpy import Exists, GetParameterAsText
+from NG911_DataCheck import sanityCheck, userMessage, getLayerList
+from arcpy import Exists, GetParameterAsText, AddError
 from os.path import basename
 from Conversion_ZipNG911Geodatabase import createNG911Zip
 
@@ -29,11 +29,23 @@ def validateAllPrep(gdb, domain, esbList, ESZ, template10, zipFlag, zipPath):
     esb = []
     esbPath = []
 
+    layerList = getLayerList()
+
+    layerFlag = 0
+
     for e in esbList:
         e = e.replace("'", "")
-        esbPath.append(e)
+        fcList.append(e)
         e1 = basename(e)
-        esb.append(e1)
+        if e1 in layerList:
+            layerFlag = 1
+        else:
+            esb.append(e1)
+
+    if layerFlag == 1:
+        AddError("Please define PSAP and ESB layers like EMS, fire & law enforcement boundaries. One or more layers you identfied is a different layer type.")
+        print("Please define PSAP and ESB layers like EMS, fire & law enforcement boundaries. One or more layers you identfied is a different layer type.")
+        sys.exit()
 
     #set up currentPathSettings
     currentPathSettings.gdbPath = gdb
