@@ -413,7 +413,7 @@ def checkESNandMuniAttribute(currentPathSettings):
     today = strftime("%m/%d/%y")
     filename = "AddressPoints"
 
-    searchDict = {esz: ("ESN", "OBJECTID"), muni: ("MUNI", "OBJECTID")}
+    searchDict = {esz: ("ESN", "ESZID"), muni: ("MUNI", "MUNI_ID")}
 
     for layer, fieldList in searchDict.iteritems():
 
@@ -424,7 +424,7 @@ def checkESNandMuniAttribute(currentPathSettings):
 
                 #make feature layer
                 lyr1 = "lyr1"
-                qry = "OBJECTID = " + str(poly[1])
+                qry = fieldList[1] + " = '" + str(poly[1]) + "'"
                 MakeFeatureLayer_management(layer, lyr1, qry)
 
                 #select by location
@@ -437,7 +437,7 @@ def checkESNandMuniAttribute(currentPathSettings):
                         value_addy = row[0]
 
                         #see if the values match
-                        if value_addy != feature_value:
+                        if value_addy.strip() != feature_value.strip():
                             segID = row[1]
 
                             report = "Address point " + feature + " does not match " + feature + " in " + basename(layer) + " layer"
@@ -1309,6 +1309,8 @@ def main_check(checkType, currentPathSettings):
 ##        userMessage( "Copy config file into command line")
 
     checkList = currentPathSettings.checkList
+    env.workspace = currentPathSettings.gdbPath
+    env.overwriteOutput = True
 
     #give user a warning if they didn't select any validation checks
     stuffToCheck = 0
