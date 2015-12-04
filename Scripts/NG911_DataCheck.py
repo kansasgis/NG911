@@ -15,19 +15,16 @@
 #Changes include: modifying format so the checks work with the 1.1 template
 #-------------------------------------------------------------------------------
 
-
 from arcpy import (AddField_management, AddMessage, CalculateField_management,  CopyRows_management, CreateAddressLocator_geocoding,
                    CreateTable_management, Delete_management, Exists, GeocodeAddresses_geocoding, GetCount_management, FieldInfo,
                    ListFields, MakeFeatureLayer_management, MakeTableView_management, SelectLayerByAttribute_management, Statistics_analysis,
                    SelectLayerByLocation_management, RebuildAddressLocator_geocoding, DeleteRows_management, GetInstallInfo, env, ListDatasets)
 from arcpy.da import Walk, InsertCursor, ListDomains, SearchCursor
-
 from os import path
 from os.path import basename, dirname, join
-
 from time import strftime
-
 from NG911_Config import getGDBObject
+from Validation_ClearOldResults import ClearOldResults
 
 def getLayerList():
     layerList = ["RoadAlias", "AddressPoints", "RoadCenterline", "AuthoritativeBoundary", "CountyBoundary", "ESZ", "MunicipalBoundary"]
@@ -42,9 +39,9 @@ def getCurrentLayerList(esb):
 
 
 def userMessage(msg):
+    #print stuff
     print msg
     AddMessage(msg)
-
 
 def getCurrentDomainList(version):
     domainList = ["AddressNumbers", "AddressParity", "AgencyID", "Counties", "Country",
@@ -984,68 +981,76 @@ def checkRequiredFieldValues(pathsInfoObject):
 
                         #only work with records that are for submission
                         lyr2 = "lyr2"
+                        worked = 0
                         if version == "10":
                             MakeTableView_management(fullPath, lyr2)
+                            worked = 1
                         else:
                             wc2 = "SUBMIT = 'Y'"
-                            MakeTableView_management(fullPath, lyr2, wc2)
+                            try:
+                                MakeTableView_management(fullPath, lyr2, wc2)
+                                worked = 1
+                            except:
+                                userMessage("Cannot check required field values for " + basename(fullPath))
 
-                        #get count of the results
-                        result2 = GetCount_management(lyr2)
-                        count2 = int(result2.getOutput(0))
-
-                        if count2 > 0:
-
-                            #create where clause to select any records where required values aren't populated
-                            wc = ""
-
-                            for field in matchingFields:
-                                wc = wc + " " + field + " is null or "
-
-                            wc = wc[0:-4]
-
-                            #make table view using where clause
-                            lyr = "lyr"
-                            MakeTableView_management(lyr2, lyr, wc)
+                        if worked == 1:
 
                             #get count of the results
-                            result = GetCount_management(lyr)
-                            count = int(result.getOutput(0))
+                            result2 = GetCount_management(lyr2)
+                            count2 = int(result2.getOutput(0))
+
+                            if count2 > 0:
+
+                                #create where clause to select any records where required values aren't populated
+                                wc = ""
+
+                                for field in matchingFields:
+                                    wc = wc + " " + field + " is null or "
+
+                                wc = wc[0:-4]
+
+                                #make table view using where clause
+                                lyr = "lyr"
+                                MakeTableView_management(lyr2, lyr, wc)
+
+                                #get count of the results
+                                result = GetCount_management(lyr)
+                                count = int(result.getOutput(0))
 
 
-                            #if count is greater than 0, it means a required value somewhere isn't filled in
-                            if count > 0:
-                                #make sure the objectID gets included in the search for reporting
-                                if id1 not in matchingFields:
-                                    matchingFields.append(id1)
+                                #if count is greater than 0, it means a required value somewhere isn't filled in
+                                if count > 0:
+                                    #make sure the objectID gets included in the search for reporting
+                                    if id1 not in matchingFields:
+                                        matchingFields.append(id1)
 
-                                #run a search cursor to get any/all records where a required field value is null
-                                with SearchCursor(lyr, (matchingFields), wc) as rows:
-                                    for row in rows:
-                                        k = 0
-                                        #get object ID of the field
-                                        oid = str(row[matchingFields.index(id1)])
+                                    #run a search cursor to get any/all records where a required field value is null
+                                    with SearchCursor(lyr, (matchingFields), wc) as rows:
+                                        for row in rows:
+                                            k = 0
+                                            #get object ID of the field
+                                            oid = str(row[matchingFields.index(id1)])
 
-                                        #loop through row
-                                        while k < len(matchingFields):
-                                            #see if the value is nothing
-                                            if row[k] is None:
-                                                #report the value if it is indeed null
-                                                report = matchingFields[k] + " is null for Feature ID " + oid
-                                                userMessage(report)
-                                                val = (today, report, filename, matchingFields[k], oid)
-                                                values.append(val)
+                                            #loop through row
+                                            while k < len(matchingFields):
+                                                #see if the value is nothing
+                                                if row[k] is None:
+                                                    #report the value if it is indeed null
+                                                    report = matchingFields[k] + " is null for Feature ID " + oid
+                                                    userMessage(report)
+                                                    val = (today, report, filename, matchingFields[k], oid)
+                                                    values.append(val)
 
-                                            #iterate!
-                                            k = k + 1
+                                                #iterate!
+                                                k = k + 1
+                                else:
+                                    userMessage( "All required values present for " + filename)
+
+                                Delete_management(lyr)
+
                             else:
-                                userMessage( "All required values present for " + filename)
-
-                            Delete_management(lyr)
-
-                        else:
-                            userMessage(filename + " has no records marked for submission. Data will not be verified.")
-                        Delete_management(lyr2)
+                                userMessage(filename + " has no records marked for submission. Data will not be verified.")
+                            Delete_management(lyr2)
 
         if values != []:
             RecordResults("fieldValues", values, gdb)
@@ -1234,8 +1239,7 @@ def checkFeatureLocations(pathsInfoObject):
     userMessage("Completed check on feature locations: " + str(len(values)) + " issues found")
 
 def sanityCheck(currentPathSettings):
-    from Validation_ClearOldResults import ClearOldResults
-    from NG911_Config import getGDBObject
+
     #fcList will contain all layers in GDB so everything will be checked
 
     #clear out template check results & field check results
