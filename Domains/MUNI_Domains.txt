@@ -196,6 +196,7 @@ FREDERICK|Municipality in Kansas
 FREDONIA|Municipality in Kansas
 FREEPORT|Municipality in Kansas
 FRONTENAC|Municipality in Kansas
+FT LEAVENWORTH|Municipality in Kansas
 FULTON|Municipality in Kansas
 GALATIA|Municipality in Kansas
 GALENA|Municipality in Kansas

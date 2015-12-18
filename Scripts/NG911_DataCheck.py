@@ -228,7 +228,7 @@ def geocodeAddressPoints(pathsInfoObject):
     if version == "10":
         MakeTableView_management(addressPointPath, addyview, "", "", fieldinfo)
     else:
-        wc = "SUBMIT = 'Y'"
+        wc = "SUBMIT <> 'N'"
         MakeTableView_management(addressPointPath, addyview, wc, "", fieldinfo)
 
     # To persist the layer on disk make a copy of the view
@@ -465,7 +465,7 @@ def checkUniqueIDFrequency(currentPathSettings):
     table = "ESB_IDS"
 
     #create temp table of esbID's
-    if esbList <> [] and esbList[0] != esbList[1]:
+    if len(esbList) > 1 and esbList[0] != esbList[1]:
         layerList = ["ESB_IDS"]
 
         if Exists(table):
@@ -592,7 +592,7 @@ def checkFrequency(fc, freq, fields, gdb, version):
                 wc1 = "L_F_ADD <> 0 AND L_T_ADD <> 0 AND R_F_ADD <> 0 AND R_T_ADD <> 0"
 
             if version != "10":
-                wc1 = wc1 + " AND SUBMIT = 'Y'"
+                wc1 = wc1 + " AND SUBMIT <> 'N'"
 
             #run query on fc to make sure 0's are ignored
             MakeTableView_management(fc, fl1, wc1)
@@ -986,7 +986,7 @@ def checkRequiredFieldValues(pathsInfoObject):
                             MakeTableView_management(fullPath, lyr2)
                             worked = 1
                         else:
-                            wc2 = "SUBMIT = 'Y'"
+                            wc2 = "SUBMIT <> 'N'"
                             try:
                                 MakeTableView_management(fullPath, lyr2, wc2)
                                 worked = 1
@@ -1139,7 +1139,7 @@ def checkSubmissionNumbers(pathsInfoObject):
         if version == "10":
             MakeTableView_management(fc, lyr2)
         else:
-            wc2 = "SUBMIT = 'Y'"
+            wc2 = "SUBMIT <> 'N'"
             MakeTableView_management(fc, lyr2, wc2)
 
         #get count of the results
@@ -1191,9 +1191,9 @@ def checkFeatureLocations(pathsInfoObject):
             MakeFeatureLayer_management(fullPath, fl)
         else:
             if "RoadCenterline" in fullPath:
-                wc = "SUBMIT = 'Y' AND EXCEPTION not in ('EXCEPTION INSIDE', 'EXCEPTION BOTH')"
+                wc = "SUBMIT <> 'N' AND EXCEPTION not in ('EXCEPTION INSIDE', 'EXCEPTION BOTH')"
             else:
-                wc = "SUBMIT = 'Y'"
+                wc = "SUBMIT <> 'N'"
             MakeFeatureLayer_management(fullPath, fl, wc)
 
         try:
