@@ -17,6 +17,7 @@ The project consists of:
 		COUNTRY_Domains.txt
 		COUNTY_Domains.txt
 		EXCEPTION_Domains.txt
+		KS_HWY.txt
 		LOCTYPE_Domains.txt
 		MUNI_Domains.txt
 		NG911_FieldDefinitions.txt
@@ -49,6 +50,7 @@ The project consists of:
 		Enhancement_CheckTN.py
 		Enhancement_FindAddressRangeOverlaps.py
 		Enhancement_USNGCalc.py
+		Enhancement_VerifyRoadAlias.py
 		Metadata_EnhanceMetadata.py
 		NG911_Config.py
 		NG911_DataCheck.py

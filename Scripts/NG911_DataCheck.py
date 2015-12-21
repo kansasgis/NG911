@@ -345,7 +345,7 @@ def geocodeAddressPoints(pathsInfoObject):
                     today = strftime("%m/%d/%y")
                     filename = "AddressPoints"
 
-                    rfields = ("ADDID")
+                    rfields = ("ADDID", "Status")
                     with SearchCursor(output, rfields, wc) as rRows:
                         for rRow in rRows:
                             fID = rRow[0]
@@ -364,7 +364,10 @@ def geocodeAddressPoints(pathsInfoObject):
                                     rCount = rCount - 1
                                 else:
                                     #report as an error
-                                    report = str(fID) + " did not geocode against centerline"
+                                    if rRow[1] == "U":
+                                        report = str(fID) + " did not geocode against centerline."
+                                    elif rRow[1] == "T":
+                                        report = str(fID) + " geocoded against more than one centerline segment. Possible address range overlap."
                                     val = (today, report, filename, "", fID)
                                     values.append(val)
                                 Delete_management(tblGE)

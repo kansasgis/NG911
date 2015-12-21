@@ -67,7 +67,8 @@ def main():
                     #loop through the fields to see what's null & skip it
                     while start_int < field_count:
                         if row[start_int] is not None:
-                            label = label + " " + row[start_int]
+                            if row[start_int] not in ("", " "):
+                                label = label + " " + str(row[start_int])
                         start_int = start_int + 1
 
                     row[0] = label
