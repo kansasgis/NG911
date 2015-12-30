@@ -542,11 +542,11 @@ SPEARVILLE|Municipality in Kansas
 SPEED|Municipality in Kansas
 SPIVEY|Municipality in Kansas
 SPRING HILL |Municipality in Kansas
-ST. FRANCIS|Municipality in Kansas
-ST. GEORGE|Municipality in Kansas
-ST. JOHN|Municipality in Kansas
-ST. MARYS |Municipality in Kansas
-ST. PAUL|Municipality in Kansas
+ST FRANCIS|Municipality in Kansas
+ST GEORGE|Municipality in Kansas
+ST JOHN|Municipality in Kansas
+ST MARYS |Municipality in Kansas
+ST PAUL|Municipality in Kansas
 STAFFORD|Municipality in Kansas
 STARK|Municipality in Kansas
 STERLING|Municipality in Kansas
