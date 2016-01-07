@@ -345,7 +345,7 @@ def geocodeAddressPoints(pathsInfoObject):
                     today = strftime("%m/%d/%y")
                     filename = "AddressPoints"
 
-                    rfields = ("ADDID", "Status")
+                    rfields = ("ADDID", "Status", "LOCTYPE")
                     with SearchCursor(output, rfields, wc) as rRows:
                         for rRow in rRows:
                             fID = rRow[0]
@@ -368,12 +368,17 @@ def geocodeAddressPoints(pathsInfoObject):
                                         report = str(fID) + " did not geocode against centerline."
                                     elif rRow[1] == "T":
                                         report = str(fID) + " geocoded against more than one centerline segment. Possible address range overlap."
+                                    if rRow[2] != "PRIMARY":
+                                        report = "Notice: " + report
+                                        rCount = rCount - 1
+                                    else:
+                                        report = "Error: " + report
                                     val = (today, report, filename, "", fID)
                                     values.append(val)
                                 Delete_management(tblGE)
 
                             else:
-                                report = str(fID) + " did not geocode against centerline"
+                                report = "Error: " + str(fID) + " did not geocode against centerline"
                                 val = (today, report, filename, "", fID)
                                 values.append(val)
 
@@ -431,7 +436,7 @@ def checkESNandMuniAttribute(currentPathSettings):
                 SelectLayerByLocation_management(addy_lyr, "INTERSECT", lyr1)
 
                 #loop through address points
-                with SearchCursor(addy_lyr, (feature, "ADDID")) as rows:
+                with SearchCursor(addy_lyr, (feature, "ADDID", "LOCTYPE")) as rows:
                     for row in rows:
                         #get value
                         value_addy = row[0]
@@ -441,6 +446,10 @@ def checkESNandMuniAttribute(currentPathSettings):
                             segID = row[1]
 
                             report = "Address point " + feature + " does not match " + feature + " in " + basename(layer) + " layer"
+                            if row[2] != 'PRIMARY':
+                                report = "Notice: " + report
+                            else:
+                                report = "Error: " + report
                             val = (today, report, filename, feature, segID)
                             values.append(val)
 
@@ -553,7 +562,7 @@ def checkUniqueIDFrequency(currentPathSettings):
                     #report duplicate IDs
                     report = str(row2[0]) + " is a duplicate ID"
                     if stringESBReport != "":
-                        report = report + " in " + stringESBReport
+                        report = "Error: " + report + " in " + stringESBReport
                     val = (today, report, "ESB", uniqueID, row2[0])
                     values.append(val)
 
@@ -589,7 +598,7 @@ def checkFrequency(fc, freq, fields, gdb, version):
             filename = ""
             if freq == join(gdb, "AP_Freq"):
                 filename = "AddressPoints"
-                wc1 = "HNO <> 0 and LOC = 'PRIMARY'"
+                wc1 = "HNO <> 0 and LOCTYPE = 'PRIMARY'"
             elif freq == join(gdb, "Road_Freq"):
                 filename = "RoadCenterline"
                 wc1 = "L_F_ADD <> 0 AND L_T_ADD <> 0 AND R_F_ADD <> 0 AND R_T_ADD <> 0"
@@ -660,7 +669,7 @@ def checkFrequency(fc, freq, fields, gdb, version):
                         with SearchCursor(fl1, (id1), wc) as sRows:
                             for sRow in sRows:
                                 fID = sRow[0]
-                                report = str(fID) + " has duplicate field information"
+                                report = "Error: " + str(fID) + " has duplicate field information"
                                 val = (today, report, filename, "", fID)
                                 values.append(val)
 
@@ -697,7 +706,7 @@ def checkLayerList(pathsInfoObject):
     datasets = ListDatasets()
 
     if "NG911" not in datasets:
-        dataset_report = "No feature dataset named 'NG911' exists"
+        dataset_report = "Error: No feature dataset named 'NG911' exists"
         val = (today, dataset_report, "Template")
         values.append(val)
         userMessage(dataset_report)
@@ -717,7 +726,7 @@ def checkLayerList(pathsInfoObject):
     #report any required layers that are not present
     for l in layerList:
         if l not in layers:
-            report = "Required layer " + l + " is not in geodatabase."
+            report = "Error: Required layer " + l + " is not in geodatabase."
             userMessage(report)
             val = (today, report, "Layer")
             values.append(val)
@@ -904,14 +913,14 @@ def checkValuesAgainstDomain(pathsInfoObject):
                                     if fieldN == "HNO":
                                         hno = row[1]
                                         if hno > 999999 or hno < 0:
-                                            report = "Value " + str(row[1]) + " not in approved domain for field " + fieldN
+                                            report = "Error: Value " + str(row[1]) + " not in approved domain for field " + fieldN
                                             val = (today, report, fc, fieldN, fID)
                                             values.append(val)
                                     #otherwise, compare row value to domain list
                                     else:
 ##                                        userMessage("Checking value: " + row[1])
                                         if row[1] not in domainList:
-                                            report = "Value " + str(row[1]) + " not in approved domain for field " + fieldN
+                                            report = "Error: Value " + str(row[1]) + " not in approved domain for field " + fieldN
                                             val = (today, report, fc, fieldN, fID)
                                             values.append(val)
 
@@ -1039,7 +1048,7 @@ def checkRequiredFieldValues(pathsInfoObject):
                                                 #see if the value is nothing
                                                 if row[k] is None:
                                                     #report the value if it is indeed null
-                                                    report = matchingFields[k] + " is null for Feature ID " + oid
+                                                    report = "Error: " + matchingFields[k] + " is null for Feature ID " + oid
                                                     userMessage(report)
                                                     val = (today, report, filename, matchingFields[k], oid)
                                                     values.append(val)
@@ -1104,7 +1113,7 @@ def checkRequiredFields(pathsInfoObject):
                     #loop through required fields to make sure they exist in the geodatabase
                     for comparisonField in comparisonList:
                         if comparisonField.upper() not in fields:
-                            report = filename + " does not have required field " + comparisonField
+                            report = "Error: " + filename + " does not have required field " + comparisonField
                             userMessage(report)
                             #add issue to list of values
                             val = (today, report, "Field")
@@ -1143,6 +1152,8 @@ def checkSubmissionNumbers(pathsInfoObject):
             MakeTableView_management(fc, lyr2)
         else:
             wc2 = "SUBMIT not in ('N')"
+            if "AddressPoints" in fc:
+                wc2 = wc2 + " AND LOCTYPE = 'PRIMARY'"
             MakeTableView_management(fc, lyr2, wc2)
 
         #get count of the results
@@ -1152,7 +1163,7 @@ def checkSubmissionNumbers(pathsInfoObject):
         userMessage(basename(fc) + ": " + str(count) + " records marked for submission")
 
         if count == 0:
-            report = basename(fc) + " has 0 records for submission"
+            report = "Error: " + basename(fc) + " has 0 records for submission"
             #add issue to list of values
             val = (today, report, "Submission")
             values.append(val)
@@ -1193,10 +1204,9 @@ def checkFeatureLocations(pathsInfoObject):
         if version == "10":
             MakeFeatureLayer_management(fullPath, fl)
         else:
+            wc = "SUBMIT not in ('N')"
             if "RoadCenterline" in fullPath:
-                wc = "SUBMIT not in ('N') AND EXCEPTION not in ('EXCEPTION INSIDE', 'EXCEPTION BOTH')"
-            else:
-                wc = "SUBMIT not in ('N')"
+                wc = wc + " AND EXCEPTION not in ('EXCEPTION INSIDE', 'EXCEPTION BOTH')"
             MakeFeatureLayer_management(fullPath, fl, wc)
 
         try:
@@ -1216,11 +1226,18 @@ def checkFeatureLocations(pathsInfoObject):
                 else:
                     layerName = layer
                 id1 = getUniqueIDField(layerName.upper())
-                report = "Feature not inside authoritative boundary"
                 if id1 != '':
-                    with SearchCursor(fl, (id1)) as rows:
+                    fields = (id1)
+                    if "AddressPoints" in fullPath:
+                        fields = (id1, "LOCTYPE")
+                    with SearchCursor(fl, fields) as rows:
                         for row in rows:
                             fID = row[0]
+                            report = "Error: Feature not inside authoritative boundary"
+                            if "AddressPoints" in fullPath:
+                                if row[1] != 'PRIMARY':
+                                    report = report.replace("Error:", "Notice:")
+
                             val = (today, report, layer, " ", fID)
                             values.append(val)
                 else:
@@ -1291,7 +1308,8 @@ def sanityCheck(currentPathSettings):
     for table in [fieldCheckResults, templateResults]:
         if Exists(table):
             tbl = "tbl"
-            MakeTableView_management(table, tbl)
+            wc = "Description not like '%Notice%'"
+            MakeTableView_management(table, tbl, wc)
             result = GetCount_management(tbl)
             count = int(result.getOutput(0))
             numErrors = numErrors + count
