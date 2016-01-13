@@ -23,7 +23,7 @@ def main():
     if basename(layer) == "RoadCenterline":
         expression = '!PRD! + " " + !STP! + " " + !RD! + " " + !STS! + " " + !POD! + " " + !POM!'
     elif basename(layer) == "AddressPoints":
-        expression = '!HNO! + " " + !HNS! + " " + !PRD! + " " + !STP! + " " + !RD! + " " + !STS! + " " + !POD! + " " + !POM!'
+        expression = 'str(!HNO!) + " " + !HNS! + " " + !PRD! + " " + !STP! + " " + !RD! + " " + !STS! + " " + !POD! + " " + !POM!'
 
     else:
         userMessage(layer + " does not work with this tool. Please select the NG911 road centerline or address point file.")
@@ -32,9 +32,10 @@ def main():
         lyr = "lyr"
         MakeFeatureLayer_management(layer, lyr)
 
+        qry = "LABEL is null or LABEL = '' or LABEL = ' '"
+
         #select only the blank ones to update if that's what the user wanted
         if updateBlanksOnly == "true":
-            qry = "LABEL is null or LABEL = '' or LABEL = ' '"
             SelectLayerByAttribute_management(lyr, "NEW_SELECTION", qry)
 
         userMessage("Calculating label...")
