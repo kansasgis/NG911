@@ -719,13 +719,13 @@ def checkLayerList(pathsInfoObject):
 ##        ignoreList = ("gc_test", "TemplateCheckResults", "FieldValuesCheckResults", "GeocodeTable")
         for fn in filenames:
             name = basename(fn)
-            layers.append(name)
+            layers.append(name.upper())
 
 ##    userMessage(layers)
 
     #report any required layers that are not present
     for l in layerList:
-        if l not in layers:
+        if l.upper() not in layers:
             report = "Error: Required layer " + l + " is not in geodatabase."
             userMessage(report)
             val = (today, report, "Layer")
