@@ -1201,7 +1201,7 @@ def checkFeatureLocations(pathsInfoObject):
 
     for fullPath in fcList:
         fl = "fl"
-        if version == "10":
+        if version == "10" or "CountyBoundary" in fullPath:
             MakeFeatureLayer_management(fullPath, fl)
         else:
             wc = "SUBMIT not in ('N')"

@@ -193,8 +193,3 @@ try:
 
 except "FieldError":
     userMessage("Fields in the input table: " + input_fc + " do not exist")
-
-del dictionary
-del segments
-del segment
-
