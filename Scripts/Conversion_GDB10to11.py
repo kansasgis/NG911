@@ -10,7 +10,8 @@
 
 def main():
     from arcpy import (GetParameterAsText, env, Append_management, ListFeatureClasses,
-        AssignDefaultToField_management, Exists, Copy_management, AddField_management, CalculateField_management)
+        AssignDefaultToField_management, Exists, Copy_management, AddField_management,
+        CalculateField_management, ListFields)
     from os.path import join
 
     oldgdb = GetParameterAsText(0)
@@ -41,6 +42,20 @@ def main():
         fc10 = join(oldgdb, fc)
         fc11 = join(gdbTemplate, fc)
 
+        #migrate other user fields
+        fields10 = ListFields(fc10)
+        fields11 = ListFields(fc11)
+
+        #make list of field names in 1.1 version
+        fList11 = []
+        for f11 in fields11:
+            fList11.append(f11.name)
+
+        #if the proprietary field doesn't exist, add it
+        for field10 in fields10:
+            if field10.name not in fList11:
+                AddField_management(fc11, field10.name, field10.type, "", "", field10.length)
+
         #if the feature class already exists, copy over the data
         if Exists(fc11):
             Append_management(fc10, fc11, "NO_TEST")
@@ -63,6 +78,7 @@ def main():
         #EXCEPTION if it's a road feature
         if fc == 'RoadCenterline':
             CalculateField_management(fc11, "EXCEPTION", '"NOT EXCEPTION"', "PYTHON_9.3")
+
 
 if __name__ == '__main__':
     main()
