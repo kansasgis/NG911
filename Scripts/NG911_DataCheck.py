@@ -445,11 +445,11 @@ def checkESNandMuniAttribute(currentPathSettings):
                         if value_addy.strip() != feature_value.strip():
                             segID = row[1]
 
-                            report = "Address point " + feature + " does not match " + feature + " in " + basename(layer) + " layer"
-                            if row[2] != 'PRIMARY':
-                                report = "Notice: " + report
-                            else:
-                                report = "Error: " + report
+                            report = "Notice: Address point " + feature + " does not match " + feature + " in " + basename(layer) + " layer"
+##                            if row[2] != 'PRIMARY':
+##                                report = "Notice: " + report
+##                            else:
+##                                report = "Error: " + report
                             val = (today, report, filename, feature, segID)
                             values.append(val)
 
