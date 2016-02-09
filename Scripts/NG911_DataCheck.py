@@ -440,18 +440,17 @@ def checkESNandMuniAttribute(currentPathSettings):
                     for row in rows:
                         #get value
                         value_addy = row[0]
+                        segID = row[1]
 
-                        #see if the values match
-                        if value_addy.strip() != feature_value.strip():
-                            segID = row[1]
-
-                            report = "Notice: Address point " + feature + " does not match " + feature + " in " + basename(layer) + " layer"
-##                            if row[2] != 'PRIMARY':
-##                                report = "Notice: " + report
-##                            else:
-##                                report = "Error: " + report
-                            val = (today, report, filename, feature, segID)
-                            values.append(val)
+                        try:
+                            #see if the values match
+                            if value_addy.strip() != feature_value.strip():
+                                #this issue has been demoted to a notice
+                                report = "Notice: Address point " + feature + " does not match " + feature + " in " + basename(layer) + " layer"
+                                val = (today, report, filename, feature, segID)
+                                values.append(val)
+                        except:
+                            userMessage("Issue comparing value for " + feature + ": " + segID)
 
 
                 Delete_management(lyr1)
