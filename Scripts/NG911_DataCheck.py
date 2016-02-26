@@ -160,6 +160,37 @@ def getResultsFieldList(table):
     return fieldList
 
 
+def calcAngle(pt1, pt2, pt3):
+    import math, decimal
+    context = decimal.Context(prec=5, rounding="ROUND_DOWN")
+    #get length of side A
+    a = abs(abs(pt1[0]) - abs(pt2[0]))
+    b = abs(abs(pt1[1]) - abs(pt2[1]))
+    A = context.create_decimal_from_float(math.hypot(a,b))
+
+    #get length of side B
+    c = abs(abs(pt2[0]) - abs(pt3[0]))
+    d = abs(abs(pt2[1]) - abs(pt3[1]))
+    B = context.create_decimal_from_float(math.hypot(c,d))
+
+    #get length of side C
+    e = abs(abs(pt3[0]) - abs(pt1[0]))
+    f = abs(abs(pt3[1]) - abs(pt1[1]))
+    C = context.create_decimal_from_float(math.hypot(e,f))
+
+    q = ((A*A) + (B*B) - (C*C))/(2*A*B)
+
+    degrees = 0
+
+    if -1 < q < 1:
+        #get angle
+        radian = math.acos(q)
+
+##    radian = math.atan((pt3x - pt2x)/(pt1y - pt2y))
+        degrees = radian * 180 / math.pi
+    return degrees
+
+
 def RecordResults(resultType, values, gdb): # Guessed on whitespace formatting here. -- DT
     if resultType == "template":
         tbl = "TemplateCheckResults"
@@ -1257,6 +1288,65 @@ def checkFeatureLocations(pathsInfoObject):
 
     userMessage("Completed check on feature locations: " + str(len(values)) + " issues found")
 
+def checkCutbacks(pathsInfoObject):
+    userMessage("Checking for geometry cutbacks...")
+
+    gdb = pathsInfoObject.gdbPath
+    gdbObject = getGDBObject(gdb)
+    roads = gdbObject.RoadCenterline
+
+    #set up tracking variables
+    cutbacks = []
+    values = []
+    today = strftime("%m/%d/%y")
+    layer = "RoadCenterline"
+
+    #set up search cursor on roads layer
+##    wc = "SEGID in ('1673')"
+    with SearchCursor(roads, ("SHAPE@","SEGID")) as rows:
+        for row in rows:
+            geom = row[0]
+            segid = row[1]
+
+            #loop through geometry parts
+            for part in geom:
+                part_coords = []
+
+                #don't check simple roads
+                if len(part) > 4:
+                    #loop through points
+                    for pnt in part:
+                        #set up points in a straightforward list
+                        pc = []
+                        if pnt:
+                            pc = [pnt.X, pnt.Y]
+                            part_coords.append(pc)
+                        else:
+                            print("interior ring")
+
+                    #loop through coordinate list
+                    if part_coords != []:
+                        i = 1
+                        while i < (len(part_coords)-1):
+
+                            #calculate the angle between three points
+                            angle = calcAngle(part_coords[i-1],part_coords[i],part_coords[i+1])
+##                            print angle
+
+                            #if the angle is quite sharp, it might indicate a cutback
+                            if 0 < angle < 55:
+                                if segid not in cutbacks:
+                                    report = "Notice: This segment might contain a geometry cutback"
+                                    val = (today, report, layer, " ", segid)
+                                    values.append(val)
+                                    cutbacks.append(segid)
+                            i += 1
+
+    if values != []:
+        RecordResults("fieldValues", values, gdb)
+
+    userMessage("Completed check on cutbacks: " + str(len(values)) + " issues found")
+
 def sanityCheck(currentPathSettings):
 
     #fcList will contain all layers in GDB so everything will be checked
@@ -1288,6 +1378,7 @@ def sanityCheck(currentPathSettings):
         checkESNandMuniAttribute(currentPathSettings)
     else:
         userMessage("ESZ layer does not exist. Cannot complete check.")
+    checkCutbacks(currentPathSettings)
 
     #check roads
     roads = join(currentPathSettings.gdbPath, "RoadCenterline")
@@ -1402,6 +1493,9 @@ def main_check(checkType, currentPathSettings):
 
         if checkList[3] == "true":
             checkUniqueIDFrequency(currentPathSettings)
+
+        if checkList[4] == "true":
+            checkCutbacks(currentPathSettings)
 
     #check boundaries or ESB
     elif checkType in ("admin", "ESB"):
