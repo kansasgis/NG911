@@ -431,6 +431,65 @@ def geocodeAddressPoints(pathsInfoObject):
         else:
             userMessage("Could not geocode addresses")
 
+def checkDirectionality(fc,gdb):
+    userMessage("Checking road directionality...")
+
+    #set variables
+    values = []
+    recordType = "fieldValues"
+    today = strftime("%m/%d/%y")
+    filename = "RoadCenterline"
+    report = "Notice: Segment's address range is from high to low instead of low to high"
+
+    fields = ("SHAPE@", "SEGID", "L_F_ADD", "L_T_ADD", "R_F_ADD", "R_T_ADD")
+
+    with SearchCursor(fc, fields) as rows:
+        for row in rows:
+
+            #get unique id and from/to values
+            segid = row[1]
+            addyList = [row[2],row[3],row[4],row[5]]
+
+            #make sure it's not a blank road
+            if addyList != [0,0,0,0]:
+
+                #set up values
+                lFrom = addyList[0]
+                lTo = addyList[1]
+                rFrom = addyList[2]
+                rTo = addyList[3]
+
+                check = "both"
+                issue = "no"
+
+                #see if we're working with any 0's
+                if lFrom == 0 or lTo == 0:
+                    check = "right"
+                elif rFrom ==0 or rTo == 0:
+                    check = "left"
+
+                #see if any road values don't follow low to high pattern
+                if check == "both":
+                    if rTo < rFrom or lTo < lFrom:
+                        issue = "yes"
+                elif check == "right":
+                    if rTo < rFrom:
+                        issue = "yes"
+                elif check == "left":
+                    if lTo < lFrom:
+                        issue = "yes"
+
+                if issue == "yes":
+                    val = (today, report, filename, "", segid)
+                    values.append(val)
+
+    #report records
+    if values != []:
+        RecordResults(recordType, values, gdb)
+        userMessage("Completed road directionality check. There were " + str(len(values)) + " issues.")
+    else:
+        userMessage("Completed road directionality check. No issues found.")
+
 def checkESNandMuniAttribute(currentPathSettings):
 
     NG911gdb = currentPathSettings.gdbPath
@@ -1288,6 +1347,68 @@ def checkFeatureLocations(pathsInfoObject):
 
     userMessage("Completed check on feature locations: " + str(len(values)) + " issues found")
 
+def findInvalidGeometry(pathsInfoObject):
+    userMessage("Checking for invalid geometry...")
+
+    #set variables
+    gdb = pathsInfoObject.gdbPath
+    esb = pathsInfoObject.esbList
+    version = pathsInfoObject.gdbVersion
+    gdbObject = getGDBObject(gdb)
+    fcList = pathsInfoObject.fcList
+
+    today = strftime("%m/%d/%y")
+    values = []
+    report = "Error: Invalid geometry"
+
+    invalidDict = {"point": 1, "polyline": 2, "polygon":3}
+
+    #loop through feature classes
+    for fullPath in fcList:
+
+        #get the unique ID column
+        layer = basename(fullPath)
+
+        if layer.upper() != "ROADALIAS":
+            if layer in esb:
+                layerName = "ESB"
+            else:
+                layerName = layer
+
+            id_column = getUniqueIDField(layerName.upper())
+
+            #set up fields for cursor
+            fields = ("SHAPE@", id_column)
+
+            with SearchCursor(fullPath, fields) as rows:
+                for row in rows:
+                    geom = row[0]
+                    fid = row[1]
+
+                    try:
+                        #get geometry type
+                        geomType = geom.type
+
+                        #find the minimum number of required points
+                        minNum = invalidDict[geomType]
+
+                        #get the count of points in the geometry
+                        count = geom.pointCount
+
+                        #if the count is smaller than the minimum number, there's a problem
+                        if count < minNum:
+                            val = (today, report, layer, " ", fid)
+                            values.append(val)
+                    except:
+                        #if this errors, there's an error accessing the geometry, hence problems
+                        val = (today, report, layer, " ", fid)
+                        values.append(val)
+
+    if values != []:
+        RecordResults("fieldValues", values, gdb)
+
+    userMessage("Completed for invalid geometry: " + str(len(values)) + " issues found")
+
 def checkCutbacks(pathsInfoObject):
     userMessage("Checking for geometry cutbacks...")
 
@@ -1362,6 +1483,7 @@ def sanityCheck(currentPathSettings):
     checkRequiredFields(currentPathSettings)
     checkRequiredFieldValues(currentPathSettings)
     checkSubmissionNumbers(currentPathSettings)
+    findInvalidGeometry(currentPathSettings)
 
     #common layer checks
     checkValuesAgainstDomain(currentPathSettings)
@@ -1378,7 +1500,7 @@ def sanityCheck(currentPathSettings):
         checkESNandMuniAttribute(currentPathSettings)
     else:
         userMessage("ESZ layer does not exist. Cannot complete check.")
-    checkCutbacks(currentPathSettings)
+
 
     #check roads
     roads = join(currentPathSettings.gdbPath, "RoadCenterline")
@@ -1387,6 +1509,8 @@ def sanityCheck(currentPathSettings):
     PARITY_L;PARITY_R;POSTCO_L;POSTCO_R;ZIP_L;ZIP_R;ESN_L;ESN_R;MSAGCO_L;MSAGCO_R;PRD;STP;RD;STS;POD;
     POM;SPDLIMIT;ONEWAY;RDCLASS;LABEL;ELEV_F;ELEV_T;ESN_C;SURFACE;STATUS;TRAVEL;LRSKEY"""
     checkFrequency(roads, road_freq, road_fields, currentPathSettings.gdbPath, currentPathSettings.gdbVersion)
+    checkCutbacks(currentPathSettings)
+    checkDirectionality(roads, currentPathSettings.gdbPath)
 
     #verify that the check resulted in 0 issues
     sanity = 0 #flag to return at end
@@ -1449,6 +1573,9 @@ def main_check(checkType, currentPathSettings):
         if checkList[3] == "true":
             checkSubmissionNumbers(currentPathSettings)
 
+        if checkList[4] == "true":
+            findInvalidGeometry(currentPathSettings)
+
     #check address points
     elif checkType == "AddressPoints":
         if checkList[0] == "true":
@@ -1496,6 +1623,10 @@ def main_check(checkType, currentPathSettings):
 
         if checkList[4] == "true":
             checkCutbacks(currentPathSettings)
+
+        if checkList[5] == "true":
+            roads = join(currentPathSettings.gdbPath, "RoadCenterline")
+            checkDirectionality(roads, currentPathSettings.gdbPath)
 
     #check boundaries or ESB
     elif checkType in ("admin", "ESB"):
