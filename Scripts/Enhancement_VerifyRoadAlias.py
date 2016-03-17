@@ -63,7 +63,7 @@ def main():
 
     #get variables set up
     #where clause for the search cursor
-    wc = "A_STS is null or A_STS = 'HWY'"
+    wc = "A_STS is null or A_STS in ('HWY', '', ' ')"
 
     #variables for error reporting
     errorList = []
