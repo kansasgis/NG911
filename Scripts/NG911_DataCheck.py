@@ -18,10 +18,11 @@
 from arcpy import (AddField_management, AddMessage, CalculateField_management,  CopyRows_management, CreateAddressLocator_geocoding,
                    CreateTable_management, Delete_management, Exists, GeocodeAddresses_geocoding, GetCount_management, FieldInfo,
                    ListFields, MakeFeatureLayer_management, MakeTableView_management, SelectLayerByAttribute_management, Statistics_analysis,
-                   SelectLayerByLocation_management, RebuildAddressLocator_geocoding, DeleteRows_management, GetInstallInfo, env, ListDatasets)
+                   SelectLayerByLocation_management, RebuildAddressLocator_geocoding, DeleteRows_management, GetInstallInfo, env, ListDatasets,
+                   AddJoin_management, RemoveJoin_management)
 from arcpy.da import Walk, InsertCursor, ListDomains, SearchCursor
 from os import path
-from os.path import basename, dirname, join
+from os.path import basename, dirname, join, exists
 from time import strftime
 from NG911_Config import getGDBObject
 from Validation_ClearOldResults import ClearOldResults
@@ -1468,6 +1469,180 @@ def checkCutbacks(pathsInfoObject):
 
     userMessage("Completed check on cutbacks: " + str(len(values)) + " issues found")
 
+def getNumbers():
+    numbers = "0123456789"
+    return numbers
+
+def VerifyRoadAlias(gdb, domainFolder):
+    #set up variables for search cursor
+    roadAlias = join(gdb, "RoadAlias")
+    fieldList = ('A_RD', 'ALIASID')
+
+    #get highway values
+    hwy_text = join(domainFolder, "KS_HWY.txt")
+
+    hwy_dict = {}
+
+    #make sure file path exists
+    if exists(hwy_text):
+        fieldDefDoc = open(hwy_text, "r")
+
+        #get the header information
+        headerLine = fieldDefDoc.readline()
+        valueList = headerLine.split("|")
+        ## print valueList
+
+        #get field indexes
+        rNameIndex = valueList.index("ROUTENAME")
+        rNumIndex = valueList.index("ROUTENUM\n")
+
+        #parse the text to populate the field definition dictionary
+        for line in fieldDefDoc.readlines():
+            stuffList = line.split("|")
+
+            #set up values
+            route_num = stuffList[1].rstrip()
+            route_name = stuffList[0]
+
+            #see if the road list already exists in the hwy dictionary
+            if route_num not in hwy_dict:
+                nameList = [route_name]
+            else:
+                nameList = hwy_dict[route_num]
+                nameList.append(route_name)
+
+            #set dictionary value to name list
+            hwy_dict[route_num] = nameList
+
+    #get variables set up
+    #where clause for the search cursor
+    wc = "A_STS is null or A_STS in ('HWY', '', ' ')"
+
+    #variables for error reporting
+    errorList = []
+    values = []
+    filename = "RoadAlias"
+    field = "A_RD"
+    recordType = "fieldValues"
+    today = strftime("%m/%d/%y")
+
+    #get a list of numbers
+    numbers = getNumbers()
+
+    #start search cursor to examine records
+    with SearchCursor(roadAlias, fieldList, wc) as rows:
+        for row in rows:
+
+            road = row[0]
+            first_char = road[0]
+
+            #see if first character indicates a highway
+            if first_char in "IUK0123456789":
+
+                for n in numbers:
+
+                    #see if the road name has numbers in it
+                    if n in road:
+
+                        roadNum = road #working variable to strip out all alphabet characters
+                        fID = row[1] #road alias ID for reporting
+
+                        #get just the road number with no other characters
+                        for r in roadNum:
+                            if r not in numbers:
+                                roadNum = roadNum.replace(r, "")
+
+                        #see if the road number is in the highway dictionary
+                        if roadNum in hwy_dict:
+                            if road not in hwy_dict[roadNum]:
+                                if fID not in errorList:
+                                    errorList.append(fID)
+                                    report = "Notice: " + road + " is not in the approved highway name list"
+                                    val = (today, report, filename, field, fID)
+                                    values.append(val)
+
+
+    #report records
+    if values != []:
+        #set up custom error count message
+        count = len(errorList)
+        if count > 1:
+            countReport = "There were " + str(count) + " issues. "
+        else:
+            countReport = "There was 1 issue. "
+
+        RecordResults(recordType, values, gdb)
+        userMessage("Checked highway names in the road alias table. " + countReport + "Results are in table FieldValuesCheckResults")
+    else:
+        userMessage("Checked highway names in the road alias table. No errors were found.")
+
+def checkJoin(gdb, inputTable, joinTable, where_clause, errorMessage, field):
+    #set up tracking variables
+    values = []
+    today = strftime("%m/%d/%y")
+    layer = field.split(".")[0]
+    recordType = "fieldValues"
+
+    AddJoin_management(inputTable, "SEGID", joinTable, "SEGID")
+    tbl = "tbl"
+
+    MakeTableView_management(inputTable, tbl, where_clause)
+
+    #see if any issues exist
+    result = GetCount_management(tbl)
+    count = int(result.getOutput(0))
+
+    #catalog issues
+    if count > 0:
+        fields = (field)
+        with SearchCursor(tbl, fields) as rows:
+            for row in rows:
+                val = (today, errorMessage, layer, "", row[0])
+                values.append(val)
+
+    #clean up
+    RemoveJoin_management(inputTable)
+    Delete_management(tbl)
+
+    #report records
+    if values != []:
+        RecordResults(recordType, values, gdb)
+
+    return count
+
+def checkRoadAliases(pathsInfoObject):
+    userMessage("Checking road alias table...")
+
+    gdb = pathsInfoObject.gdbPath
+    gdbObject = getGDBObject(gdb)
+
+    #make road layer into a feature layer
+    roads = gdbObject.RoadCenterline
+    rdslyr = "rdslyr"
+    MakeFeatureLayer_management(roads, rdslyr)
+
+    #make road alias into a table view
+    road_alias = gdbObject.RoadAlias
+    ra_tbl = "ra_tbl"
+    MakeTableView_management(road_alias, ra_tbl)
+
+    #make sure all road alias records relate back to the road centerline file
+    alias_count = checkJoin(gdb, ra_tbl, rdslyr, "RoadCenterline.RD is null", "Notice: Road alias entry does not have a corresponding road centerline segment", "RoadAlias.ALIASID")
+
+    #see if the highways link back to a road alias record
+    hwy_count = checkJoin(gdb, rdslyr, ra_tbl, "(RoadCenterline.RD like '%HIGHWAY%' or RoadCenterline.RD like '%HWY%' or RoadCenterline.RD like '%INTERSTATE%') and RoadAlias.A_RD is null",
+                                "Notice: Road centerline highway segment does not have a corresponding road alias record", "RoadCenterline.SEGID")
+
+    total_count = alias_count + hwy_count
+
+    if total_count > 0:
+        userMessage("Checked road alias records. There were " + str(total_count) + " issues. Results are in table FieldValuesCheckResults")
+    else:
+        userMessage("Checked road alias records. No errors were found.")
+
+    #verify domain values
+    VerifyRoadAlias(gdb, pathsInfoObject.domainsFolderPath)
+
 def sanityCheck(currentPathSettings):
 
     #fcList will contain all layers in GDB so everything will be checked
@@ -1511,6 +1686,7 @@ def sanityCheck(currentPathSettings):
     checkFrequency(roads, road_freq, road_fields, currentPathSettings.gdbPath, currentPathSettings.gdbVersion)
     checkCutbacks(currentPathSettings)
     checkDirectionality(roads, currentPathSettings.gdbPath)
+    checkRoadAliases(currentPathSettings)
 
     #verify that the check resulted in 0 issues
     sanity = 0 #flag to return at end
@@ -1604,6 +1780,7 @@ def main_check(checkType, currentPathSettings):
 
     #check roads
     elif checkType == "Roads":
+        roads = join(currentPathSettings.gdbPath, "RoadCenterline")
         if checkList[0] == "true":
             checkValuesAgainstDomain(currentPathSettings)
 
@@ -1611,7 +1788,6 @@ def main_check(checkType, currentPathSettings):
             checkFeatureLocations(currentPathSettings)
 
         if checkList[2] == "true":
-            roads = join(currentPathSettings.gdbPath, "RoadCenterline")
             road_freq = join(currentPathSettings.gdbPath, "Road_Freq")
             road_fields = """STATE_L;STATE_R;COUNTY_L;COUNTY_R;MUNI_L;MUNI_R;L_F_ADD;L_T_ADD;R_F_ADD;R_T_ADD;
             PARITY_L;PARITY_R;POSTCO_L;POSTCO_R;ZIP_L;ZIP_R;ESN_L;ESN_R;MSAGCO_L;MSAGCO_R;PRD;STP;RD;STS;POD;
@@ -1625,8 +1801,10 @@ def main_check(checkType, currentPathSettings):
             checkCutbacks(currentPathSettings)
 
         if checkList[5] == "true":
-            roads = join(currentPathSettings.gdbPath, "RoadCenterline")
             checkDirectionality(roads, currentPathSettings.gdbPath)
+
+        if checkList[6] == "true":
+            checkRoadAliases(currentPathSettings)
 
     #check boundaries or ESB
     elif checkType in ("admin", "ESB"):

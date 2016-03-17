@@ -26,10 +26,11 @@ def main():
     checkUniqueIDs = GetParameterAsText(5)
     checkCutbacks = GetParameterAsText(6)
     checkDirectionality = GetParameterAsText(7)
-    template10 = GetParameterAsText(8)
+    checkRoadAliases = GetParameterAsText(8)
+    template10 = GetParameterAsText(9)
 
     #create check list
-    checkList = [checkValuesAgainstDomain,checkFeatureLocations,checkRoadFrequency,checkUniqueIDs,checkCutbacks,checkDirectionality]
+    checkList = [checkValuesAgainstDomain,checkFeatureLocations,checkRoadFrequency,checkUniqueIDs,checkCutbacks,checkDirectionality, checkRoadAliases]
 
     roadFile = join(gdb, "RoadCenterline")
     aliasFile = join(gdb, "RoadAlias")
