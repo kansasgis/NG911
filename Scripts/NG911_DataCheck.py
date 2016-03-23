@@ -146,6 +146,7 @@ def getAddFieldInfo(table):
     elif lyr == "DASC_Communication":
         fieldInfo = [(table, "NoteDate", "DATE", "", "", ""),(table, "Description", "TEXT", "", "", 250)]
 
+    del lyr
     return fieldInfo
 
 
@@ -429,6 +430,8 @@ def geocodeAddressPoints(pathsInfoObject):
                         Delete_management(output)
                     except:
                         userMessage("Geocoding table could not be deleted")
+
+                del lyr
         else:
             userMessage("Could not geocode addresses")
 
@@ -1149,6 +1152,7 @@ def checkRequiredFieldValues(pathsInfoObject):
                                     userMessage( "All required values present for " + filename)
 
                                 Delete_management(lyr)
+                                del lyr
 
                             else:
                                 userMessage(filename + " has no records marked for submission. Data will not be verified.")
@@ -1286,6 +1290,14 @@ def checkFeatureLocations(pathsInfoObject):
     #get authoritative boundary
     authBound = path.join(gdb, "NG911", "AuthoritativeBoundary")
     ab = "ab"
+
+    #see if authoritative boundary has more than 1 feature
+    result1 = GetCount_management(authBound)
+    count = int(result.getOutput(0))
+
+    #if more than one feature is in the authoritative boundary, use the county boundary instead
+    if count > 1:
+        authBound = path.join(gdb, "NG911", "CountyBoundary")
 
     MakeFeatureLayer_management(authBound, ab)
 
