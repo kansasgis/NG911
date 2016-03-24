@@ -1293,7 +1293,7 @@ def checkFeatureLocations(pathsInfoObject):
 
     #see if authoritative boundary has more than 1 feature
     result1 = GetCount_management(authBound)
-    count = int(result.getOutput(0))
+    count = int(result1.getOutput(0))
 
     #if more than one feature is in the authoritative boundary, use the county boundary instead
     if count > 1:
