@@ -1302,57 +1302,58 @@ def checkFeatureLocations(pathsInfoObject):
     MakeFeatureLayer_management(authBound, ab)
 
     for fullPath in fcList:
-        fl = "fl"
-        if version == "10" or "CountyBoundary" in fullPath:
-            MakeFeatureLayer_management(fullPath, fl)
-        else:
-            wc = "SUBMIT not in ('N')"
-            if "RoadCenterline" in fullPath:
-                wc = wc + " AND EXCEPTION not in ('EXCEPTION INSIDE', 'EXCEPTION BOTH')"
-            MakeFeatureLayer_management(fullPath, fl, wc)
-
-        try:
-
-            #select by location to get count of features outside the authoritative boundary
-            SelectLayerByLocation_management(fl, "WITHIN", ab)
-            SelectLayerByAttribute_management(fl, "SWITCH_SELECTION", "")
-            #get count of selected records
-            result = GetCount_management(fl)
-            count = int(result.getOutput(0))
-
-            #report results
-            if count > 0:
-                layer = basename(fullPath)
-                if layer in esb:
-                    layerName = "ESB"
-                else:
-                    layerName = layer
-                id1 = getUniqueIDField(layerName.upper())
-                if id1 != '':
-                    fields = (id1)
-                    if "AddressPoints" in fullPath:
-                        fields = (id1, "LOCTYPE")
-                    with SearchCursor(fl, fields) as rows:
-                        for row in rows:
-                            fID = row[0]
-                            report = "Error: Feature not inside authoritative boundary"
-                            if "AddressPoints" in fullPath:
-                                if row[1] != 'PRIMARY':
-                                    report = report.replace("Error:", "Notice:")
-
-                            val = (today, report, layer, " ", fID)
-                            values.append(val)
-                else:
-                    userMessage("Could not process features in " + fullPath)
+        if "CountyBoundary" not in fullPath:
+            fl = "fl"
+            if version == "10":
+                MakeFeatureLayer_management(fullPath, fl)
             else:
-                userMessage( fullPath + ": all records inside authoritative boundary")
-        except:
-            userMessage("Could not check locations of " + fullPath)
+                wc = "SUBMIT not in ('N')"
+                if "RoadCenterline" in fullPath:
+                    wc = wc + " AND EXCEPTION not in ('EXCEPTION INSIDE', 'EXCEPTION BOTH')"
+                MakeFeatureLayer_management(fullPath, fl, wc)
 
-        finally:
+            try:
 
-            #clean up
-            Delete_management(fl)
+                #select by location to get count of features outside the authoritative boundary
+                SelectLayerByLocation_management(fl, "WITHIN", ab)
+                SelectLayerByAttribute_management(fl, "SWITCH_SELECTION", "")
+                #get count of selected records
+                result = GetCount_management(fl)
+                count = int(result.getOutput(0))
+
+                #report results
+                if count > 0:
+                    layer = basename(fullPath)
+                    if layer in esb:
+                        layerName = "ESB"
+                    else:
+                        layerName = layer
+                    id1 = getUniqueIDField(layerName.upper())
+                    if id1 != '':
+                        fields = (id1)
+                        if "AddressPoints" in fullPath:
+                            fields = (id1, "LOCTYPE")
+                        with SearchCursor(fl, fields) as rows:
+                            for row in rows:
+                                fID = row[0]
+                                report = "Error: Feature not inside authoritative boundary"
+                                if "AddressPoints" in fullPath:
+                                    if row[1] != 'PRIMARY':
+                                        report = report.replace("Error:", "Notice:")
+
+                                val = (today, report, layer, " ", fID)
+                                values.append(val)
+                    else:
+                        userMessage("Could not process features in " + fullPath)
+                else:
+                    userMessage( fullPath + ": all records inside authoritative boundary")
+            except:
+                userMessage("Could not check locations of " + fullPath)
+
+            finally:
+
+                #clean up
+                Delete_management(fl)
 
     if values != []:
         RecordResults("fieldValues", values, gdb)
