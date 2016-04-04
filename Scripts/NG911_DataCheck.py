@@ -550,7 +550,10 @@ def checkESNandMuniAttribute(currentPathSettings):
                 Delete_management(lyr1)
                 del lyr1
 
-        del poly, polys
+        try:
+            del poly, polys
+        except:
+            userMessage("Poly/polys didn't exist in the Muni/ESN check. No worries.")
 
     #report records
     if values != []:
@@ -1436,49 +1439,58 @@ def checkCutbacks(pathsInfoObject):
     today = strftime("%m/%d/%y")
     layer = "RoadCenterline"
 
+    k = 0
+
     #set up search cursor on roads layer
 ##    wc = "SEGID in ('1673')"
     with SearchCursor(roads, ("SHAPE@","SEGID")) as rows:
         for row in rows:
-            geom = row[0]
-            segid = row[1]
+            try:
+                geom = row[0]
+                segid = row[1]
 
-            #loop through geometry parts
-            for part in geom:
-                part_coords = []
+                #loop through geometry parts
+                for part in geom:
+                    part_coords = []
 
-                #don't check simple roads
-                if len(part) > 4:
-                    #loop through points
-                    for pnt in part:
-                        #set up points in a straightforward list
-                        pc = []
-                        if pnt:
-                            pc = [pnt.X, pnt.Y]
-                            part_coords.append(pc)
-                        else:
-                            print("interior ring")
+                    #don't check simple roads
+                    if len(part) > 4:
+                        #loop through points
+                        for pnt in part:
+                            #set up points in a straightforward list
+                            pc = []
+                            if pnt:
+                                pc = [pnt.X, pnt.Y]
+                                part_coords.append(pc)
+                            else:
+                                print("interior ring")
 
-                    #loop through coordinate list
-                    if part_coords != []:
-                        i = 1
-                        while i < (len(part_coords)-1):
+                        #loop through coordinate list
+                        if part_coords != []:
+                            i = 1
+                            while i < (len(part_coords)-1):
 
-                            #calculate the angle between three points
-                            angle = calcAngle(part_coords[i-1],part_coords[i],part_coords[i+1])
-##                            print angle
+                                #calculate the angle between three points
+                                angle = calcAngle(part_coords[i-1],part_coords[i],part_coords[i+1])
+    ##                            print angle
 
-                            #if the angle is quite sharp, it might indicate a cutback
-                            if 0 < angle < 55:
-                                if segid not in cutbacks:
-                                    report = "Notice: This segment might contain a geometry cutback"
-                                    val = (today, report, layer, " ", segid)
-                                    values.append(val)
-                                    cutbacks.append(segid)
-                            i += 1
+                                #if the angle is quite sharp, it might indicate a cutback
+                                if 0 < angle < 55:
+                                    if segid not in cutbacks:
+                                        report = "Notice: This segment might contain a geometry cutback"
+                                        val = (today, report, layer, " ", segid)
+                                        values.append(val)
+                                        cutbacks.append(segid)
+                                i += 1
+            except Exception as e:
+                userMessage("Issue checking a cutback.")
+                k += 1
 
     if values != []:
         RecordResults("fieldValues", values, gdb)
+
+    if k != 0:
+        userMessage("Could not complete cutback check on " + str(k) + " segments.")
 
     userMessage("Completed check on cutbacks: " + str(len(values)) + " issues found")
 
@@ -1545,34 +1557,38 @@ def VerifyRoadAlias(gdb, domainFolder):
     #start search cursor to examine records
     with SearchCursor(roadAlias, fieldList, wc) as rows:
         for row in rows:
+            fID = row[1] #road alias ID for reporting
+            try:
+                road = row[0]
+                first_char = road[0]
 
-            road = row[0]
-            first_char = road[0]
+                #see if first character indicates a highway
+                if first_char in "IUK0123456789":
 
-            #see if first character indicates a highway
-            if first_char in "IUK0123456789":
+                    for n in numbers:
 
-                for n in numbers:
+                        #see if the road name has numbers in it
+                        if n in road:
 
-                    #see if the road name has numbers in it
-                    if n in road:
+                            roadNum = road #working variable to strip out all alphabet characters
 
-                        roadNum = road #working variable to strip out all alphabet characters
-                        fID = row[1] #road alias ID for reporting
+                            #get just the road number with no other characters
+                            for r in roadNum:
+                                if r not in numbers:
+                                    roadNum = roadNum.replace(r, "")
 
-                        #get just the road number with no other characters
-                        for r in roadNum:
-                            if r not in numbers:
-                                roadNum = roadNum.replace(r, "")
-
-                        #see if the road number is in the highway dictionary
-                        if roadNum in hwy_dict:
-                            if road not in hwy_dict[roadNum]:
-                                if fID not in errorList:
-                                    errorList.append(fID)
-                                    report = "Notice: " + road + " is not in the approved highway name list"
-                                    val = (today, report, filename, field, fID)
-                                    values.append(val)
+                            #see if the road number is in the highway dictionary
+                            if roadNum in hwy_dict:
+                                if road not in hwy_dict[roadNum]:
+                                    if fID not in errorList:
+                                        errorList.append(fID)
+                                        report = "Notice: " + road + " is not in the approved highway name list"
+                                        val = (today, report, filename, field, fID)
+                                        values.append(val)
+            except Exception as e:
+                report = "Error: Issue with road alias record"
+                val = (today, report, filename, field, fID)
+                values.append(val)
 
 
     #report records
