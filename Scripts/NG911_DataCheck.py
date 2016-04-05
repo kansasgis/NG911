@@ -656,9 +656,9 @@ def checkUniqueIDFrequency(currentPathSettings):
                         stringESBReport = " and ".join(stringEsbInfo)
 
                     #report duplicate IDs
-                    report = str(row2[0]) + " is a duplicate ID"
+                    report = "Error: " + str(row2[0]) + " is a duplicate ID"
                     if stringESBReport != "":
-                        report = "Error: " + report + " in " + stringESBReport
+                        report = report + " in " + stringESBReport
                     val = (today, report, "ESB", uniqueID, row2[0])
                     values.append(val)
 
@@ -1698,7 +1698,7 @@ def sanityCheck(currentPathSettings):
     geocodeAddressPoints(currentPathSettings)
     addressPoints = join(currentPathSettings.gdbPath, "AddressPoints")
     AP_freq = join(currentPathSettings.gdbPath, "AP_Freq")
-    AP_fields = "MUNI;HNO;HNS;PRD;STP;RD;STS;POD;POM;ZIP;BLD;FLR;UNIT;ROOM;SEAT;LOC;LOCTYPE"
+    AP_fields = "MUNI;HNO;HNS;PRD;STP;RD;STS;POD;POM;ZIP;BLD;FLR;UNIT;ROOM;SEAT;LOC;LOCTYPE;MSAGCO"
     checkFrequency(addressPoints, AP_freq, AP_fields, currentPathSettings.gdbPath, currentPathSettings.gdbVersion)
     if Exists(currentPathSettings.ESZ):
         checkESNandMuniAttribute(currentPathSettings)
@@ -1795,7 +1795,7 @@ def main_check(checkType, currentPathSettings):
         if checkList[3] == "true":
             addressPoints = join(currentPathSettings.gdbPath, "AddressPoints")
             AP_freq = join(currentPathSettings.gdbPath, "AP_Freq")
-            AP_fields = "MUNI;HNO;HNS;PRD;STP;RD;STS;POD;POM;ZIP;BLD;FLR;UNIT;ROOM;SEAT;LOC;LOCTYPE"
+            AP_fields = "MUNI;HNO;HNS;PRD;STP;RD;STS;POD;POM;ZIP;BLD;FLR;UNIT;ROOM;SEAT;LOC;LOCTYPE;MSAGCO"
             checkFrequency(addressPoints, AP_freq, AP_fields, currentPathSettings.gdbPath, currentPathSettings.gdbVersion)
 
         if checkList[4] == "true":
