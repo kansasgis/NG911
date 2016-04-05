@@ -810,6 +810,8 @@ def checkLayerList(pathsInfoObject):
     userMessage("Checking geodatabase layers...")
     #get current layer list
     layerList = getCurrentLayerList(esb)
+    layerList.remove("CountyBoundary")
+    layerList.remove("MunicipalBoundary")
     layers = []
     for dirpath, dirnames, filenames in Walk(gdb, True, '', False, ["Table","FeatureClass"]):
 ##        ignoreList = ("gc_test", "TemplateCheckResults", "FieldValuesCheckResults", "GeocodeTable")
