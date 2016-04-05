@@ -8,7 +8,9 @@ The project consists of:
 	Doc
 		AdjustmentTools.docx
 		ConversionTools.docx
+		Downloading_TN_records_from_911IM.docx
 		EnhancementTools.docx
+		Interpreting_Tool_Results.docx
 		MetadataTools.docx
 		SubmissionTools.docx
 		ValidationTools.docx
