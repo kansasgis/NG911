@@ -646,7 +646,9 @@ def checkUniqueIDFrequency(currentPathSettings):
             with SearchCursor(freq_table, fields, where_clause) as rows2:
                 stringESBReport = ""
                 for row2 in rows2:
+                    reportLayer = layer
                     if layer == "ESB_IDS":
+                        reportLayer = "ESB"
                         stringEsbInfo = []
                         wc2 = "ESBID = '" + str(row2[0]) + "'"
                         with SearchCursor("ESB_IDS", ("ESB_LYR"), wc2) as esbRows:
@@ -659,7 +661,7 @@ def checkUniqueIDFrequency(currentPathSettings):
                     report = "Error: " + str(row2[0]) + " is a duplicate ID"
                     if stringESBReport != "":
                         report = report + " in " + stringESBReport
-                    val = (today, report, "ESB", uniqueID, row2[0])
+                    val = (today, report, reportLayer, uniqueID, row2[0])
                     values.append(val)
 
         Delete_management(freq_table)
