@@ -611,7 +611,7 @@ WHITE CLOUD|Municipality in Kansas
 WHITEWATER|Municipality in Kansas
 WHITING|Municipality in Kansas
 WICHITA|Municipality in Kansas
-WILLARD |Municipality in Kansas
+WILLARD|Municipality in Kansas
 WILLIAMSBURG|Municipality in Kansas
 WILLIS|Municipality in Kansas
 WILLOWBROOK|Municipality in Kansas
