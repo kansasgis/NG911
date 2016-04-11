@@ -23,7 +23,7 @@ def main():
     if basename(layer) == "RoadCenterline":
         expression = '!PRD! + " " + !STP! + " " + !RD! + " " + !STS! + " " + !POD! + " " + !POM!'
     elif basename(layer) == "AddressPoints":
-        expression = 'str(!HNO!) + " " + !HNS! + " " + !PRD! + " " + !STP! + " " + !RD! + " " + !STS! + " " + !POD! + " " + !POM!'
+        expression = 'str(!HNO!) + " " + !HNS! + " " + !PRD! + " " + !STP! + " " + !RD! + " " + !STS! + " " + !POD! + " " + !POM! + " " + !BLD! + " " + !FLR! + " " + !UNIT! + " " + !ROOM! + " " + !SEAT!'
 
     else:
         userMessage(layer + " does not work with this tool. Please select the NG911 road centerline or address point file.")
