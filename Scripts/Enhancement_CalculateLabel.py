@@ -39,7 +39,7 @@ def main():
             SelectLayerByAttribute_management(lyr, "NEW_SELECTION", qry)
 
         userMessage("Calculating label...")
-        CalculateField_management(lyr, "LABEL", expression, "PYTHON_9.3")
+        CalculateField_management(lyr, "LABEL", '"' + expression + '"', "PYTHON_9.3")
 
         #make sure no records were left behind
         SelectLayerByAttribute_management(lyr, "NEW_SELECTION", qry)
@@ -52,7 +52,7 @@ def main():
             if basename(layer) == "RoadCenterline":
                 fields = ("LABEL", "PRD", "STP", "RD", "STS", "POD", "POM")
             elif basename(layer) == "AddressPoints":
-                fields = ("LABEL", "HNO", "HNS","PRD","STP","RD","STS","POD","POM")
+                fields = ("LABEL", "HNO", "HNS","PRD","STP","RD","STS","POD","POM","BLD","FLR","UNIT","ROOM","SEAT")
 
             #start edit session
             edit = Editor(gdb)
