@@ -51,7 +51,7 @@ The project consists of:
 		Enhancement_CheckRoadElevationDirection.py
 		Enhancement_CheckTN.py
 		Enhancement_FindAddressRangeOverlaps.py
-		Enhancement_USNGCalc.py
+		Enhancement_XYUSNGCalc.py
 		Enhancement_VerifyRoadAlias.py
 		Metadata_EnhanceMetadata.py
 		NG911_Config.py
