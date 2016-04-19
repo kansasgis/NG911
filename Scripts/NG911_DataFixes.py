@@ -7,46 +7,50 @@
 # Created:     21/10/2015
 #-------------------------------------------------------------------------------
 from arcpy import (GetParameterAsText, MakeTableView_management, Frequency_analysis, CalculateField_management, Delete_management, env, Exists, CreateTable_management,
-    AddField_management, GetCount_management)
+    AddField_management, GetCount_management, ListFields)
 from arcpy.da import SearchCursor, InsertCursor
-from os.path import join, dirname
+from os.path import join, dirname, basename
 from NG911_DataCheck import getFieldDomain, userMessage, RecordResults
 from time import strftime
+from NG911_GDB_Objects import getDefaultNG911AddressObject, getDefaultNG911GeocodeExceptionsObject, getDefaultNG911FieldValuesCheckResultsObject, getDefaultNG911ESBObject
+from NG911_Config import getGDBObject
 
 def FixDomainCase(gdb, domainFolder):
     env.workspace = gdb
+    gdb_object = getGDBObject(gdb)
 
-    table = join(gdb, "FieldValuesCheckResults")
+    table = gdb_object.FieldValuesCheckResults
+    fvcr_object = getDefaultNG911FieldValuesCheckResultsObject()
 
     if Exists(table):
 
         #read FieldValuesCheckResults, limit table view to only domain errors
         tbl = "tbl"
-        wc = "Description IS LIKE '%not in approved domain for field%'"
+        wc = fvcr_object.DESCRIPTION + " IS LIKE '%not in approved domain for field%'"
         MakeTableView_management(table, tbl, wc)
 
         outTableInMemory = r"in_memory\outputFrequency"
 
         #run frequency, store in memory
-        Frequency_analysis(tbl, outTableInMemory, ["Description", "Layer", "Field"])
+        Frequency_analysis(tbl, outTableInMemory, [fvcr_object.DESCRIPTION, fvcr_object.LAYER, fvcr_object.FIELD])
 
         #run search cursor on frequency, see which fields in which layers have domain issues
-        freq_fields = ("Description", "Layer", "Field")
-        freq_wc = "Field is not null"
+        freq_fields = (fvcr_object.DESCRIPTION, fvcr_object.LAYER, fvcr_object.FIELD)
+        freq_wc = fvcr_object.FIELD + " is not null and " + fvcr_object.FIELD + " not in ('',' ')"
 
         fixDict = {}
 
         with SearchCursor(outTableInMemory, freq_fields, freq_wc) as rows:
             for row in rows:
-                splitDesc = row[0].split()
+                #get the offending value out of the error message
+                value = ((row[0].strip("Error: Value ")).replace(" not in approved domain for field ", "|")).split("|")[0]
+                layerName = row[1]
+                fieldName = row[2]
 
-                if len(splitDesc) == 9:
-                    value = splitDesc[1]
-                    layerName = row[1]
-                    fieldName = row[2]
-
+                #make sure the field name is not blank
+                if fieldName not in ('',' '):
                     #test if the value in upper case is in the domain
-                    domainDict = getFieldDomain(row[2], domainFolder)
+                    domainDict = getFieldDomain(fieldName, domainFolder)
                     domainList = []
 
                     for val in domainDict.iterkeys():
@@ -82,35 +86,54 @@ def FixDomainCase(gdb, domainFolder):
             userMessage("Domain values edited to be upper case: " + report)
 
     else:
-        userMessage("FieldValuesCheckResults must be present for this tool to run.")
+        userMessage(basename(table) + " must be present for this tool to run.")
 
 def FixDuplicateESBIDs(FireESB, EMSESB, LawESB):
+    e = getDefaultNG911ESBObject()
 
-    CalculateField_management(FireESB, "ESBID", '!ESBID! + "F"', "PYTHON_9.3")
-    CalculateField_management(EMSESB, "ESBID", '!ESBID! + "E"', "PYTHON_9.3")
-    CalculateField_management(LawESB, "ESBID", '!ESBID! + "L"', "PYTHON_9.3")
+    CalculateField_management(FireESB, e.ESBID, '!' + e.ESBID + '! + "F"', "PYTHON_9.3")
+    CalculateField_management(EMSESB, e.ESBID, '!' + e.ESBID + '! + "E"', "PYTHON_9.3")
+    CalculateField_management(LawESB, e.ESBID, '!' + e.ESBID + '! + "L"', "PYTHON_9.3")
 
-    userMessage("ESBIDs are now unique.")
+    userMessage(e.ESBID + "s are now unique.")
 
 def CreateGeocodeExceptions(gdb):
 
-    table = join(gdb, "GeocodeExceptions")
+    gdb_object = getGDBObject(gdb)
+
+    table = gdb_object.GeocodeExceptions
+    addressPoints = gdb_object.AddressPoints
+    a = getDefaultNG911AddressObject()
+    ge = getDefaultNG911GeocodeExceptionsObject()
+    fvcr_obj = getDefaultNG911FieldValuesCheckResultsObject()
 
     if not Exists(table):
-        CreateTable_management(gdb, "GeocodeExceptions")
-        AddField_management(table, "ADDID", "TEXT", "", "", 38)
+        CreateTable_management(gdb, basename(table))
+
+    table_fields = ListFields(table)
+    lstTable_fields = []
+
+    for tf in table_fields:
+        lstTable_fields.append(tf.name)
+
+    if ge.ADDID not in lstTable_fields:
+        AddField_management(table, ge.ADDID, "TEXT", "", "", 38)
+    if ge.LABEL not in lstTable_fields:
+        AddField_management(table, ge.LABEL, "TEXT", "", "", 300)
+    if ge.NOTES not in lstTable_fields:
+        AddField_management(table, ge.NOTES, "TEXT", "", "", 100)
 
     #read FieldValuesCheckResults for geocoding errors
-    FVCR = join(gdb, "FieldValuesCheckResults")
-    fields = ("DESCRIPTION", "FeatureID")
-    wc = "DESCRIPTION like '%did not geocode%'"
+    FVCR = gdb_object.FieldValuesCheckResults
+    fields = (fvcr_obj.DESCRIPTION, fvcr_obj.FEATUREID)
+    wc = fvcr_obj.DESCRIPTION + " like '%did not geocode%'"
 
     if Exists(FVCR):
         with SearchCursor(FVCR, fields, wc) as rows:
             for row in rows:
                 addid = row[1]
                 #create query clause to see if the geocoding exception already exists
-                newWC = "ADDID = '" + addid + "'"
+                newWC = ge.ADDID + " = '" + addid + "'"
                 tbl = "tbl"
                 MakeTableView_management(table, tbl, newWC)
 
@@ -119,16 +142,21 @@ def CreateGeocodeExceptions(gdb):
 
                 #if the geocoding exception does not exist, add it
                 if rCount == 0:
-                    newRow = InsertCursor(table, ("ADDID"))
-                    newVal = [addid]
-                    newRow.insertRow(newVal)
-                    del newRow
+                    with SearchCursor(addressPoints, (a.LABEL), newWC) as addy_rows:
+                        for addy_row in addy_rows:
+                            label = addy_row[0]
+                            userMessage(label)
+
+                            newRow = InsertCursor(table, (ge.ADDID, ge.LABEL))
+                            newVal = (addid, label)
+                            newRow.insertRow(newVal)
+                            del newRow
 
                 #clean up
                 Delete_management(tbl)
 
-        userMessage("Created GeocodeExceptions table.")
+        userMessage("Created " + basename(table) + " table.")
 
     else:
-        userMessage("FieldValuesCheckResults must be present for this tool to run.")
+        userMessage(basename(FVCR) + " must be present for this tool to run.")
 

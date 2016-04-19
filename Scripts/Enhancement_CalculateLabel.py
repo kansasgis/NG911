@@ -12,34 +12,65 @@ from arcpy import GetParameterAsText, Exists, CalculateField_management, MakeFea
 from arcpy.da import UpdateCursor, Editor
 from os.path import basename, dirname
 from NG911_DataCheck import userMessage
+from NG911_GDB_Objects import getDefaultNG911AddressObject, getDefaultNG911RoadCenterlineObject
 
 def main():
     layer = GetParameterAsText(0)
     updateBlanksOnly = GetParameterAsText(1)
 
     expression = ""
+    a = ""
+    field_list = []
 
-    #define the expression
+    #define object & field list
     if basename(layer) == "RoadCenterline":
-        expression = '!PRD! + " " + !STP! + " " + !RD! + " " + !STS! + " " + !POD! + " " + !POM!'
+        a = getDefaultNG911RoadCenterlineObject()
+        field_list = a.LABEL_FIELDS
     elif basename(layer) == "AddressPoints":
-        expression = 'str(!HNO!) + " " + !HNS! + " " + !PRD! + " " + !STP! + " " + !RD! + " " + !STS! + " " + !POD! + " " + !POM! + " " + !BLD! + " " + !FLR! + " " + !UNIT! + " " + !ROOM! + " " + !SEAT!'
-
+        a = getDefaultNG911AddressObject()
+        field_list = a.LABEL_FIELDS
     else:
         userMessage(layer + " does not work with this tool. Please select the NG911 road centerline or address point file.")
+
+    #make sure the object is something
+    if a != "":
+        #start at 1 since 0 is the label field itself
+        i = 1
+
+        #create the expression
+        while i < len(field_list):
+            #since the house number needs a string conversion, we need to have a slightly different expression for the first piece
+            if i == 1:
+                if basename(layer) == "AddressPoints":
+                    expression = 'str(!' +  field_list[i] + '!) + " " + !'
+                else:
+                    expression = '!' + field_list[i] + '! + " " + !'
+
+            else:
+                expression = expression + field_list[i] + '! + " " + !'
+
+            i += 1
+
+        expression = expression[:-10]
+
+    userMessage(expression)
+
+    labelField = a.LABEL
+
+    userMessage(labelField)
 
     if expression != "":
         lyr = "lyr"
         MakeFeatureLayer_management(layer, lyr)
 
-        qry = "LABEL is null or LABEL = '' or LABEL = ' '"
+        qry = labelField + " is null or " + labelField + " = '' or " + labelField + " = ' '"
 
         #select only the blank ones to update if that's what the user wanted
         if updateBlanksOnly == "true":
             SelectLayerByAttribute_management(lyr, "NEW_SELECTION", qry)
 
         userMessage("Calculating label...")
-        CalculateField_management(lyr, "LABEL", '"' + expression + '"', "PYTHON_9.3")
+        CalculateField_management(lyr, labelField, expression, "PYTHON_9.3")
 
         #make sure no records were left behind
         SelectLayerByAttribute_management(lyr, "NEW_SELECTION", qry)
@@ -49,10 +80,7 @@ def main():
         #if the count is higher than 0, it means the table had null values in some of the concatonated fields
         if count > 0:
             gdb = dirname(dirname(layer))
-            if basename(layer) == "RoadCenterline":
-                fields = ("LABEL", "PRD", "STP", "RD", "STS", "POD", "POM")
-            elif basename(layer) == "AddressPoints":
-                fields = ("LABEL", "HNO", "HNS","PRD","STP","RD","STS","POD","POM","BLD","FLR","UNIT","ROOM","SEAT")
+            fields = tuple(field_list)
 
             #start edit session
             edit = Editor(gdb)
@@ -79,8 +107,8 @@ def main():
 
 
         #clean up all labels
-        trim_expression = '" ".join(!LABEL!.split())'
-        CalculateField_management(layer, "LABEL", trim_expression, "PYTHON_9.3")
+        trim_expression = '" ".join(!' + labelField + '!.split())'
+        CalculateField_management(layer, labelField, trim_expression, "PYTHON_9.3")
 
 if __name__ == '__main__':
     main()

@@ -7,7 +7,8 @@
 # Created:     09/12/2014
 #-------------------------------------------------------------------------------
 from arcpy import GetParameterAsText, DeleteRows_management, Exists, AddMessage
-from os.path import join
+from os.path import join, basename
+from NG911_Config import getGDBObject
 
 def main():
 
@@ -19,19 +20,21 @@ def main():
 
 def ClearOldResults(gdb, templateTableClear, fieldValuesTableClear):
 
+    gdbObject = getGDBObject(gdb)
+
     if templateTableClear == "true":
-        templateTable = join(gdb, "TemplateCheckResults")
+        templateTable = gdbObject.TemplateCheckResults
         if Exists(templateTable):
             DeleteRows_management(templateTable)
-            AddMessage("TemplateCheckResults cleared")
-            print("TemplateCheckResults cleared")
+            AddMessage(basename(templateTable) + " cleared")
+            print(basename(templateTable) + " cleared")
 
     if fieldValuesTableClear == "true":
-        fieldValuesTable = join(gdb,"FieldValuesCheckResults")
+        fieldValuesTable = gdbObject.FieldValuesCheckResults
         if Exists(fieldValuesTable):
             DeleteRows_management(fieldValuesTable)
-            AddMessage("FieldValuesCheckResults cleared")
-            print("FieldValuesCheckResults cleared")
+            AddMessage(basename(fieldValuesTable) + " cleared")
+            print(basename(fieldValuesTable) + " cleared")
 
 if __name__ == '__main__':
     main()

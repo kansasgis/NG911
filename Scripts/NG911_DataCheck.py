@@ -26,6 +26,22 @@ from os.path import basename, dirname, join, exists
 from time import strftime
 from NG911_Config import getGDBObject
 from Validation_ClearOldResults import ClearOldResults
+import NG911_GDB_Objects
+
+a_obj = NG911_GDB_Objects.getDefaultNG911AddressObject()
+rc_obj = NG911_GDB_Objects.getDefaultNG911RoadCenterlineObject()
+esb_obj = NG911_GDB_Objects.getDefaultNG911ESBObject()
+ab_obj = NG911_GDB_Objects.getDefaultNG911AuthoritativeBoundaryObject()
+ra_obj = NG911_GDB_Objects.getDefaultNG911RoadAliasObject()
+cb_obj = NG911_GDB_Objects.getDefaultNG911CountyBoundaryObject()
+mb_obj = NG911_GDB_Objects.getDefaultNG911MunicipalBoundaryObject()
+esz_obj = NG911_GDB_Objects.getDefaultNG911ESZObject()
+psap_obj = NG911_GDB_Objects.getDefaultNG911ESBObject()
+fvcr_obj = NG911_GDB_Objects.getDefaultNG911FieldValuesCheckResultsObject()
+tcr_obj = NG911_GDB_Objects.getDefaultNG911TemplateCheckResultsObject()
+
+layer_obj_dict = {"ADDRESSPOINTS": a_obj, "ROADCENTERLINE": rc_obj, "ESB": esb_obj, "AUTHORITATIVEBOUNDARY": ab_obj, "ROADALIAS": ra_obj, "COUNTYBOUNDARY": cb_obj,
+                     "MUNICIPALBOUNDARY":mb_obj, "ESZ": esz_obj, "PSAP": esb_obj, "FieldValuesCheckResults":fvcr_obj, "TemplateCheckResults":tcr_obj}
 
 def getLayerList():
     layerList = ["RoadAlias", "AddressPoints", "RoadCenterline", "AuthoritativeBoundary", "CountyBoundary", "ESZ", "MunicipalBoundary"]
@@ -59,25 +75,11 @@ def getCurrentDomainList(version):
 
 
 def fieldsWithDomains(version, layer):
+
     #list of all the fields that have a domain
-    if layer == "ADDRESSPOINTS":
-        fieldList = ["STEWARD", "STATE", "COUNTY", "MUNI", "PRD", "STS", "POD", "POSTCO", "ZIP", "PLC", "LOCTYPE", "EXCEPTION", "SUBMIT"]
-    elif layer == "ROADCENTERLINE":
-        fieldList = ["STEWARD", "STATE_L", "STATE_R", "COUNTY_L", "COUNTY_R", "MUNI_L", "MUNI_R", "PARITY_L", "PARITY_R", "POSTCO_L", "POSTCO_R", "ZIP_L", "ZIP_R", "PRD", "STS", "POD", "ONEWAY", "RDCLASS", "SURFACE", "STATUS", "EXCEPTION", "SUBMIT"]
-    elif layer == "ESB":
-        fieldList = ["STEWARD", "STATE", "AGENCYID", "SUBMIT"]
-    elif layer == "AUTHORITATIVEBOUNDARY":
-        fieldList = ["STEWARD", "AGENCYID", "SUBMIT"]
-    elif layer == "ROADALIAS":
-        fieldList = ["STEWARD", "A_PRD", "A_STS", "A_POD", "SUBMIT"]
-    elif layer == "COUNTYBOUNDARY":
-        fieldList = ["STEWARD", "STATE", "COUNTY"]
-    elif layer == "MUNICIPALBOUNDARY":
-        fieldList = ["STEWARD", "STATE", "COUNTY", "MUNI", "SUBMIT"]
-    elif layer == "ESZ":
-        fieldList = ["STEWARD", "AGENCYID", "SUBMIT"]
-    elif layer == "PSAP":
-        fieldList = ["STEWARD", "STATE", "AGENCYID", "SUBMIT"]
+    obj = layer_obj_dict[layer]
+
+    fieldList = obj.FIELDS_WITH_DOMAINS
 
     #take out fields if it's a different version of geodatabase
     if version == "10":
@@ -89,11 +91,8 @@ def fieldsWithDomains(version, layer):
     return fieldList
 
 def getUniqueIDField(layer):
-    id_dict = {"ADDRESSPOINTS":"ADDID", "AUTHORITATIVEBOUNDARY":"ABID", "COUNTYBOUNDARY":"CountyID", "ESB":"ESBID", "ESZ":"ESZID", "MUNICIPALBOUNDARY":"MUNI_ID", "PSAP":"ESBID", "ROADCENTERLINE":"SEGID", "ROADALIAS":"ALIASID"}
-    try:
-        id1 = id_dict[layer]
-    except:
-        id1 = ""
+    obj = layer_obj_dict[layer]
+    id1 = obj.UNIQUEID
     return id1
 
 def getDomainKeyword(domainName):
@@ -140,9 +139,10 @@ def getAddFieldInfo(table):
     lyr = basename(table)
     #field info
     if lyr == "TemplateCheckResults":
-        fieldInfo = [(table, "DateFlagged", "DATE", "", "", ""),(table, "Description", "TEXT", "", "", 250),(table, "Category", "TEXT", "", "", 25)]
+        fieldInfo = [(table, tcr_obj.DATEFLAGGED, "DATE", "", "", ""),(table, tcr_obj.DESCRIPTION, "TEXT", "", "", 250),(table, tcr_obj.CATEGORY, "TEXT", "", "", 25)]
     elif lyr == "FieldValuesCheckResults":
-        fieldInfo = [(table, "DateFlagged", "DATE", "", "", ""),(table, "Description", "TEXT", "", "", 250),(table, "Layer", "TEXT", "", "", 25),(table, "Field", "TEXT", "", "", 25),(table, "FeatureID", "TEXT", "", "", 38)]
+        fieldInfo = [(table, fvcr_obj.DATEFLAGGED, "DATE", "", "", ""),(table, fvcr_obj.DESCRIPTION, "TEXT", "", "", 250),
+            (table, fvcr_obj.LAYER, "TEXT", "", "", 25),(table, fvcr_obj.FIELD, "TEXT", "", "", 25),(table, fvcr_obj.FEATUREID, "TEXT", "", "", 38)]
     elif lyr == "DASC_Communication":
         fieldInfo = [(table, "NoteDate", "DATE", "", "", ""),(table, "Description", "TEXT", "", "", 250)]
 
@@ -227,19 +227,20 @@ def RecordResults(resultType, values, gdb): # Guessed on whitespace formatting h
 
 def geocodeAddressPoints(pathsInfoObject):
     gdb = pathsInfoObject.gdbPath
+    gdbObject = getGDBObject(gdb)
 
     version = pathsInfoObject.gdbVersion
 
     env.workspace = gdb
-    addressPointPath = "AddressPoints"
-    streetPath = "RoadCenterline"
-    roadAliasPath = "RoadAlias"
+    addressPointPath = gdbObject.AddressPoints
+    streetPath = gdbObject.RoadCenterline
+    roadAliasPath = gdbObject.RoadAlias
 
     userMessage("Geocoding address points...")
 
-    gc_table = "GeocodeTable"
+    gc_table = gdbObject.GeocodeTable
     sl_field = "SingleLineInput"
-    Locator = "Locator"
+    Locator = gdbObject.Locator
     addyview = "addy_view"
     output = "gc_test"
 
@@ -251,7 +252,7 @@ def geocodeAddressPoints(pathsInfoObject):
 
     # Iterate through the fields and set them to fieldinfo
     for field in fields:
-        if field.name in ("LABEL", "ZIP"):
+        if field.name in (a_obj.LABEL, a_obj.ZIP):
             fieldinfo.addField(field.name, field.name, "VISIBLE", "")
     else:
         fieldinfo.addField(field.name, field.name, "HIDDEN", "")
@@ -261,7 +262,7 @@ def geocodeAddressPoints(pathsInfoObject):
     if version == "10":
         MakeTableView_management(addressPointPath, addyview, "", "", fieldinfo)
     else:
-        wc = "SUBMIT not in ('N')"
+        wc = a_obj.SUBMIT + " not in ('N')"
         MakeTableView_management(addressPointPath, addyview, wc, "", fieldinfo)
 
     # To persist the layer on disk make a copy of the view
@@ -278,7 +279,7 @@ def geocodeAddressPoints(pathsInfoObject):
         AddField_management(gc_table, sl_field, "TEXT", "", "", 250)
 
         #calculate field
-        exp = '[LABEL] & " " & [ZIP]'
+        exp = '[' + a_obj.LABEL + '] & " " & [' + a_obj.ZIP + ']'
         CalculateField_management(gc_table, sl_field, exp, "VB")
 
         #generate locator
@@ -346,14 +347,14 @@ def geocodeAddressPoints(pathsInfoObject):
             i = 0
 
             #set up geocoding
-            gc_fieldMap = "Street LABEL VISIBLE NONE;City MUNI VISIBLE NONE;State State VISIBLE NONE;ZIP ZIP VISIBLE NONE"
+            gc_fieldMap = "Street " + a_obj.LABEL + " VISIBLE NONE;City " + a_obj.MUNI + " VISIBLE NONE;State " + a_obj.STATE + " VISIBLE NONE;ZIP " + a_obj.ZIP + " VISIBLE NONE"
 
             #geocode addresses
             try:
                 GeocodeAddresses_geocoding(gc_table, Locator, gc_fieldMap, output, "STATIC")
                 i = 1
             except:
-                gc_fieldMap = "Street LABEL VISIBLE NONE;City MUNI VISIBLE NONE;State State VISIBLE NONE"
+                gc_fieldMap =  "Street " + a_obj.LABEL + " VISIBLE NONE;City " + a_obj.MUNI + " VISIBLE NONE;State " + a_obj.STATE + " VISIBLE NONE"
 
                 try:
                     GeocodeAddresses_geocoding(gc_table, Locator, gc_fieldMap, output, "STATIC")
@@ -378,14 +379,14 @@ def geocodeAddressPoints(pathsInfoObject):
                     today = strftime("%m/%d/%y")
                     filename = "AddressPoints"
 
-                    rfields = ("ADDID", "Status", "LOCTYPE")
+                    rfields = (a_obj.UNIQUEID, "Status", a_obj.LOCTYPE)
                     with SearchCursor(output, rfields, wc) as rRows:
                         for rRow in rRows:
                             fID = rRow[0]
 
                             #see if the fID exists as an exception
                             if Exists(ge):
-                                wcGE = "ADDID = '" + fID + "'"
+                                wcGE = a_obj.UNIQUEID + " = '" + fID + "'"
                                 tblGE = "tblGE"
                                 MakeTableView_management(ge, tblGE, wcGE)
 
@@ -445,7 +446,7 @@ def checkDirectionality(fc,gdb):
     filename = "RoadCenterline"
     report = "Notice: Segment's address range is from high to low instead of low to high"
 
-    fields = ("SHAPE@", "SEGID", "L_F_ADD", "L_T_ADD", "R_F_ADD", "R_T_ADD")
+    fields = ("SHAPE@", rc_obj.UNIQUEID, rc_obj.L_F_ADD, rc_obj.L_T_ADD, rc_obj.R_F_ADD, rc_obj.R_T_ADD)
 
     with SearchCursor(fc, fields) as rows:
         for row in rows:
@@ -512,7 +513,7 @@ def checkESNandMuniAttribute(currentPathSettings):
     today = strftime("%m/%d/%y")
     filename = "AddressPoints"
 
-    searchDict = {esz: ("ESN", "ESZID"), muni: ("MUNI", "MUNI_ID")}
+    searchDict = {esz: (esz_obj.ESN, esz_obj.UNIQUEID), muni: (mb_obj.MUNI, mb_obj.UNIQUEID)}
 
     for layer, fieldList in searchDict.iteritems():
 
@@ -530,7 +531,7 @@ def checkESNandMuniAttribute(currentPathSettings):
                 SelectLayerByLocation_management(addy_lyr, "INTERSECT", lyr1)
 
                 #loop through address points
-                with SearchCursor(addy_lyr, (feature, "ADDID", "LOCTYPE")) as rows:
+                with SearchCursor(addy_lyr, (feature, a_obj.UNIQUEID, a_obj.LOCTYPE)) as rows:
                     for row in rows:
                         #get value
                         value_addy = row[0]
@@ -581,16 +582,16 @@ def checkUniqueIDFrequency(currentPathSettings):
 
         CreateTable_management(gdb, table)
 
-        AddField_management(table, "ESBID", "TEXT", "", "", 38)
+        AddField_management(table, esb_obj.UNIQUEID, "TEXT", "", "", 38)
         AddField_management(table, "ESB_LYR", "TEXT", "", "", 30)
 
-        esbFields = ("ESBID")
+        esbFields = (esb_obj.UNIQUEID)
 
         #copy ID's & esb layer type into the table
         for esb in esbList:
             with SearchCursor(esb, esbFields) as rows:
                 for row in rows:
-                    cursor = InsertCursor(table, ('ESBID', 'ESB_LYR'))
+                    cursor = InsertCursor(table, (esb_obj.UNIQUEID, 'ESB_LYR'))
                     cursor.insertRow((row[0], esb))
 
         try:
@@ -620,7 +621,7 @@ def checkUniqueIDFrequency(currentPathSettings):
 
         else:
             #for esb layers, get the unique ID field
-            uniqueID = "ESBID"
+            uniqueID = esb_obj.UNIQUEID
 
         freq_table = layer + "_freq"
 
@@ -696,13 +697,13 @@ def checkFrequency(fc, freq, fields, gdb, version):
             filename = ""
             if freq == join(gdb, "AP_Freq"):
                 filename = "AddressPoints"
-                wc1 = "HNO <> 0 and LOCTYPE = 'PRIMARY'"
+                wc1 = a_obj.HNO + " <> 0 and " + a_obj.LOCTYPE + " = 'PRIMARY'"
             elif freq == join(gdb, "Road_Freq"):
                 filename = "RoadCenterline"
-                wc1 = "L_F_ADD <> 0 AND L_T_ADD <> 0 AND R_F_ADD <> 0 AND R_T_ADD <> 0"
+                wc1 = rc_obj.L_F_ADD + " <> 0 AND " + rc_obj.L_T_ADD + " <> 0 AND " + rc_obj.R_F_ADD + " <> 0 AND " + rc_obj.R_T_ADD + " <> 0"
 
             if version != "10":
-                wc1 = wc1 + " AND SUBMIT not in ('N')"
+                wc1 = wc1 + " AND " + rc_obj.SUBMIT + " not in ('N')"
 
             #run query on fc to make sure 0's are ignored
             MakeTableView_management(fc, fl1, wc1)
@@ -812,8 +813,10 @@ def checkLayerList(pathsInfoObject):
     userMessage("Checking geodatabase layers...")
     #get current layer list
     layerList = getCurrentLayerList(esb)
-    layerList.remove("CountyBoundary")
-    layerList.remove("MunicipalBoundary")
+    if "CountyBoundary" in layerList:
+        layerList.remove("CountyBoundary")
+    if "MunicipalBoundary" in layerList:
+        layerList.remove("MunicipalBoundary")
     layers = []
     for dirpath, dirnames, filenames in Walk(gdb, True, '', False, ["Table","FeatureClass"]):
 ##        ignoreList = ("gc_test", "TemplateCheckResults", "FieldValuesCheckResults", "GeocodeTable")
@@ -880,8 +883,8 @@ def getRequiredFields(folder, version):
             fieldList.append(field)
 
             if version == "10":
-                if "EXCEPTION" in fieldList:
-                    fieldList.remove("EXCEPTION")
+                if rc_obj.EXCEPTION in fieldList:
+                    fieldList.remove(rc_obj.EXCEPTION)
             #set value as list
             rfDict[fc] = fieldList
     else:
@@ -1010,7 +1013,7 @@ def checkValuesAgainstDomain(pathsInfoObject):
                                 if row[1] is not None:
                                     fID = row[0]
                                     #see if field domain is actually a range
-                                    if fieldN == "HNO":
+                                    if fieldN == a_obj.HNO:
                                         hno = row[1]
                                         if hno > 999999 or hno < 0:
                                             report = "Error: Value " + str(row[1]) + " not in approved domain for field " + fieldN
@@ -1039,6 +1042,7 @@ def checkRequiredFieldValues(pathsInfoObject):
     folder = pathsInfoObject.domainsFolderPath
     esb = pathsInfoObject.esbList
     version = pathsInfoObject.gdbVersion
+    fcList = pathsInfoObject.fcList
 
     userMessage("Checking that required fields have all values...")
 
@@ -1051,119 +1055,121 @@ def checkRequiredFieldValues(pathsInfoObject):
     if rfDict != {}:
 
         values = []
-
+        requiredFieldList = []
         #walk through the tables/feature classes
-        for dirpath, dirnames, filenames in Walk(gdb, True, '', False, ["Table","FeatureClass"]):
-            for filename in filenames:
-                if filename.upper() not in ("FIELDVALUESCHECKRESULTS", "TEMPLATECHECKRESULTS"):
-                    fullPath = path.join(gdb, filename)
-                    if filename.upper() in esb:
-                        layer = "ESB"
-                    else:
-                        layer = filename.upper()
-                    id1 = getUniqueIDField(layer)
-                    if id1 != "":
+##        for dirpath, dirnames, filenames in Walk(gdb, True, '', False, ["Table","FeatureClass"]):
+##            for filename in filenames:
+##                if filename.upper() not in ("FIELDVALUESCHECKRESULTS", "TEMPLATECHECKRESULTS", "GEOCODEEXCEPTIONS"):
+##                    fullPath = path.join(gdb, filename)
+##        userMessage(fcList)
+        for filename in fcList:
+            if basename(filename).upper() in esb:
+                layer = "ESB"
+            else:
+                layer = basename(filename).upper()
+            id1 = getUniqueIDField(layer)
+            if id1 != "":
 
-                        #get the keyword to acquire required field names
-                        keyword = getKeyword(filename, esb)
+                #get the keyword to acquire required field names
+                keyword = getKeyword(layer, esb)
 
-                        #goal: get list of required fields that are present in the feature class
-                        #get the appropriate required field list
-                        if keyword in rfDict:
-                            requiredFieldList = rfDict[keyword]
+                #goal: get list of required fields that are present in the feature class
+                #get the appropriate required field list
+                if keyword in rfDict:
+                    requiredFieldList = rfDict[keyword]
 
-                        rfl = []
-                        for rf in requiredFieldList:
-                            rfl.append(rf.upper())
+                rfl = []
+                for rf in requiredFieldList:
+                    rfl.append(rf.upper())
 
-                        #get list of fields in the feature class
-                        allFields = ListFields(fullPath)
+                #get list of fields in the feature class
+                allFields = ListFields(filename)
 
-                        #make list of field names
-                        fields = []
-                        for aF in allFields:
-                            fields.append(aF.name.upper())
+                #make list of field names
+                fields = []
+                for aF in allFields:
+                    fields.append(aF.name.upper())
 
-                        #convert lists to sets
-                        set1 = set(rfl)
-                        set2 = set(fields)
+                #convert lists to sets
+                set1 = set(rfl)
+                set2 = set(fields)
 
-                        #get the set of fields that are the same
-                        matchingFields = list(set1 & set2)
+                #get the set of fields that are the same
+                matchingFields = list(set1 & set2)
 
-                        #only work with records that are for submission
-                        lyr2 = "lyr2"
-                        worked = 0
-                        if version == "10":
-                            MakeTableView_management(fullPath, lyr2)
-                            worked = 1
+                #only work with records that are for submission
+                lyr2 = "lyr2"
+                worked = 0
+                if version == "10":
+                    MakeTableView_management(filename, lyr2)
+                    worked = 1
+                else:
+                    wc2 = rc_obj.SUBMIT + " not in ('N')"
+                    try:
+                        MakeTableView_management(filename, lyr2, wc2)
+                        worked = 1
+                    except:
+                        userMessage("Cannot check required field values for " + layer)
+
+                if worked == 1:
+
+                    #get count of the results
+                    result2 = GetCount_management(lyr2)
+                    count2 = int(result2.getOutput(0))
+
+                    if count2 > 0:
+
+                        #create where clause to select any records where required values aren't populated
+                        wc = ""
+
+                        for field in matchingFields:
+                            wc = wc + " " + field + " is null or "
+
+                        wc = wc[0:-4]
+
+                        #make table view using where clause
+                        lyr = "lyr"
+                        MakeTableView_management(lyr2, lyr, wc)
+
+                        #get count of the results
+                        result = GetCount_management(lyr)
+                        count = int(result.getOutput(0))
+
+
+                        #if count is greater than 0, it means a required value somewhere isn't filled in
+                        if count > 0:
+                            #make sure the objectID gets included in the search for reporting
+                            if id1 not in matchingFields:
+                                matchingFields.append(id1)
+
+                            #run a search cursor to get any/all records where a required field value is null
+                            with SearchCursor(lyr, (matchingFields), wc) as rows:
+                                for row in rows:
+                                    k = 0
+                                    #get object ID of the field
+                                    oid = str(row[matchingFields.index(id1)])
+
+                                    #loop through row
+                                    while k < len(matchingFields):
+                                        #see if the value is nothing
+                                        if row[k] is None:
+                                            #report the value if it is indeed null
+                                            report = "Error: " + matchingFields[k] + " is null for Feature ID " + oid
+                                            userMessage(report)
+                                            val = (today, report, filename, matchingFields[k], oid)
+                                            values.append(val)
+
+                                        #iterate!
+                                        k = k + 1
                         else:
-                            wc2 = "SUBMIT not in ('N')"
-                            try:
-                                MakeTableView_management(fullPath, lyr2, wc2)
-                                worked = 1
-                            except:
-                                userMessage("Cannot check required field values for " + basename(fullPath))
+                            userMessage( "All required values present for " + layer)
 
-                        if worked == 1:
+                        Delete_management(lyr)
+                        del lyr
 
-                            #get count of the results
-                            result2 = GetCount_management(lyr2)
-                            count2 = int(result2.getOutput(0))
-
-                            if count2 > 0:
-
-                                #create where clause to select any records where required values aren't populated
-                                wc = ""
-
-                                for field in matchingFields:
-                                    wc = wc + " " + field + " is null or "
-
-                                wc = wc[0:-4]
-
-                                #make table view using where clause
-                                lyr = "lyr"
-                                MakeTableView_management(lyr2, lyr, wc)
-
-                                #get count of the results
-                                result = GetCount_management(lyr)
-                                count = int(result.getOutput(0))
-
-
-                                #if count is greater than 0, it means a required value somewhere isn't filled in
-                                if count > 0:
-                                    #make sure the objectID gets included in the search for reporting
-                                    if id1 not in matchingFields:
-                                        matchingFields.append(id1)
-
-                                    #run a search cursor to get any/all records where a required field value is null
-                                    with SearchCursor(lyr, (matchingFields), wc) as rows:
-                                        for row in rows:
-                                            k = 0
-                                            #get object ID of the field
-                                            oid = str(row[matchingFields.index(id1)])
-
-                                            #loop through row
-                                            while k < len(matchingFields):
-                                                #see if the value is nothing
-                                                if row[k] is None:
-                                                    #report the value if it is indeed null
-                                                    report = "Error: " + matchingFields[k] + " is null for Feature ID " + oid
-                                                    userMessage(report)
-                                                    val = (today, report, filename, matchingFields[k], oid)
-                                                    values.append(val)
-
-                                                #iterate!
-                                                k = k + 1
-                                else:
-                                    userMessage( "All required values present for " + filename)
-
-                                Delete_management(lyr)
-                                del lyr
-
-                            else:
-                                userMessage(filename + " has no records marked for submission. Data will not be verified.")
-                            Delete_management(lyr2)
+                    else:
+                        userMessage(layer + " has no records marked for submission. Data will not be verified.")
+                    Delete_management(lyr2)
 
         if values != []:
             RecordResults("fieldValues", values, gdb)
@@ -1252,9 +1258,9 @@ def checkSubmissionNumbers(pathsInfoObject):
         if version == "10":
             MakeTableView_management(fc, lyr2)
         else:
-            wc2 = "SUBMIT not in ('N')"
+            wc2 = rc_obj.SUBMIT + " not in ('N')"
             if "AddressPoints" in fc:
-                wc2 = wc2 + " AND LOCTYPE = 'PRIMARY'"
+                wc2 = wc2 + " AND " + a_obj.LOCTYPE + " = 'PRIMARY'"
             MakeTableView_management(fc, lyr2, wc2)
 
         #get count of the results
@@ -1281,7 +1287,9 @@ def checkFeatureLocations(pathsInfoObject):
     esb = pathsInfoObject.esbList
     version = pathsInfoObject.gdbVersion
 
-    RoadAlias = join(gdb, "RoadAlias")
+    gdbObject = getGDBObject(gdb)
+
+    RoadAlias = gdbObject.RoadAlias
 
     if RoadAlias in fcList:
         fcList.remove(RoadAlias)
@@ -1295,7 +1303,7 @@ def checkFeatureLocations(pathsInfoObject):
     #make sure features are all inside authoritative boundary
 
     #get authoritative boundary
-    authBound = path.join(gdb, "NG911", "AuthoritativeBoundary")
+    authBound = gdbObject.AuthoritativeBoundary
     ab = "ab"
 
     #see if authoritative boundary has more than 1 feature
@@ -1304,7 +1312,7 @@ def checkFeatureLocations(pathsInfoObject):
 
     #if more than one feature is in the authoritative boundary, use the county boundary instead
     if count > 1:
-        authBound = path.join(gdb, "NG911", "CountyBoundary")
+        authBound = gdbObject.CountyBoundary
 
     MakeFeatureLayer_management(authBound, ab)
 
@@ -1314,9 +1322,9 @@ def checkFeatureLocations(pathsInfoObject):
             if version == "10":
                 MakeFeatureLayer_management(fullPath, fl)
             else:
-                wc = "SUBMIT not in ('N')"
+                wc = rc_obj.SUBMIT + " not in ('N')"
                 if "RoadCenterline" in fullPath:
-                    wc = wc + " AND EXCEPTION not in ('EXCEPTION INSIDE', 'EXCEPTION BOTH')"
+                    wc = wc + " AND " + rc_obj.EXCEPTION + " not in ('EXCEPTION INSIDE', 'EXCEPTION BOTH')"
                 MakeFeatureLayer_management(fullPath, fl, wc)
 
             try:
@@ -1339,7 +1347,7 @@ def checkFeatureLocations(pathsInfoObject):
                     if id1 != '':
                         fields = (id1)
                         if "AddressPoints" in fullPath:
-                            fields = (id1, "LOCTYPE")
+                            fields = (id1, a_obj.LOCTYPE)
                         with SearchCursor(fl, fields) as rows:
                             for row in rows:
                                 fID = row[0]
@@ -1447,7 +1455,7 @@ def checkCutbacks(pathsInfoObject):
 
     #set up search cursor on roads layer
 ##    wc = "SEGID in ('1673')"
-    with SearchCursor(roads, ("SHAPE@","SEGID")) as rows:
+    with SearchCursor(roads, ("SHAPE@",rc_obj.UNIQUEID)) as rows:
         for row in rows:
             try:
                 geom = row[0]
@@ -1503,9 +1511,10 @@ def getNumbers():
     return numbers
 
 def VerifyRoadAlias(gdb, domainFolder):
+    gdbObject = getGDBObject(gdb)
     #set up variables for search cursor
-    roadAlias = join(gdb, "RoadAlias")
-    fieldList = ('A_RD', 'ALIASID')
+    roadAlias = gdbObject.RoadAlias
+    fieldList = (ra_obj.A_RD, ra_obj.ALIASID)
 
     #get highway values
     hwy_text = join(domainFolder, "KS_HWY.txt")
@@ -1545,13 +1554,13 @@ def VerifyRoadAlias(gdb, domainFolder):
 
     #get variables set up
     #where clause for the search cursor
-    wc = "A_STS is null or A_STS in ('HWY', '', ' ')"
+    wc = ra_obj.A_STS + " is null or " + ra_obj.A_STS + " in ('HWY', '', ' ')"
 
     #variables for error reporting
     errorList = []
     values = []
-    filename = "RoadAlias"
-    field = "A_RD"
+    filename = basename(roadAlias)
+    field = ra_obj.A_RD
     recordType = "fieldValues"
     today = strftime("%m/%d/%y")
 
@@ -1616,7 +1625,7 @@ def checkJoin(gdb, inputTable, joinTable, where_clause, errorMessage, field):
     layer = field.split(".")[0]
     recordType = "fieldValues"
 
-    AddJoin_management(inputTable, "SEGID", joinTable, "SEGID")
+    AddJoin_management(inputTable, rc_obj.UNIQUEID, joinTable, rc_obj.UNIQUEID)
     tbl = "tbl"
 
     MakeTableView_management(inputTable, tbl, where_clause)
@@ -1660,11 +1669,11 @@ def checkRoadAliases(pathsInfoObject):
     MakeTableView_management(road_alias, ra_tbl)
 
     #make sure all road alias records relate back to the road centerline file
-    alias_count = checkJoin(gdb, ra_tbl, rdslyr, "RoadCenterline.RD is null", "Notice: Road alias entry does not have a corresponding road centerline segment", "RoadAlias.ALIASID")
+    alias_count = checkJoin(gdb, ra_tbl, rdslyr, "RoadCenterline." + rc_obj.RD + " is null", "Notice: Road alias entry does not have a corresponding road centerline segment", "RoadAlias." + ra_obj.UNIQUEID)
 
     #see if the highways link back to a road alias record
-    hwy_count = checkJoin(gdb, rdslyr, ra_tbl, "(RoadCenterline.RD like '%HIGHWAY%' or RoadCenterline.RD like '%HWY%' or RoadCenterline.RD like '%INTERSTATE%') and RoadAlias.A_RD is null",
-                                "Notice: Road centerline highway segment does not have a corresponding road alias record", "RoadCenterline.SEGID")
+    hwy_count = checkJoin(gdb, rdslyr, ra_tbl, "(RoadCenterline." + rc_obj.RD + " like '%HIGHWAY%' or RoadCenterline." + rc_obj.RD + " like '%HWY%' or RoadCenterline." + rc_obj.RD + " like '%INTERSTATE%') and RoadAlias." + ra_obj.A_RD + " is null",
+                                "Notice: Road centerline highway segment does not have a corresponding road alias record", "RoadCenterline." + rc_obj.UNIQUEID)
 
     total_count = alias_count + hwy_count
 
@@ -1687,8 +1696,8 @@ def sanityCheck(currentPathSettings):
     gdbObject = getGDBObject(gdb)
 
     #check template
-    checkLayerList(currentPathSettings)
-    checkRequiredFields(currentPathSettings)
+##    checkLayerList(currentPathSettings)
+##    checkRequiredFields(currentPathSettings)
     checkRequiredFieldValues(currentPathSettings)
     checkSubmissionNumbers(currentPathSettings)
     findInvalidGeometry(currentPathSettings)
@@ -1700,9 +1709,9 @@ def sanityCheck(currentPathSettings):
 
     #check address points
     geocodeAddressPoints(currentPathSettings)
-    addressPoints = join(currentPathSettings.gdbPath, "AddressPoints")
-    AP_freq = join(currentPathSettings.gdbPath, "AP_Freq")
-    AP_fields = "MUNI;HNO;HNS;PRD;STP;RD;STS;POD;POM;ZIP;BLD;FLR;UNIT;ROOM;SEAT;LOC;LOCTYPE;MSAGCO"
+    addressPoints = gdbObject.AddressPoints
+    AP_freq = gdbObject.AddressPointFrequency
+    AP_fields = a_obj.FREQUENCY_FIELDS_STRING
     checkFrequency(addressPoints, AP_freq, AP_fields, currentPathSettings.gdbPath, currentPathSettings.gdbVersion)
     if Exists(currentPathSettings.ESZ):
         checkESNandMuniAttribute(currentPathSettings)
@@ -1711,11 +1720,9 @@ def sanityCheck(currentPathSettings):
 
 
     #check roads
-    roads = join(currentPathSettings.gdbPath, "RoadCenterline")
-    road_freq = join(currentPathSettings.gdbPath, "Road_Freq")
-    road_fields = """STATE_L;STATE_R;COUNTY_L;COUNTY_R;MUNI_L;MUNI_R;L_F_ADD;L_T_ADD;R_F_ADD;R_T_ADD;
-    PARITY_L;PARITY_R;POSTCO_L;POSTCO_R;ZIP_L;ZIP_R;ESN_L;ESN_R;MSAGCO_L;MSAGCO_R;PRD;STP;RD;STS;POD;
-    POM;SPDLIMIT;ONEWAY;RDCLASS;LABEL;ELEV_F;ELEV_T;ESN_C;SURFACE;STATUS;TRAVEL;LRSKEY"""
+    roads = gdbObject.RoadCenterline
+    road_freq = gdbObject.RoadCenterlineFrequency
+    road_fields = rc_obj.FREQUENCY_FIELDS_STRING
     checkFrequency(roads, road_freq, road_fields, currentPathSettings.gdbPath, currentPathSettings.gdbVersion)
     checkCutbacks(currentPathSettings)
     checkDirectionality(roads, currentPathSettings.gdbPath)
@@ -1760,6 +1767,8 @@ def main_check(checkType, currentPathSettings):
     env.workspace = currentPathSettings.gdbPath
     env.overwriteOutput = True
 
+    gdbObject = getGDBObject(currentPathSettings.gdb)
+
     #give user a warning if they didn't select any validation checks
     stuffToCheck = 0
     for cI in checkList:
@@ -1797,9 +1806,9 @@ def main_check(checkType, currentPathSettings):
             geocodeAddressPoints(currentPathSettings)
 
         if checkList[3] == "true":
-            addressPoints = join(currentPathSettings.gdbPath, "AddressPoints")
-            AP_freq = join(currentPathSettings.gdbPath, "AP_Freq")
-            AP_fields = "MUNI;HNO;HNS;PRD;STP;RD;STS;POD;POM;ZIP;BLD;FLR;UNIT;ROOM;SEAT;LOC;LOCTYPE;MSAGCO"
+            addressPoints = gdbObject.AddressPoints
+            AP_freq = gdbObject.AddressPointFrequency
+            AP_fields = a_obj.FREQUENCY_FIELDS_STRING
             checkFrequency(addressPoints, AP_freq, AP_fields, currentPathSettings.gdbPath, currentPathSettings.gdbVersion)
 
         if checkList[4] == "true":
@@ -1813,7 +1822,7 @@ def main_check(checkType, currentPathSettings):
 
     #check roads
     elif checkType == "Roads":
-        roads = join(currentPathSettings.gdbPath, "RoadCenterline")
+        roads = gdbObject.RoadCenterline
         if checkList[0] == "true":
             checkValuesAgainstDomain(currentPathSettings)
 
@@ -1821,10 +1830,8 @@ def main_check(checkType, currentPathSettings):
             checkFeatureLocations(currentPathSettings)
 
         if checkList[2] == "true":
-            road_freq = join(currentPathSettings.gdbPath, "Road_Freq")
-            road_fields = """STATE_L;STATE_R;COUNTY_L;COUNTY_R;MUNI_L;MUNI_R;L_F_ADD;L_T_ADD;R_F_ADD;R_T_ADD;
-            PARITY_L;PARITY_R;POSTCO_L;POSTCO_R;ZIP_L;ZIP_R;ESN_L;ESN_R;MSAGCO_L;MSAGCO_R;PRD;STP;RD;STS;POD;
-            POM;SPDLIMIT;ONEWAY;RDCLASS;LABEL;ELEV_F;ELEV_T;ESN_C;SURFACE;STATUS;TRAVEL;LRSKEY"""
+            road_freq = gdbObject.RoadCenterlineFrequency
+            road_fields = rc_obj.FREQUENCY_FIELDS_STRING
             checkFrequency(roads, road_freq, road_fields, currentPathSettings.gdbPath, currentPathSettings.gdbVersion)
 
         if checkList[3] == "true":

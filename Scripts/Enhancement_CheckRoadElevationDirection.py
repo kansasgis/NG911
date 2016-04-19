@@ -13,6 +13,7 @@ from NG911_Config import getGDBObject
 from NG911_DataCheck import RecordResults, userMessage
 from os.path import join
 from time import strftime
+from NG911_GDB_Objects import getDefaultNG911RoadCenterlineObject
 
 def main():
     gdb = GetParameterAsText(0)
@@ -20,16 +21,17 @@ def main():
     #set variables
     gdb_object = getGDBObject(gdb)
     roads = gdb_object.RoadCenterline
+    a = getDefaultNG911RoadCenterlineObject()
 
     #userMessage
     userMessage("Comparing elevation indicators...")
 
     #limit records to those with elevation flags
-    qry = "ELEV_F = 1 or ELEV_T = 1"
+    qry = a.ELEV_F + " = 1 or " + a.ELEV_T + " = 1"
 
     #set up search cursor
     roadFullDict = {}
-    fields = ("SEGID", "LABEL", "ELEV_F", "ELEV_T", "L_F_ADD")
+    fields = (a.UNIQUEID, a.LABEL, a.ELEV_F, a.ELEV_T, a.L_F_ADD)
 
     with SearchCursor(roads, fields, qry) as rows:
         for row in rows:
@@ -118,11 +120,11 @@ def main():
     resultType = "fieldValues"
     today = strftime("%m/%d/%y")
     fc = "RoadCenterline"
-    report = "ELEV_F and:or ELEV_T are not consistent with neighboring road segments"
+    report = a.ELEV_F + " and:or " + a.ELEV_T + " are not consistent with neighboring road segments"
 
     if len(badSegs) > 0:
         for badSeg in badSegs:
-            val = (today, report, fc, "ELEV_F ELEV_T", badSeg)
+            val = (today, report, fc, a.ELEV_F + " " + aELEV_T, badSeg)
             values.append(val)
 
     if values != []:

@@ -13,23 +13,31 @@ def main():
         AssignDefaultToField_management, Exists, Copy_management, AddField_management,
         CalculateField_management, ListFields)
     from os.path import join
+    from NG911_Config import getGDBObject
+    from NG911_GDB_Objects import getDefaultNG911RoadCenterlineObject, getDefaultNG911CountyBoundaryObject, getDefaultNG911RoadAliasObject
 
     oldgdb = GetParameterAsText(0)
     gdbTemplate = GetParameterAsText(1)
 
+    oldgdb_object = getGDBObject(oldgdb)
+    gdbTemplate_object = getGDBObject(gdbTemplate)
+
     #set road alias table names
-    roadAlias10 = join(oldgdb, "RoadAlias")
-    roadAlias11 = join(gdbTemplate, "RoadAlias")
+    roadAlias10 = oldgdb_object.RoadAlias
+    roadAlias11 = gdbTemplate_object.RoadAlias
+
+    #get road alias object
+    ra = getDefaultNG911RoadAliasObject()
 
     #copy over road alias table
     Append_management(roadAlias10, roadAlias11, "NO_TEST")
 
     #input default value for road alias records
-    CalculateField_management(roadAlias11, "SUBMIT", '"Y"', "PYTHON_9.3")
+    CalculateField_management(roadAlias11, ra.SUBMIT, '"Y"', "PYTHON_9.3")
 
     #set up geodatabase workspaces that include the feature dataset
-    oldgdb = join(oldgdb, "NG911")
-    gdbTemplate = join(gdbTemplate, "NG911")
+    oldgdb = oldgdb_object.NG911_FeatureDataset
+    gdbTemplate = gdbTemplate_object.NG911_FeatureDataset
 
     env.workspace = oldgdb
 
@@ -64,20 +72,24 @@ def main():
             Copy_management(fc10, fc11)
 
             #add new fields necessary for the 1.1 template
-            if fc <> "CountyBoundary":
-                AddField_management(fc11, "SUBMIT", "TEXT", "", "", 1, "SUBMIT", "", "", "Submit")
-                AssignDefaultToField_management(fc11, "SUBMIT", "Y")
 
-                AddField_management(fc11, "NOTES", "TEXT", "", "", 255)
+            if fc <> "CountyBoundary":
+                #I'm using fields from the road alias object since they are common in most all layers
+                AddField_management(fc11, ra.SUBMIT, "TEXT", "", "", 1, ra.SUBMIT, "", "", "Submit")
+                AssignDefaultToField_management(fc11, ra.SUBMIT, "Y")
+
+                AddField_management(fc11, ra.NOTES, "TEXT", "", "", 255)
 
         #fill in default values
         #SUBMIT for all except county boundary
         if fc <> "CountyBoundary":
-            CalculateField_management(fc11, "SUBMIT", '"Y"', "PYTHON_9.3")
+            CalculateField_management(fc11, ra.SUBMIT, '"Y"', "PYTHON_9.3")
 
         #EXCEPTION if it's a road feature
         if fc == 'RoadCenterline':
-            CalculateField_management(fc11, "EXCEPTION", '"NOT EXCEPTION"', "PYTHON_9.3")
+            rc = getDefaultNG911RoadCenterlineObject()
+            CalculateField_management(fc11, rc.EXCEPTION, '"NOT EXCEPTION"', "PYTHON_9.3")
+            del rc
 
 
 if __name__ == '__main__':

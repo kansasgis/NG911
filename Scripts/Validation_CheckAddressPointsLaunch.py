@@ -13,7 +13,7 @@ def main():
 
     from NG911_DataCheck import main_check, userMessage
     try:
-        from NG911_Config import currentPathSettings # currentPathSettings should have all the path information available. ## import esb, gdb, folder
+        from NG911_Config import currentPathSettings, getGDBObject # currentPathSettings should have all the path information available. ## import esb, gdb, folder
     except:
         userMessage( "Copy config file into command line")
 
@@ -34,9 +34,10 @@ def main():
 
     #set object parameters
     checkType = "AddressPoints"
+    gdbObject = getGDBObject(gdb)
     currentPathSettings.gdbPath = gdb
     currentPathSettings.domainsFolderPath = domainsFolder
-    currentPathSettings.addressPointsPath = join(gdb, "AddressPoints")
+    currentPathSettings.addressPointsPath = gdbObject.AddressPoints
     currentPathSettings.fcList = [currentPathSettings.addressPointsPath]
     currentPathSettings.esbList = []
     currentPathSettings.checkList = checkList

@@ -7,7 +7,7 @@
 # Created:     24/09/2014
 # Modified:    31/10/2014 by dirktall04
 #-------------------------------------------------------------------------------
-from os.path import join
+from os.path import join, basename
 
 esb = ["EMS", "FIRE", "LAW"] #list of layers that are emergency services boundaries
 gdb = r"R:\BigDrives\internal\internal1\NG911_Pilot_Agg\Final_GIS_Data\Region1_PR_Final_KJ.gdb" #full path of the NG911 geodatabase
@@ -48,19 +48,27 @@ def getGDBObject(gdb):
     class NG911_GDB_Object():
         def __init__(self):
             self.gdbPath = gdb
-            self.AddressPoints = join(gdb, "NG911", "AddressPoints")
-            self.RoadCenterline = join(gdb, "NG911", "RoadCenterline")
+            self.NG911_FeatureDataset = join(gdb, "NG911")
+            self.AddressPoints = join(self.NG911_FeatureDataset, "AddressPoints")
+            self.RoadCenterline = join(self.NG911_FeatureDataset, "RoadCenterline")
             self.RoadAlias = join(gdb, "RoadAlias")
-            self.AuthoritativeBoundary = join(gdb, "NG911", "AuthoritativeBoundary")
-            self.MunicipalBoundary = join(gdb, "NG911", "MunicipalBoundary")
-            self.ESZ = join(gdb, "NG911", "ESZ")
-            self.Topology = join(gdb, "NG911", "NG911_Topology")
+            self.AuthoritativeBoundary = join(self.NG911_FeatureDataset, "AuthoritativeBoundary")
+            self.MunicipalBoundary = join(self.NG911_FeatureDataset, "MunicipalBoundary")
+            self.CountyBoundary = join(self.NG911_FeatureDataset, "CountyBoundary")
+            self.ESZ = join(self.NG911_FeatureDataset, "ESZ")
+            self.PSAP = join(self.NG911_FeatureDataset, "PSAP")
+            self.Topology = join(self.NG911_FeatureDataset, "NG911_Topology")
             self.Locator = join(gdb, "Locator")
             self.gc_test = join(gdb, "gc_test")
             self.GeocodeTable = join(gdb, "GeocodeTable")
+            self.GeocodeExceptions = join(gdb, "GeocodeExceptions")
+            self.AddressPointFrequency = join(gdb, "AP_Freq")
+            self.RoadCenterlineFrequency = join(gdb, "Road_Freq")
             self.FieldValuesCheckResults = join(gdb, "FieldValuesCheckResults")
             self.TemplateCheckResults = join(gdb, "TemplateCheckResults")
             self.ProjectionFile = r"\\stewie\c$\hp\ftp\ftp2\ftp_users\GISSubcommittee_NG911\KDOTprojectionfile\KDOT_Lambert.prj"
+            self.AdminBoundaryList = [basename(self.AuthoritativeBoundary), basename(self.CountyBoundary), basename(self.MunicipalBoundary),
+                                    basename(self.ESZ), basename(self.PSAP)]
 
     NG911_GDB = NG911_GDB_Object()
 

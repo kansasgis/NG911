@@ -13,7 +13,7 @@ def main():
 
     from NG911_DataCheck import main_check, userMessage
     try:
-        from NG911_Config import currentPathSettings # currentPathSettings should have all the path information available. ## import esb, gdb, folder
+        from NG911_Config import currentPathSettings, getGDBObject # currentPathSettings should have all the path information available. ## import esb, gdb, folder
     except:
         userMessage( "Copy config file into command line")
 
@@ -32,8 +32,9 @@ def main():
     checkType = "admin"
     currentPathSettings.gdbPath = gdb
     currentPathSettings.domainsFolderPath = domainsFolder
+    gdbObject = getGDBObject(gdb)
 
-    adminList = ["AuthoritativeBoundary", "CountyBoundary", "MunicipalBoundary", "ESZ", "PSAP"]
+    adminList = gdbObject.AdminBoundaryList
     fcList = []
     for admin in adminList:
         path = join(gdb, admin)

@@ -11,8 +11,9 @@ MakeFeatureLayer_management, MakeTableView_management, RemoveJoin_management, De
 from arcpy.da import SearchCursor
 from NG911_Config import getGDBObject
 from NG911_DataCheck import RecordResults, userMessage
-from os.path import join
+from os.path import join, basename
 from time import strftime
+from NG911_GDB_Objects import getDefaultNG911RoadCenterlineObject
 
 def main():
 
@@ -25,6 +26,7 @@ def main():
     #export topology errors as feature class
     topology = gdbObject.Topology
     out_basename = "NG911"
+    rc_obj = getDefaultNG911RoadCenterlineObject()
 
     userMessage("Exporting topology errors...")
     ExportTopologyErrors_management(topology, gdb, out_basename)
@@ -41,12 +43,12 @@ def main():
 
     flds = ListFields(rd)
 
-    if "Exception" in flds:
+    if rc_obj.EXCEPTION in flds:
 
         #set variables for working with the data
         recordType = "fieldValues"
         today = strftime("%m/%d/%y")
-        filename = "RoadCenterline"
+        filename = basename(road)
         values = []
         count = 0
 
@@ -66,7 +68,7 @@ def main():
 
             #set query and field variables
             qry = errors + ".OriginObjectID IS NOT NULL"
-            fields = ("RoadCenterline.SEGID", "RoadCenterline.Exception", errors + ".RuleType", errors + ".RuleDescription", errors + ".isException")
+            fields = ("RoadCenterline." + rc_obj.UNIQUEID, "RoadCenterline." + rc_obj.EXCEPTION, errors + ".RuleType", errors + ".RuleDescription", errors + ".isException")
 
             try:
                 #set up search cursor to loop through records
