@@ -12,6 +12,9 @@ from arcpy.da import InsertCursor
 from NG911_DataCheck import userMessage
 from NG911_Config import getGDBObject
 from os.path import join
+from NG911_GDB_Objects import getDefaultNG911AddressObject
+
+a_obj = getDefaultNG911AddressObject()
 
 def createLocators(gdb_object):
     addressPointPath = gdb_object.AddressPoints
@@ -115,12 +118,16 @@ def prepXLS(tnxls, gdb):
     #create gdb table
     tname = "TN_Prepped"
     outTable = join(gdb, tname)
+
+    if Exists(outTable):
+        Delete_management(outTable)
+
     CreateTable_management(gdb, tname)
 
     #add fields
-    fields = ("HNO", "SUF", "PREDIR", "STREET", "SFX", "POSTDIR", "COMMUNITY", "STATE")
+    fields = (a_obj.HNO, a_obj.HNS, a_obj.PRD, a_obj.RD, a_obj.MUNI, a_obj.STATE)
 
-    colIDlist = (5,6,7,8,9,10,11,13)
+    colIDlist = (17,18,20,21,22,24)
 
     #add fields
     for field in fields:
@@ -170,7 +177,7 @@ def prepXLS(tnxls, gdb):
     AddField_management(outTable, "SingleLineInput", "TEXT", "", "", 100)
 
     #concatenate field
-    CalculateField_management(outTable, "SingleLineInput", '[HNO] & " " & [SUF] & " " & [PREDIR] & " " & [STREET] & " " & [SFX] & " " & [POSTDIR]& " " & [COMMUNITY]& " " & [STATE]', "VB")
+    CalculateField_management(outTable, "SingleLineInput", '[' + a_obj.HNO + '] & " " & [' + a_obj.HNS + '] & " " & [' + a_obj.PRD + '] & " " & [' + a_obj.RD + '] & " " & [' + a_obj.MUNI + ']& " " & [' + a_obj.STATE + ']', "VB")
     #replace three spaces in a row with one
     CalculateField_management(outTable, "SingleLineInput", 'Replace([SingleLineInput], "   ", " ")', "VB")
     #replace two spaces in a row with one
