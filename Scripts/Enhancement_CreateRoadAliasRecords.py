@@ -22,9 +22,10 @@ def uniqueID():
 def main():
     gdb = GetParameterAsText(0)
     road_name = GetParameterAsText(1).upper()
-    alias_road_name = GetParameterAsText(2).upper()
-    alias_road_type = GetParameterAsText(3).upper()
-    label = GetParameterAsText(4)
+    road_type = GetParameterAsText(2).upper()
+    alias_road_name = GetParameterAsText(3).upper()
+    alias_road_type = GetParameterAsText(4).upper()
+    label = GetParameterAsText(5)
 
     #get gdb object & set layer names
     gdbObject = getGDBObject(gdb)
@@ -33,6 +34,8 @@ def main():
 
     #set where clause for query
     wc = rc_obj.RD + " = '" + road_name + "'"
+    if road_type != "":
+        wc += " AND " + rc_obj.STS + " = '" + road_type + "'"
 
     #define fields for cursors
     fields = (rc_obj.STEWARD, rc_obj.EFF_DATE, rc_obj.UNIQUEID, "OBJECTID")
