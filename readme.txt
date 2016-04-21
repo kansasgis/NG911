@@ -50,6 +50,7 @@ The project consists of:
 		Enhancement_CalculateLabel.py
 		Enhancement_CheckRoadElevationDirection.py
 		Enhancement_CheckTN.py
+		Enhancement_CreatRoadAliasRecords.py
 		Enhancement_FindAddressRangeOverlaps.py
 		Enhancement_XYUSNGCalc.py
 		Enhancement_VerifyRoadAlias.py

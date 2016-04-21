@@ -517,44 +517,46 @@ def checkESNandMuniAttribute(currentPathSettings):
 
     for layer, fieldList in searchDict.iteritems():
 
-        with SearchCursor(layer, fieldList) as polys:
-            for poly in polys:
-                feature = fieldList[0]
-                feature_value = poly[0]
+        if Exists(layer):
 
-                #make feature layer
-                lyr1 = "lyr1"
-                qry = fieldList[1] + " = '" + str(poly[1]) + "'"
-                MakeFeatureLayer_management(layer, lyr1, qry)
+            with SearchCursor(layer, fieldList) as polys:
+                for poly in polys:
+                    feature = fieldList[0]
+                    feature_value = poly[0]
 
-                #select by location
-                SelectLayerByLocation_management(addy_lyr, "INTERSECT", lyr1)
+                    #make feature layer
+                    lyr1 = "lyr1"
+                    qry = fieldList[1] + " = '" + str(poly[1]) + "'"
+                    MakeFeatureLayer_management(layer, lyr1, qry)
 
-                #loop through address points
-                with SearchCursor(addy_lyr, (feature, a_obj.UNIQUEID, a_obj.LOCTYPE)) as rows:
-                    for row in rows:
-                        #get value
-                        value_addy = row[0]
-                        segID = row[1]
+                    #select by location
+                    SelectLayerByLocation_management(addy_lyr, "INTERSECT", lyr1)
 
-                        try:
-                            #see if the values match
-                            if value_addy.strip() != feature_value.strip():
-                                #this issue has been demoted to a notice
-                                report = "Notice: Address point " + feature + " does not match " + feature + " in " + basename(layer) + " layer"
-                                val = (today, report, filename, feature, segID)
-                                values.append(val)
-                        except:
-                            userMessage("Issue comparing value for " + feature + ": " + segID)
+                    #loop through address points
+                    with SearchCursor(addy_lyr, (feature, a_obj.UNIQUEID, a_obj.LOCTYPE)) as rows:
+                        for row in rows:
+                            #get value
+                            value_addy = row[0]
+                            segID = row[1]
+
+                            try:
+                                #see if the values match
+                                if value_addy.strip() != feature_value.strip():
+                                    #this issue has been demoted to a notice
+                                    report = "Notice: Address point " + feature + " does not match " + feature + " in " + basename(layer) + " layer"
+                                    val = (today, report, filename, feature, segID)
+                                    values.append(val)
+                            except:
+                                userMessage("Issue comparing value for " + feature + ": " + segID)
 
 
-                Delete_management(lyr1)
-                del lyr1
+                    Delete_management(lyr1)
+                    del lyr1
 
-        try:
-            del poly, polys
-        except:
-            userMessage("Poly/polys didn't exist in the Muni/ESN check. No worries.")
+            try:
+                del poly, polys
+            except:
+                userMessage("Poly/polys didn't exist in the Muni/ESN check. No worries.")
 
     #report records
     if values != []:
@@ -1767,7 +1769,7 @@ def main_check(checkType, currentPathSettings):
     env.workspace = currentPathSettings.gdbPath
     env.overwriteOutput = True
 
-    gdbObject = getGDBObject(currentPathSettings.gdb)
+    gdbObject = getGDBObject(currentPathSettings.gdbPath)
 
     #give user a warning if they didn't select any validation checks
     stuffToCheck = 0
