@@ -533,22 +533,25 @@ def checkESNandMuniAttribute(currentPathSettings):
                     SelectLayerByLocation_management(addy_lyr, "INTERSECT", lyr1)
 
                     #loop through address points
-                    with SearchCursor(addy_lyr, (feature, a_obj.UNIQUEID, a_obj.LOCTYPE)) as rows:
+                    with SearchCursor(addy_lyr, (feature, a_obj.UNIQUEID, a_obj.LOCTYPE, "OBJECTID")) as rows:
                         for row in rows:
                             #get value
                             value_addy = row[0]
                             segID = row[1]
+                            objectID = row[3]
 
-                            try:
-                                #see if the values match
-                                if value_addy.strip() != feature_value.strip():
-                                    #this issue has been demoted to a notice
-                                    report = "Notice: Address point " + feature + " does not match " + feature + " in " + basename(layer) + " layer"
-                                    val = (today, report, filename, feature, segID)
-                                    values.append(val)
-                            except:
-                                userMessage("Issue comparing value for " + feature + ": " + segID)
-
+                            if segID is not None:
+                                try:
+                                    #see if the values match
+                                    if value_addy.strip() != feature_value.strip():
+                                        #this issue has been demoted to a notice
+                                        report = "Notice: Address point " + feature + " does not match " + feature + " in " + basename(layer) + " layer"
+                                        val = (today, report, filename, feature, segID)
+                                        values.append(val)
+                                except:
+                                    userMessage("Issue comparing value for " + feature + " with OBJECTID: " + objectID)
+                            else:
+                                userMessage("Issue comparing value for " + feature + " with OBJECTID: " + objectID)
 
                     Delete_management(lyr1)
                     del lyr1
