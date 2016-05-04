@@ -1641,11 +1641,14 @@ def checkJoin(gdb, inputTable, joinTable, where_clause, errorMessage, field):
 
     #catalog issues
     if count > 0:
-        fields = (field)
+        fields = (field, "RoadCenterline." + rc_obj.RD)
         with SearchCursor(tbl, fields) as rows:
             for row in rows:
-                val = (today, errorMessage, layer, "", row[0])
-                values.append(val)
+                if " TO " in row[1] or "RAMP" in row[1] or "OLD" in row[1]:
+                    print "this is probably an exception"
+                else:
+                    val = (today, errorMessage, layer, "", row[0])
+                    values.append(val)
 
     #clean up
     RemoveJoin_management(inputTable)
@@ -1655,7 +1658,9 @@ def checkJoin(gdb, inputTable, joinTable, where_clause, errorMessage, field):
     if values != []:
         RecordResults(recordType, values, gdb)
 
-    return count
+    valCount = len(values)
+
+    return valCount
 
 def checkRoadAliases(pathsInfoObject):
     userMessage("Checking road alias table...")
