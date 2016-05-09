@@ -73,3 +73,44 @@ def getGDBObject(gdb):
     NG911_GDB = NG911_GDB_Object()
 
     return NG911_GDB
+
+def checkToolboxVersion():
+    import json, urllib
+    from inspect import getsourcefile
+    from os.path import abspath, dirname, join, exists
+
+    #set lots of variables
+    message, toolData, toolVersion, response, mostRecentVersion = "", "", "0", "", "X"
+
+    #get version in the .json file that is already present
+    me_folder = dirname(abspath(getsourcefile(lambda:0)))
+    jsonFile = join(me_folder, "ToolboxVersion.json")
+
+    #make sure the local json file exists
+    if exists(jsonFile):
+        toolData = json.loads(open(jsonFile).read())
+        toolVersion = toolData["toolboxVersion"]["version"]
+
+    #get version of toolbox live online
+    url = "https://raw.githubusercontent.com/kansasgis/NG911/master/Scripts/ToolboxVersion.json"
+
+    #Error trapping in case the computer is offline or can't get to the internet
+    try:
+        response = urllib.urlopen(url)
+        mostRecentVersion = json.loads(response.read())
+    except:
+        message("Unable to check toolbox version at this time.")
+
+    #compare the two
+    if toolVersion == mostRecentVersion:
+        message = "Your NG911 toolbox version is up-to-date."
+    else:
+        if mostRecentVersion != "X":
+            message = """Your version of the NG911 toolbox is not the most recent version available.
+            Your results might be different than results received upon data submission. Please
+            download an up-to-date copy of the toolbox at
+            https://github.com/kansasgis/NG911/raw/master/KansasNG911GISTools.zip"""
+
+    #report back to the user
+    return message
+

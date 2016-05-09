@@ -24,7 +24,7 @@ from arcpy.da import Walk, InsertCursor, ListDomains, SearchCursor
 from os import path
 from os.path import basename, dirname, join, exists
 from time import strftime
-from NG911_Config import getGDBObject
+from NG911_Config import getGDBObject, checkToolboxVersion
 from Validation_ClearOldResults import ClearOldResults
 import NG911_GDB_Objects
 
@@ -1695,6 +1695,10 @@ def checkRoadAliases(pathsInfoObject):
     #verify domain values
     VerifyRoadAlias(gdb, pathsInfoObject.domainsFolderPath)
 
+def checkToolboxVersionFinal():
+    versionResult = checkToolboxVersion()
+    userMessage(versionResult)
+
 def sanityCheck(currentPathSettings):
 
     #fcList will contain all layers in GDB so everything will be checked
@@ -1764,6 +1768,8 @@ def sanityCheck(currentPathSettings):
         userMessage("Geodatabase passed all data checks.")
     else:
         userMessage("There were " + str(numErrors) + " issues with the data. Please view errors in the TemplateCheckResults and:or FieldValuesCheckResults tables.")
+
+    checkToolboxVersionFinal()
 
     return sanity
 
@@ -1867,6 +1873,7 @@ def main_check(checkType, currentPathSettings):
         if checkList[2] == "true":
             checkUniqueIDFrequency(currentPathSettings)
 
+    checkToolboxVersionFinal()
 
 if __name__ == '__main__':
     main()
