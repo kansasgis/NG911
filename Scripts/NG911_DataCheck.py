@@ -19,7 +19,7 @@ from arcpy import (AddField_management, AddMessage, CalculateField_management,  
                    CreateTable_management, Delete_management, Exists, GeocodeAddresses_geocoding, GetCount_management, FieldInfo,
                    ListFields, MakeFeatureLayer_management, MakeTableView_management, SelectLayerByAttribute_management, Statistics_analysis,
                    SelectLayerByLocation_management, RebuildAddressLocator_geocoding, DeleteRows_management, GetInstallInfo, env, ListDatasets,
-                   AddJoin_management, RemoveJoin_management)
+                   AddJoin_management, RemoveJoin_management, AddWarning)
 from arcpy.da import Walk, InsertCursor, ListDomains, SearchCursor
 from os import path
 from os.path import basename, dirname, join, exists
@@ -1697,7 +1697,10 @@ def checkRoadAliases(pathsInfoObject):
 
 def checkToolboxVersionFinal():
     versionResult = checkToolboxVersion()
-    userMessage(versionResult)
+    if versionResult == "Your NG911 toolbox version is up-to-date.":
+        userMessage(versionResult)
+    else:
+        AddWarning(versionResult)
 
 def sanityCheck(currentPathSettings):
 
