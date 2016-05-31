@@ -78,6 +78,7 @@ def checkToolboxVersion():
     import json, urllib
     from inspect import getsourcefile
     from os.path import abspath, dirname, join, exists
+    from arcpy import AddMessage
 
     #set lots of variables
     message, toolData, toolVersion, response, mostRecentVersion = "", "", "0", "", "X"
@@ -90,6 +91,7 @@ def checkToolboxVersion():
     if exists(jsonFile):
         toolData = json.loads(open(jsonFile).read())
         toolVersion = toolData["toolboxVersion"]["version"]
+        AddMessage(toolVersion)
 
     #get version of toolbox live online
     url = "https://raw.githubusercontent.com/kansasgis/NG911/master/Scripts/ToolboxVersion.json"
@@ -97,7 +99,9 @@ def checkToolboxVersion():
     #Error trapping in case the computer is offline or can't get to the internet
     try:
         response = urllib.urlopen(url)
-        mostRecentVersion = json.loads(response.read())
+        mostRecentData = json.loads(response.read())
+        mostRecentVersion = mostRecentData["toolboxVersion"]["version"]
+        AddMessage(mostRecentVersion)
     except:
         message("Unable to check toolbox version at this time.")
 

@@ -122,6 +122,9 @@ class NG911_RoadAlias_Object(object):
         self.KSSEGID = u_KSSEGID
         self.REQUIRED_FIELDS = [self.STEWARD, self.L_UPDATE, self.EFF_DATE, self.UNIQUEID, self.SEGID, self.LABEL, self.UPDATEBY]
         self.FIELDS_WITH_DOMAINS = [self.STEWARD, self.A_PRD, self.A_STS, self.A_POD, self.SUBMIT]
+        self.FIELD_MAP = [self.STEWARD, self.L_UPDATE, self.EFF_DATE, self.EXP_DATE, self.UNIQUEID, self.SEGID, self.A_PRD,
+                            self.A_STP, self.A_RD, self.A_STS, self.A_POD, self.A_POM, self.A_L_FROM, self.A_L_TO,
+                            self.A_R_FROM, self.A_R_TO, self.LABEL, self.UPDATEBY, self.SUBMIT, self.NOTES]
 
 
 def getDefaultNG911RoadAliasObject():
@@ -277,6 +280,9 @@ class NG911_ESB_Object(object):
         self.NOTES = u_NOTES
         self.REQUIRED_FIELDS = [self.STEWARD, self.L_UPDATE, self.EFF_DATE, self.UNIQUEID, self.STATE, self.AGENCYID, self.DISPLAY, self.ESB_TYPE, self.UPDATEBY]
         self.FIELDS_WITH_DOMAINS = [self.STEWARD, self.STATE, self.AGENCYID, self.SUBMIT]
+        self.FIELD_MAP = [self.STEWARD, self.L_UPDATE, self.EFF_DATE, self.EXP_DATE, self.UNIQUEID, self.STATE, self.AGENCYID,
+                            self.SERV_NUM, self.DISPLAY, self.ESB_TYPE, self.LAW, self.FIRE, self.EMS, self.UPDATEBY, self.PSAP,
+                            self.SUBMIT, self.NOTES]
 
 
 def getDefaultNG911ESBObject():
@@ -304,6 +310,8 @@ class NG911_ESZ_Object(object):
         self.NOTES = u_NOTES
         self.REQUIRED_FIELDS = [self.STEWARD, self.L_UPDATE, self.EFF_DATE, self.UNIQUEID, self.AGENCYID, self.ESN, self.UPDATEBY]
         self.FIELDS_WITH_DOMAINS = [self.STEWARD, self.AGENCYID, self.SUBMIT]
+        self.FIELD_MAP = [self.STEWARD, self.L_UPDATE, self.EFF_DATE, self.EXP_DATE, self.UNIQUEID, self.AGENCYID,
+                            self.ESN, self.UPDATEBY, self.SUBMIT, self.NOTES]
 
 
 def getDefaultNG911ESZObject():
@@ -327,6 +335,7 @@ class NG911_CountyBoundary_Object(object):
         self.NOTES = u_NOTES
         self.REQUIRED_FIELDS = [self.STEWARD, self.L_UPDATE, self.UNIQUEID, self.STATE, self.COUNTY, self.UPDATEBY]
         self.FIELDS_WITH_DOMAINS = [self.STEWARD, self.STATE, self.COUNTY]
+        self.FIELD_MAP = [self.STEWARD, self.L_UPDATE, self.UNIQUEID, self.STATE, self.COUNTY, self.UPDATEBY, self.SUBMIT, self.NOTES]
 
 
 def getDefaultNG911CountyBoundaryObject():
@@ -353,6 +362,8 @@ class NG911_AuthoritativeBoundary_Object(object):
         self.NOTES = u_NOTES
         self.REQUIRED_FIELDS = [self.STEWARD, self.L_UPDATE, self.EFF_DATE, self.UNIQUEID, self.AGENCYID, self.DISPLAY, self.UPDATEBY]
         self.FIELDS_WITH_DOMAINS = [self.STEWARD, self.AGENCYID, self.SUBMIT]
+        self.FIELD_MAP = [self.STEWARD, self.L_UPDATE, self.EFF_DATE, self.EXP_DATE, self.UNIQUEID, self.AGENCYID, self.DISPLAY,
+                            self.UPDATEBY, self.SUBMIT, self.NOTES]
 
 
 def getDefaultNG911AuthoritativeBoundaryObject():
@@ -381,6 +392,8 @@ class NG911_MunicipalBoundary_Object(object):
         self.NOTES = u_NOTES
         self.REQUIRED_FIELDS = [self.STEWARD, self.L_UPDATE, self.EFF_DATE, self.UNIQUEID, self.STATE, self.COUNTY, self.MUNI, self.UPDATEBY]
         self.FIELDS_WITH_DOMAINS = [self.STEWARD, self.STATE, self.COUNTY, self.MUNI, self.SUBMIT]
+        self.FIELD_MAP = [self.STEWARD, self.L_UPDATE, self.EFF_DATE, self.EXP_DATE, self.UNIQUEID, self.STATE, self.COUNTY, self.MUNI,
+                            self.UPDATEBY, self.SUBMIT, self.NOTES]
 
 
 def getDefaultNG911MunicipalBoundaryObject():

@@ -283,7 +283,7 @@ def geocodeAddressPoints(pathsInfoObject):
         CalculateField_management(gc_table, sl_field, exp, "VB")
 
         #generate locator
-        fieldMap = """'Primary Table:Feature ID' <None> VISIBLE NONE;'*Primary Table:From Left' RoadCenterline:L_F_ADD VISIBLE NONE;
+        fieldMap = """'Primary Table:Feature ID' RoadCenterline:SEGID VISIBLE NONE;'*Primary Table:From Left' RoadCenterline:L_F_ADD VISIBLE NONE;
         '*Primary Table:To Left' RoadCenterline:L_T_ADD VISIBLE NONE;'*Primary Table:From Right' RoadCenterline:R_F_ADD VISIBLE NONE;
         '*Primary Table:To Right' RoadCenterline:R_T_ADD VISIBLE NONE;'Primary Table:Prefix Direction' RoadCenterline:PRD VISIBLE NONE;
         'Primary Table:Prefix Type' RoadCenterline:STP VISIBLE NONE;'*Primary Table:Street Name' RoadCenterline:RD VISIBLE NONE;
@@ -310,7 +310,7 @@ def geocodeAddressPoints(pathsInfoObject):
                 CreateAddressLocator_geocoding("US Address - Dual Ranges", streetPath + " 'Primary Table';" + roadAliasPath + " 'Alternate Name Table'", fieldMap, Locator, "")
             except:
                 try:
-                    fieldMap = """'Primary Table:Feature ID' <None> VISIBLE NONE;'*Primary Table:From Left' RoadCenterline:L_F_ADD VISIBLE NONE;
+                    fieldMap = """'Primary Table:Feature ID' RoadCenterline:SEGID VISIBLE NONE;'*Primary Table:From Left' RoadCenterline:L_F_ADD VISIBLE NONE;
                     '*Primary Table:To Left' RoadCenterline:L_T_ADD VISIBLE NONE;'*Primary Table:From Right' RoadCenterline:R_F_ADD VISIBLE NONE;
                     '*Primary Table:To Right' RoadCenterline:R_T_ADD VISIBLE NONE;'Primary Table:Prefix Direction' RoadCenterline:PRD VISIBLE NONE;
                     'Primary Table:Prefix Type' RoadCenterline:STP VISIBLE NONE;'*Primary Table:Street Name' RoadCenterline:RD VISIBLE NONE;
@@ -330,8 +330,28 @@ def geocodeAddressPoints(pathsInfoObject):
                     'Alternate Name Table:Suffix Direction' RoadAlias:A_POD VISIBLE NONE"""
                     CreateAddressLocator_geocoding("US Address - Dual Ranges", streetPath + " 'Primary Table';" + roadAliasPath + " 'Alternate Name Table'", fieldMap, Locator, "", "DISABLED")
                 except Exception as E:
-                    userMessage(Locator)
-                    userMessage("Cannot create address locator. Please email kristen@kgs.ku.edu this error message: " + str(E))
+                    try:
+                        fieldMap = """'Primary Table:Feature ID' RoadCenterline:SEGID VISIBLE NONE;'*Primary Table:From Left' RoadCenterline:L_F_ADD VISIBLE NONE;
+                        '*Primary Table:To Left' RoadCenterline:L_T_ADD VISIBLE NONE;'*Primary Table:From Right' RoadCenterline:R_F_ADD VISIBLE NONE;
+                        '*Primary Table:To Right' RoadCenterline:R_T_ADD VISIBLE NONE;'Primary Table:Prefix Direction' RoadCenterline:PRD VISIBLE NONE;
+                        'Primary Table:Prefix Type' RoadCenterline:STP VISIBLE NONE;'*Primary Table:Street Name' RoadCenterline:RD VISIBLE NONE;
+                        'Primary Table:Suffix Type' RoadCenterline:STS VISIBLE NONE;'Primary Table:Suffix Direction' RoadCenterline:POD VISIBLE NONE;
+                        'Primary Table:Left City or Place' RoadCenterline:MUNI_L VISIBLE NONE;'Primary Table:Right City or Place' RoadCenterline:MUNI_R VISIBLE NONE;
+                        'Primary Table:Left ZIP Code' RoadCenterline:ZIP_L VISIBLE NONE;'Primary Table:Right ZIP Code' RoadCenterline:ZIP_R VISIBLE NONE;
+                        'Primary Table:Left State' RoadCenterline:STATE_L VISIBLE NONE;'Primary Table:Right State' RoadCenterline:STATE_R VISIBLE NONE;
+                        'Primary Table:Left Street ID' <None> VISIBLE NONE;'Primary Table:Right Street ID' <None> VISIBLE NONE;
+                        'Primary Table:Display X' <None> VISIBLE NONE;'Primary Table:Display Y' <None> VISIBLE NONE;
+                        'Primary Table:Min X value for extent' <None> VISIBLE NONE;'Primary Table:Max X value for extent' <None> VISIBLE NONE;
+                        'Primary Table:Min Y value for extent' <None> VISIBLE NONE;'Primary Table:Max Y value for extent' <None> VISIBLE NONE;
+                        'Primary Table:Left parity' <None> VISIBLE NONE;'Primary Table:Right parity' <None> VISIBLE NONE;
+                        'Primary Table:Left Additional Field' <None> VISIBLE NONE;'Primary Table:Right Additional Field' <None> VISIBLE NONE;
+                        'Primary Table:Altname JoinID' RoadCenterline:SEGID VISIBLE NONE;'*Alias Table:Alias' RoadAlias:SEGID VISIBLE NONE;
+                        '*Alias Table:Street' RoadAlias:A_RD VISIBLE NONE;'Alias Table:City' <None> VISIBLE NONE;'Alias Table:State' <None> VISIBLE NONE;
+                        'Alias Table:ZIP' <None> VISIBLE NONE"""
+                        CreateAddressLocator_geocoding("US Address - Dual Ranges", streetPath + " 'Primary Table';" + roadAliasPath + " 'Alias Table'", fieldMap, Locator, "", "DISABLED")
+                    except Exception as E:
+                        userMessage(Locator)
+                        userMessage("Cannot create address locator. Please email kristen@kgs.ku.edu this error message: " + str(E))
 
 
         if Exists(Locator):
@@ -956,88 +976,106 @@ def checkValuesAgainstDomain(pathsInfoObject):
         if fc in esb:
             layer = "ESB"
 
-        #get list of fields with domains
-        fieldsWDoms = fieldsWithDomains(version, layer)
+        #only check records marked for submission
+        fullPathlyr = "fullPathlyr"
+        worked = 0
+        if version == "10":
+            MakeTableView_management(filename, fullPathlyr)
+            worked = 1
+        else:
+            wc2 = rc_obj.SUBMIT + " not in ('N')"
+            try:
+                MakeTableView_management(filename, fullPathlyr, wc2)
+                worked = 1
+            except:
+                userMessage("Cannot check required field values for " + layer)
 
-##        #remove "STATUS" field if we aren't working with road centerline- edit suggested by Sherry M., 6/16/2015
-##        if layer != "ROADCENTERLINE":
-##            if "STATUS" in fieldsWDoms:
-##                fieldsWDoms.remove("STATUS")
+        if worked == 1:
 
-        id1 = getUniqueIDField(layer)
-        if id1 != "":
-            fields = []
-            #create complete field list
-            fields = ListFields(fc)
-            fieldNames = []
+            #get list of fields with domains
+            fieldsWDoms = fieldsWithDomains(version, layer)
 
-            for f in fields:
-                fieldNames.append(f.name)
+    ##        #remove "STATUS" field if we aren't working with road centerline- edit suggested by Sherry M., 6/16/2015
+    ##        if layer != "ROADCENTERLINE":
+    ##            if "STATUS" in fieldsWDoms:
+    ##                fieldsWDoms.remove("STATUS")
 
-            #see if fields from complete list have domains
-            for fieldN in fieldNames:
+            id1 = getUniqueIDField(layer)
+            if id1 != "":
+                fields = []
+                #create complete field list
+                fields = ListFields(fc)
+                fieldNames = []
 
-                #userMessage(fieldN)
-                #if field has a domain
-                if fieldN in fieldsWDoms:
-                    domain = ""
-                    if fieldN[0:2] == "A_":
-                        domain = fieldN[2:]
-                    else:
-                        domain = fieldN
+                for f in fields:
+                    fieldNames.append(f.name)
 
-                    userMessage("Checking: " + fieldN)
-                    #get the full domain dictionary
-                    domainDict = getFieldDomain(domain, folder)
+                #see if fields from complete list have domains
+                for fieldN in fieldNames:
 
-                    if domainDict != {}:
-                        #put domain values in a list
-                        domainList = []
+                    #userMessage(fieldN)
+                    #if field has a domain
+                    if fieldN in fieldsWDoms:
+                        domain = ""
+                        if fieldN[0:2] == "A_":
+                            domain = fieldN[2:]
+                        else:
+                            domain = fieldN
 
-                        for val in domainDict.iterkeys():
-                            domainList.append(val)
+                        userMessage("Checking: " + fieldN)
+                        #get the full domain dictionary
+                        domainDict = getFieldDomain(domain, folder)
 
-                        #add values for some CAD users of blank and space (edit suggested by Sherry M. & Keith S. Dec 2014)
-                        domainList.append('')
-                        domainList.append(" ")
+                        if domainDict != {}:
+                            #put domain values in a list
+                            domainList = []
 
-                        #if the domain is counties, add county names to the list without "COUNTY" so both will work (edit suggest by Keith S. Dec 2014)
-                        if fieldN == "COUNTY":
-                            q = len(domainList)
-                            i = 0
-                            while i < q:
-                                dl1 = domainList[i].split(" ")[0]
-    ##                            userMessage(dl1)
-                                domainList.append(dl1)
-                                i += 1
+                            for val in domainDict.iterkeys():
+                                domainList.append(val)
 
-                        #loop through records for that particular field to see if all values match domain
-                        wc = fieldN + " is not null"
-                        with SearchCursor(fullPath, (id1, fieldN), wc) as rows:
-                            for row in rows:
-                                if row[1] is not None:
-                                    fID = row[0]
-                                    #see if field domain is actually a range
-                                    if fieldN == a_obj.HNO:
-                                        hno = row[1]
-                                        if hno > 999999 or hno < 0:
-                                            report = "Error: Value " + str(row[1]) + " not in approved domain for field " + fieldN
-                                            val = (today, report, fc, fieldN, fID)
-                                            values.append(val)
-                                    #otherwise, compare row value to domain list
-                                    else:
-##                                        userMessage("Checking value: " + row[1])
-                                        if row[1] not in domainList:
-                                            report = "Error: Value " + str(row[1]) + " not in approved domain for field " + fieldN
-                                            val = (today, report, fc, fieldN, fID)
-                                            values.append(val)
+                            #add values for some CAD users of blank and space (edit suggested by Sherry M. & Keith S. Dec 2014)
+                            domainList.append('')
+                            domainList.append(" ")
 
-                    else:
-                        userMessage("Could not compare domain for " + fieldN)
-        userMessage("Checked " + layer)
+                            #if the domain is counties, add county names to the list without "COUNTY" so both will work (edit suggest by Keith S. Dec 2014)
+                            if fieldN == "COUNTY":
+                                q = len(domainList)
+                                i = 0
+                                while i < q:
+                                    dl1 = domainList[i].split(" ")[0]
+        ##                            userMessage(dl1)
+                                    domainList.append(dl1)
+                                    i += 1
+
+                            #loop through records for that particular field to see if all values match domain
+                            wc = fieldN + " is not null"
+                            with SearchCursor(fullPathlyr, (id1, fieldN), wc) as rows:
+                                for row in rows:
+                                    if row[1] is not None:
+                                        fID = row[0]
+                                        #see if field domain is actually a range
+                                        if fieldN == a_obj.HNO:
+                                            hno = row[1]
+                                            if hno > 999999 or hno < 0:
+                                                report = "Error: Value " + str(row[1]) + " not in approved domain for field " + fieldN
+                                                val = (today, report, fc, fieldN, fID)
+                                                values.append(val)
+                                        #otherwise, compare row value to domain list
+                                        else:
+    ##                                        userMessage("Checking value: " + row[1])
+                                            if row[1] not in domainList:
+                                                report = "Error: Value " + str(row[1]) + " not in approved domain for field " + fieldN
+                                                val = (today, report, fc, fieldN, fID)
+                                                values.append(val)
+
+                        else:
+                            userMessage("Could not compare domain for " + fieldN)
+            userMessage("Checked " + layer)
 
     if values != []:
         RecordResults(resultType, values, gdb)
+
+    Delete_management(fullPathlyr)
 
     userMessage("Completed checking fields against domains: " + str(len(values)) + " issues found")
 
@@ -1276,6 +1314,8 @@ def checkSubmissionNumbers(pathsInfoObject):
 
         if count == 0:
             report = "Error: " + basename(fc) + " has 0 records for submission"
+            if "MunicipalBoundary" in fc:
+                report = report.replace("Error", "Notice")
             #add issue to list of values
             val = (today, report, "Submission")
             values.append(val)

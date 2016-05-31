@@ -39,12 +39,14 @@ def main():
 
     for e in esbList:
         e = e.replace("'", "")
-        fcList.append(e)
-        e1 = basename(e)
-        if e1 in layerList:
-            layerFlag = 1
-        else:
-            esb.append(e1)
+        for l in ['EMS','FIRE','LAW']:
+            if l in e.upper():
+                fcList.append(e)
+                e1 = basename(e)
+                if e1 in layerList:
+                    layerFlag = 1
+                else:
+                    esb.append(e1)
 
     if layerFlag == 1:
         AddError("Please define PSAP and ESB layers like EMS, fire & law enforcement boundaries. One or more layers you identfied is a different layer type.")
