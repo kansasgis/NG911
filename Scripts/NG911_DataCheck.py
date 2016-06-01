@@ -569,9 +569,9 @@ def checkESNandMuniAttribute(currentPathSettings):
                                         val = (today, report, filename, feature, segID)
                                         values.append(val)
                                 except:
-                                    userMessage("Issue comparing value for " + feature + " with OBJECTID: " + objectID)
+                                    userMessage("Issue comparing value for " + feature + " with OBJECTID: " + str(objectID))
                             else:
-                                userMessage("Issue comparing value for " + feature + " with OBJECTID: " + objectID)
+                                userMessage("Issue comparing value for " + feature + " with OBJECTID: " + str(objectID))
 
                     Delete_management(lyr1)
                     del lyr1
@@ -980,12 +980,12 @@ def checkValuesAgainstDomain(pathsInfoObject):
         fullPathlyr = "fullPathlyr"
         worked = 0
         if version == "10":
-            MakeTableView_management(filename, fullPathlyr)
+            MakeTableView_management(fullPath, fullPathlyr)
             worked = 1
         else:
             wc2 = rc_obj.SUBMIT + " not in ('N')"
             try:
-                MakeTableView_management(filename, fullPathlyr, wc2)
+                MakeTableView_management(fullPath, fullPathlyr, wc2)
                 worked = 1
             except:
                 userMessage("Cannot check required field values for " + layer)
@@ -1072,10 +1072,10 @@ def checkValuesAgainstDomain(pathsInfoObject):
                             userMessage("Could not compare domain for " + fieldN)
             userMessage("Checked " + layer)
 
+        Delete_management(fullPathlyr)
+
     if values != []:
         RecordResults(resultType, values, gdb)
-
-    Delete_management(fullPathlyr)
 
     userMessage("Completed checking fields against domains: " + str(len(values)) + " issues found")
 
@@ -1106,10 +1106,13 @@ def checkRequiredFieldValues(pathsInfoObject):
 ##                    fullPath = path.join(gdb, filename)
 ##        userMessage(fcList)
         for filename in fcList:
-            if basename(filename).upper() in esb:
-                layer = "ESB"
-            else:
-                layer = basename(filename).upper()
+            userMessage(filename)
+            for l in ['FIRE','LAW','EMS','ESB']:
+                if l in filename.upper():
+                    layer = "ESB"
+                else:
+                    layer = basename(filename).upper()
+            userMessage(layer)
             id1 = getUniqueIDField(layer)
             if id1 != "":
 
