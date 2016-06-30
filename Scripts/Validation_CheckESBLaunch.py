@@ -27,7 +27,7 @@ def main():
     checkValuesAgainstDomain = GetParameterAsText(3)
     checkFeatureLocations = GetParameterAsText(4)
     checkUniqueIDs = GetParameterAsText(5)
-    template10 = GetParameterAsText(6)
+##    template10 = GetParameterAsText(6)
 
     #create esb list
     esb = []
@@ -39,7 +39,7 @@ def main():
 
     for e in esbList:
         e = e.replace("'", "")
-        for l in ['EMS','FIRE','LAW']:
+        for l in ['EMS','FIRE','LAW','PSAP','ESB']:
             if l in e.upper():
                 fcList.append(e)
                 e1 = basename(e)
@@ -64,10 +64,10 @@ def main():
     currentPathSettings.esbList = esb
     currentPathSettings.checkList = checkList
 
-    if template10 == 'true':
-        currentPathSettings.gdbVersion = "10"
-    else:
-        currentPathSettings.gdbVersion = "11"
+##    if template10 == 'true':
+##        currentPathSettings.gdbVersion = "10"
+##    else:
+##        currentPathSettings.gdbVersion = "11"
 
     #launch the data check
     main_check(checkType, currentPathSettings)

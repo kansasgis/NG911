@@ -27,7 +27,7 @@ def main():
     checkUniqueIDs = GetParameterAsText(6)
     checkESZ = GetParameterAsText(7)
     ESZlayer = GetParameterAsText(8)
-    template10 = GetParameterAsText(9)
+##    template10 = GetParameterAsText(9)
 
     #create check list
     checkList = [checkValuesAgainstDomain,checkFeatureLocations,geocodeAddressPoints,checkAddressPointFrequency,checkUniqueIDs,checkESZ]
@@ -43,10 +43,10 @@ def main():
     currentPathSettings.checkList = checkList
     currentPathSettings.ESZ = ESZlayer
 
-    if template10 == 'true':
-        currentPathSettings.gdbVersion = "10"
-    else:
-        currentPathSettings.gdbVersion = "11"
+##    if template10 == 'true':
+##        currentPathSettings.gdbVersion = "10"
+##    else:
+##        currentPathSettings.gdbVersion = "11"
 
     #launch the data check
     main_check(checkType, currentPathSettings)

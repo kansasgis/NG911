@@ -23,7 +23,7 @@ def main():
     checkValuesAgainstDomain = GetParameterAsText(2)
     checkFeatureLocations = GetParameterAsText(3)
     checkUniqueIDs = GetParameterAsText(4)
-    template10 = GetParameterAsText(5)
+##    template10 = GetParameterAsText(5)
 
     #create check list
     checkList = [checkValuesAgainstDomain,checkFeatureLocations,checkUniqueIDs]
@@ -45,10 +45,10 @@ def main():
     currentPathSettings.esbList = []
     currentPathSettings.checkList = checkList
 
-    if template10 == 'true':
-        currentPathSettings.gdbVersion = "10"
-    else:
-        currentPathSettings.gdbVersion = "11"
+##    if template10 == 'true':
+##        currentPathSettings.gdbVersion = "10"
+##    else:
+##        currentPathSettings.gdbVersion = "11"
 
     #launch the data check
     main_check(checkType, currentPathSettings)

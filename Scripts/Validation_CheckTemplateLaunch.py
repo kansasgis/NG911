@@ -26,7 +26,7 @@ def main():
     checkRequiredFieldValues = GetParameterAsText(5)
     checkSubmissionNumbers = GetParameterAsText(6)
     findInvalidGeometry = GetParameterAsText(7)
-    template10 = GetParameterAsText(8)
+##    template10 = GetParameterAsText(8)
 
     #create esb list
     esb = []
@@ -46,10 +46,10 @@ def main():
     currentPathSettings.esbList = esb
     currentPathSettings.checkList = checkList
 
-    if template10 == 'true':
-        currentPathSettings.gdbVersion = "10"
-    else:
-        currentPathSettings.gdbVersion = "11"
+##    if template10 == 'true':
+##        currentPathSettings.gdbVersion = "10"
+##    else:
+##        currentPathSettings.gdbVersion = "11"
 
     #launch the data check
     main_check(checkType, currentPathSettings)

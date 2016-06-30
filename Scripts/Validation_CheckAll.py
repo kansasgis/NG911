@@ -12,12 +12,12 @@ from arcpy import Exists, GetParameterAsText, AddError
 from os.path import basename
 from Conversion_ZipNG911Geodatabase import createNG911Zip
 
-def validateAllPrep(gdb, domain, esbList, ESZ, template10, zipFlag, zipPath):
+def validateAllPrep(gdb, domain, esbList, ESZ, zipFlag, zipPath):
 
-    if template10 == 'true':
-        version = "10"
-    else:
-        version = "11"
+##    if template10 == 'true':
+##        version = "10"
+##    else:
+##        version = "11"
 
     gdbObject = getGDBObject(gdb)
     fcList = [gdbObject.AddressPoints, gdbObject.AuthoritativeBoundary, gdbObject.RoadAlias, gdbObject.RoadCenterline]
@@ -35,7 +35,7 @@ def validateAllPrep(gdb, domain, esbList, ESZ, template10, zipFlag, zipPath):
 
     for e in esbList:
         e = e.replace("'", "")
-        for l in ['EMS','FIRE','LAW']:
+        for l in ['EMS','FIRE','LAW','PSAP','ESB']:
             if l in e.upper():
                 fcList.append(e)
                 e1 = basename(e)
@@ -54,7 +54,7 @@ def validateAllPrep(gdb, domain, esbList, ESZ, template10, zipFlag, zipPath):
     currentPathSettings.domainsFolderPath = domain
     currentPathSettings.esbList = esb
     currentPathSettings.fcList = fcList + esbPath
-    currentPathSettings.gdbVersion = version
+##    currentPathSettings.gdbVersion = version
     currentPathSettings.ESZ = ESZ
 
     #run sanity checks
@@ -72,9 +72,9 @@ def main():
     domain = GetParameterAsText(1)
     esbList = GetParameterAsText(2).split(";")
     ESZ = GetParameterAsText(3)
-    template10 = GetParameterAsText(4)
+##    template10 = GetParameterAsText(4)
 
-    validateAllPrep(gdb, domain, esbList, ESZ, template10, "false", "")
+    validateAllPrep(gdb, domain, esbList, ESZ, "false", "")
 
 if __name__ == '__main__':
     main()

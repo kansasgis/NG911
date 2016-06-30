@@ -27,7 +27,7 @@ def main():
     checkCutbacks = GetParameterAsText(6)
     checkDirectionality = GetParameterAsText(7)
     checkRoadAliases = GetParameterAsText(8)
-    template10 = GetParameterAsText(9)
+##    template10 = GetParameterAsText(9)
 
     #create check list
     checkList = [checkValuesAgainstDomain,checkFeatureLocations,checkRoadFrequency,checkUniqueIDs,checkCutbacks,checkDirectionality, checkRoadAliases]
@@ -46,10 +46,10 @@ def main():
     currentPathSettings.esbList = []
     currentPathSettings.checkList = checkList
 
-    if template10 == 'true':
-        currentPathSettings.gdbVersion = "10"
-    else:
-        currentPathSettings.gdbVersion = "11"
+##    if template10 == 'true':
+##        currentPathSettings.gdbVersion = "10"
+##    else:
+##        currentPathSettings.gdbVersion = "11"
 
     #launch the data check
     main_check(checkType, currentPathSettings)

@@ -1,12 +1,15 @@
 readme.txt for Kansas NG911 GIS Tools
 
-These tools assist with various tasks in preparing and validating data for the Kansas NG911 GIS project
+These tools assist with various tasks in preparing and validating data for the Kansas NG911 GIS project. 
+
+These tools are intended for ArcGIS Desktop version 10.3 and higher.
 
 The project consists of:
 	readme.txt
 	Kansas NG911 GIS Tools.tbx
 	Doc
 		AdjustmentTools.docx
+		ComparisonTools.docx
 		ConversionTools.docx
 		Downloading_TN_records_from_911Net.docx
 		EnhancementTools.docx
@@ -42,6 +45,7 @@ The project consists of:
 		Adjustment_CreateGeocodeExceptions.py
 		Adjustment_FixDomainCase.py
 		Adjustment_FixDuplicateESBIDs.py
+		Comparison_CompareDataLayers.py
 		Conversion_GDB10to11.py
 		Conversion_GDBtoShapefile.py
 		Conversion_ZipNG911Geodatabase.py
@@ -55,10 +59,12 @@ The project consists of:
 		Enhancement_XYUSNGCalc.py
 		Enhancement_VerifyRoadAlias.py
 		Metadata_EnhanceMetadata.py
+		NG911_arcpy_shortcuts.py
 		NG911_Config.py
 		NG911_DataCheck.py
 		NG911_DataFixes.py
 		Submission_CheckAllAndZip.py
+		ToolboxVersion.json
 		Validation_CheckAddressPointsLaunch.py
 		Validation_CheckyAdminBndLaunch.py
 		Validation_CheckAll.py
