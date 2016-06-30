@@ -645,10 +645,10 @@ def checkUniqueIDFrequency(currentPathSettings):
         except:
             print "objects cannot be deleted, they don't exist"
 
-    else:
-        for fc in fcList:
-            fc = basename(fc)
-            layerList.append(fc)
+
+    for fc in fcList:
+        fc = basename(fc)
+        layerList.append(fc)
 
     #loop through layers in the gdb that aren't esb & ESB_IDS
 ##    layers = getCurrentLayerList(esb)
