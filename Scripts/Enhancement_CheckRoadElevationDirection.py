@@ -124,7 +124,7 @@ def main():
 
     if len(badSegs) > 0:
         for badSeg in badSegs:
-            val = (today, report, fc, a.ELEV_F + " " + aELEV_T, badSeg)
+            val = (today, report, fc, a.ELEV_F + " " + a.ELEV_T, badSeg)
             values.append(val)
 
     if values != []:

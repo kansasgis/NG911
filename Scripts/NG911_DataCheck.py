@@ -250,283 +250,292 @@ def geocodeAddressPoints(pathsInfoObject):
     streetPath = gdbObject.RoadCenterline
     roadAliasPath = gdbObject.RoadAlias
 
-    userMessage("Geocoding address points...")
+    if Exists(addressPointPath) and Exists(streetPath) and Exists(roadAliasPath):
 
-    gc_table = gdbObject.GeocodeTable
-    sl_field = "SingleLineInput"
-    Locator = gdbObject.Locator
-    addyview = "addy_view"
-    output = "gc_test"
+        userMessage("Geocoding address points...")
 
-    # Get the fields from the input
-    fields = ListFieldNames(addressPointPath)
+        gc_table = gdbObject.GeocodeTable
+        sl_field = "SingleLineInput"
+        Locator = gdbObject.Locator
+        addyview = "addy_view"
+        output = "gc_test"
 
-    # Create a fieldinfo object
-    fieldinfo = FieldInfo()
+        # Get the fields from the input
+        fields = ListFieldNames(addressPointPath)
 
-    # Iterate through the fields and set them to fieldinfo
-    for field in fields:
-        if field in (a_obj.LABEL, a_obj.ZIP):
-            fieldinfo.addField(field, field, "VISIBLE", "")
-    else:
-        fieldinfo.addField(field, field, "HIDDEN", "")
+        # Create a fieldinfo object
+        fieldinfo = FieldInfo()
 
-    userMessage("Preparing addresses...")
-    # The created addyview layer will have fields as set in fieldinfo object
-    if "SUBMIT" in fields:
-        wc = a_obj.SUBMIT + " not in ('N')"
-        MakeTableView_management(addressPointPath, addyview, wc, "", fieldinfo)
-    else:
-        MakeTableView_management(addressPointPath, addyview, "", "", fieldinfo)
-
-    # To persist the layer on disk make a copy of the view
-    try:
-        deleteExisting(gc_table)
-    except:
-        userMessage("Please manually delete the table called gc_table and then run the geocoding again")
-
-
-    if not Exists(gc_table):
-        CopyRows_management(addyview, gc_table)
-
-        #add single line input field for geocoding
-        AddField_management(gc_table, sl_field, "TEXT", "", "", 250)
-
-        #calculate field
-        exp = '[' + a_obj.LABEL + '] & " " & [' + a_obj.ZIP + ']'
-        CalculateField_management(gc_table, sl_field, exp, "VB")
-
-        #generate locator
-        fieldMap = """'Primary Table:Feature ID' RoadCenterline:SEGID VISIBLE NONE;'*Primary Table:From Left' RoadCenterline:L_F_ADD VISIBLE NONE;
-        '*Primary Table:To Left' RoadCenterline:L_T_ADD VISIBLE NONE;'*Primary Table:From Right' RoadCenterline:R_F_ADD VISIBLE NONE;
-        '*Primary Table:To Right' RoadCenterline:R_T_ADD VISIBLE NONE;'Primary Table:Prefix Direction' RoadCenterline:PRD VISIBLE NONE;
-        'Primary Table:Prefix Type' RoadCenterline:STP VISIBLE NONE;'*Primary Table:Street Name' RoadCenterline:RD VISIBLE NONE;
-        'Primary Table:Suffix Type' RoadCenterline:STS VISIBLE NONE;'Primary Table:Suffix Direction' RoadCenterline:POD VISIBLE NONE;
-        'Primary Table:Left City or Place' RoadCenterline:MUNI_L VISIBLE NONE;
-        'Primary Table:Right City or Place' RoadCenterline:MUNI_R VISIBLE NONE;
-        'Primary Table:Left ZIP Code' RoadCenterline:ZIP_L VISIBLE NONE;'Primary Table:Right ZIP Code' RoadCenterline:ZIP_R VISIBLE NONE;
-        'Primary Table:Left State' RoadCenterline:STATE_L VISIBLE NONE;'Primary Table:Right State' RoadCenterline:STATE_R VISIBLE NONE;
-        'Primary Table:Left Street ID' <None> VISIBLE NONE;'Primary Table:Right Street ID' <None> VISIBLE NONE;
-        'Primary Table:Min X value for extent' <None> VISIBLE NONE;'Primary Table:Max X value for extent' <None> VISIBLE NONE;
-        'Primary Table:Min Y value for extent' <None> VISIBLE NONE;'Primary Table:Max Y value for extent' <None> VISIBLE NONE;
-        'Primary Table:Left Additional Field' <None> VISIBLE NONE;'Primary Table:Right Additional Field' <None> VISIBLE NONE;
-        'Primary Table:Altname JoinID' RoadCenterline:SEGID VISIBLE NONE;'*Alternate Name Table:JoinID' RoadAlias:SEGID VISIBLE NONE;
-        'Alternate Name Table:Prefix Direction' RoadAlias:A_PRD VISIBLE NONE;'Alternate Name Table:Prefix Type' <None> VISIBLE NONE;
-        'Alternate Name Table:Street Name' RoadAlias:A_RD VISIBLE NONE;'Alternate Name Table:Suffix Type' RoadAlias:A_STS VISIBLE NONE;
-        'Alternate Name Table:Suffix Direction' RoadAlias:A_POD VISIBLE NONE"""
-
-        userMessage("Creating address locator...")
-        # Process: Create Address Locator
-        if Exists(Locator):
-            RebuildAddressLocator_geocoding(Locator)
+        # Iterate through the fields and set them to fieldinfo
+        for field in fields:
+            if field in (a_obj.LABEL, a_obj.ZIP):
+                fieldinfo.addField(field, field, "VISIBLE", "")
         else:
-            try:
-                CreateAddressLocator_geocoding("US Address - Dual Ranges", streetPath + " 'Primary Table';" + roadAliasPath + " 'Alternate Name Table'", fieldMap, Locator, "")
-            except:
+            fieldinfo.addField(field, field, "HIDDEN", "")
+
+        userMessage("Preparing addresses...")
+        # The created addyview layer will have fields as set in fieldinfo object
+        if "SUBMIT" in fields:
+            wc = a_obj.SUBMIT + " not in ('N')"
+            MakeTableView_management(addressPointPath, addyview, wc, "", fieldinfo)
+        else:
+            MakeTableView_management(addressPointPath, addyview, "", "", fieldinfo)
+
+        # To persist the layer on disk make a copy of the view
+        try:
+            deleteExisting(gc_table)
+        except:
+            userMessage("Please manually delete the table called gc_table and then run the geocoding again")
+
+
+        if not Exists(gc_table):
+            CopyRows_management(addyview, gc_table)
+
+            #add single line input field for geocoding
+            AddField_management(gc_table, sl_field, "TEXT", "", "", 250)
+
+            #calculate field
+            exp = '[' + a_obj.LABEL + '] & " " & [' + a_obj.ZIP + ']'
+            CalculateField_management(gc_table, sl_field, exp, "VB")
+
+            #generate locator
+            fieldMap = """'Primary Table:Feature ID' RoadCenterline:SEGID VISIBLE NONE;'*Primary Table:From Left' RoadCenterline:L_F_ADD VISIBLE NONE;
+            '*Primary Table:To Left' RoadCenterline:L_T_ADD VISIBLE NONE;'*Primary Table:From Right' RoadCenterline:R_F_ADD VISIBLE NONE;
+            '*Primary Table:To Right' RoadCenterline:R_T_ADD VISIBLE NONE;'Primary Table:Prefix Direction' RoadCenterline:PRD VISIBLE NONE;
+            'Primary Table:Prefix Type' RoadCenterline:STP VISIBLE NONE;'*Primary Table:Street Name' RoadCenterline:RD VISIBLE NONE;
+            'Primary Table:Suffix Type' RoadCenterline:STS VISIBLE NONE;'Primary Table:Suffix Direction' RoadCenterline:POD VISIBLE NONE;
+            'Primary Table:Left City or Place' RoadCenterline:MUNI_L VISIBLE NONE;
+            'Primary Table:Right City or Place' RoadCenterline:MUNI_R VISIBLE NONE;
+            'Primary Table:Left ZIP Code' RoadCenterline:ZIP_L VISIBLE NONE;'Primary Table:Right ZIP Code' RoadCenterline:ZIP_R VISIBLE NONE;
+            'Primary Table:Left State' RoadCenterline:STATE_L VISIBLE NONE;'Primary Table:Right State' RoadCenterline:STATE_R VISIBLE NONE;
+            'Primary Table:Left Street ID' <None> VISIBLE NONE;'Primary Table:Right Street ID' <None> VISIBLE NONE;
+            'Primary Table:Min X value for extent' <None> VISIBLE NONE;'Primary Table:Max X value for extent' <None> VISIBLE NONE;
+            'Primary Table:Min Y value for extent' <None> VISIBLE NONE;'Primary Table:Max Y value for extent' <None> VISIBLE NONE;
+            'Primary Table:Left Additional Field' <None> VISIBLE NONE;'Primary Table:Right Additional Field' <None> VISIBLE NONE;
+            'Primary Table:Altname JoinID' RoadCenterline:SEGID VISIBLE NONE;'*Alternate Name Table:JoinID' RoadAlias:SEGID VISIBLE NONE;
+            'Alternate Name Table:Prefix Direction' RoadAlias:A_PRD VISIBLE NONE;'Alternate Name Table:Prefix Type' <None> VISIBLE NONE;
+            'Alternate Name Table:Street Name' RoadAlias:A_RD VISIBLE NONE;'Alternate Name Table:Suffix Type' RoadAlias:A_STS VISIBLE NONE;
+            'Alternate Name Table:Suffix Direction' RoadAlias:A_POD VISIBLE NONE"""
+
+            userMessage("Creating address locator...")
+            # Process: Create Address Locator
+            if Exists(Locator):
+                RebuildAddressLocator_geocoding(Locator)
+            else:
                 try:
-                    fieldMap = """'Primary Table:Feature ID' RoadCenterline:SEGID VISIBLE NONE;'*Primary Table:From Left' RoadCenterline:L_F_ADD VISIBLE NONE;
-                    '*Primary Table:To Left' RoadCenterline:L_T_ADD VISIBLE NONE;'*Primary Table:From Right' RoadCenterline:R_F_ADD VISIBLE NONE;
-                    '*Primary Table:To Right' RoadCenterline:R_T_ADD VISIBLE NONE;'Primary Table:Prefix Direction' RoadCenterline:PRD VISIBLE NONE;
-                    'Primary Table:Prefix Type' RoadCenterline:STP VISIBLE NONE;'*Primary Table:Street Name' RoadCenterline:RD VISIBLE NONE;
-                    'Primary Table:Suffix Type' RoadCenterline:STS VISIBLE NONE;'Primary Table:Suffix Direction' RoadCenterline:POD VISIBLE NONE;
-                    'Primary Table:Left City or Place' RoadCenterline:MUNI_L VISIBLE NONE;
-                    'Primary Table:Right City or Place' RoadCenterline:MUNI_R VISIBLE NONE;
-                    'Primary Table:Left ZIP Code' RoadCenterline:ZIP_L VISIBLE NONE;'Primary Table:Right ZIP Code' RoadCenterline:ZIP_R VISIBLE NONE;
-                    'Primary Table:Left State' RoadCenterline:STATE_L VISIBLE NONE;'Primary Table:Right State' RoadCenterline:STATE_R VISIBLE NONE;
-                    'Primary Table:Left Street ID' <None> VISIBLE NONE;'Primary Table:Right Street ID' <None> VISIBLE NONE;
-                    'Primary Table:Display X' <None> VISIBLE NONE;'Primary Table:Display Y' <None> VISIBLE NONE;
-                    'Primary Table:Min X value for extent' <None> VISIBLE NONE;'Primary Table:Max X value for extent' <None> VISIBLE NONE;
-                    'Primary Table:Min Y value for extent' <None> VISIBLE NONE;'Primary Table:Max Y value for extent' <None> VISIBLE NONE;
-                    'Primary Table:Left Additional Field' <None> VISIBLE NONE;'Primary Table:Right Additional Field' <None> VISIBLE NONE;
-                    'Primary Table:Altname JoinID' RoadCenterline:SEGID VISIBLE NONE;'*Alternate Name Table:JoinID' RoadAlias:SEGID VISIBLE NONE;
-                    'Alternate Name Table:Prefix Direction' RoadAlias:A_PRD VISIBLE NONE;'Alternate Name Table:Prefix Type' <None> VISIBLE NONE;
-                    'Alternate Name Table:Street Name' RoadAlias:A_RD VISIBLE NONE;'Alternate Name Table:Suffix Type' RoadAlias:A_STS VISIBLE NONE;
-                    'Alternate Name Table:Suffix Direction' RoadAlias:A_POD VISIBLE NONE"""
-                    CreateAddressLocator_geocoding("US Address - Dual Ranges", streetPath + " 'Primary Table';" + roadAliasPath + " 'Alternate Name Table'", fieldMap, Locator, "", "DISABLED")
-                except Exception as E:
+                    CreateAddressLocator_geocoding("US Address - Dual Ranges", streetPath + " 'Primary Table';" + roadAliasPath + " 'Alternate Name Table'", fieldMap, Locator, "")
+                except:
                     try:
                         fieldMap = """'Primary Table:Feature ID' RoadCenterline:SEGID VISIBLE NONE;'*Primary Table:From Left' RoadCenterline:L_F_ADD VISIBLE NONE;
                         '*Primary Table:To Left' RoadCenterline:L_T_ADD VISIBLE NONE;'*Primary Table:From Right' RoadCenterline:R_F_ADD VISIBLE NONE;
                         '*Primary Table:To Right' RoadCenterline:R_T_ADD VISIBLE NONE;'Primary Table:Prefix Direction' RoadCenterline:PRD VISIBLE NONE;
                         'Primary Table:Prefix Type' RoadCenterline:STP VISIBLE NONE;'*Primary Table:Street Name' RoadCenterline:RD VISIBLE NONE;
                         'Primary Table:Suffix Type' RoadCenterline:STS VISIBLE NONE;'Primary Table:Suffix Direction' RoadCenterline:POD VISIBLE NONE;
-                        'Primary Table:Left City or Place' RoadCenterline:MUNI_L VISIBLE NONE;'Primary Table:Right City or Place' RoadCenterline:MUNI_R VISIBLE NONE;
+                        'Primary Table:Left City or Place' RoadCenterline:MUNI_L VISIBLE NONE;
+                        'Primary Table:Right City or Place' RoadCenterline:MUNI_R VISIBLE NONE;
                         'Primary Table:Left ZIP Code' RoadCenterline:ZIP_L VISIBLE NONE;'Primary Table:Right ZIP Code' RoadCenterline:ZIP_R VISIBLE NONE;
                         'Primary Table:Left State' RoadCenterline:STATE_L VISIBLE NONE;'Primary Table:Right State' RoadCenterline:STATE_R VISIBLE NONE;
                         'Primary Table:Left Street ID' <None> VISIBLE NONE;'Primary Table:Right Street ID' <None> VISIBLE NONE;
                         'Primary Table:Display X' <None> VISIBLE NONE;'Primary Table:Display Y' <None> VISIBLE NONE;
                         'Primary Table:Min X value for extent' <None> VISIBLE NONE;'Primary Table:Max X value for extent' <None> VISIBLE NONE;
                         'Primary Table:Min Y value for extent' <None> VISIBLE NONE;'Primary Table:Max Y value for extent' <None> VISIBLE NONE;
-                        'Primary Table:Left parity' <None> VISIBLE NONE;'Primary Table:Right parity' <None> VISIBLE NONE;
                         'Primary Table:Left Additional Field' <None> VISIBLE NONE;'Primary Table:Right Additional Field' <None> VISIBLE NONE;
-                        '*Primary Table:Altname JoinID' RoadCenterline:SEGID VISIBLE NONE;'*Alias Table:Alias' RoadAlias:SEGID VISIBLE NONE;
-                        '*Alias Table:Street' RoadAlias:A_RD VISIBLE NONE;'Alias Table:City' <None> VISIBLE NONE;'Alias Table:State' <None> VISIBLE NONE;
-                        'Alias Table:ZIP' <None> VISIBLE NONE"""
-                        CreateAddressLocator_geocoding("US Address - Dual Ranges", streetPath + " 'Primary Table';" + roadAliasPath + " 'Alias Table'", fieldMap, Locator, "", "DISABLED")
+                        'Primary Table:Altname JoinID' RoadCenterline:SEGID VISIBLE NONE;'*Alternate Name Table:JoinID' RoadAlias:SEGID VISIBLE NONE;
+                        'Alternate Name Table:Prefix Direction' RoadAlias:A_PRD VISIBLE NONE;'Alternate Name Table:Prefix Type' <None> VISIBLE NONE;
+                        'Alternate Name Table:Street Name' RoadAlias:A_RD VISIBLE NONE;'Alternate Name Table:Suffix Type' RoadAlias:A_STS VISIBLE NONE;
+                        'Alternate Name Table:Suffix Direction' RoadAlias:A_POD VISIBLE NONE"""
+                        CreateAddressLocator_geocoding("US Address - Dual Ranges", streetPath + " 'Primary Table';" + roadAliasPath + " 'Alternate Name Table'", fieldMap, Locator, "", "DISABLED")
                     except Exception as E:
-                        userMessage(Locator)
-                        userMessage("Cannot create address locator. Please email kristen@kgs.ku.edu this error message: " + str(E))
+                        try:
+                            fieldMap = """'Primary Table:Feature ID' RoadCenterline:SEGID VISIBLE NONE;'*Primary Table:From Left' RoadCenterline:L_F_ADD VISIBLE NONE;
+                            '*Primary Table:To Left' RoadCenterline:L_T_ADD VISIBLE NONE;'*Primary Table:From Right' RoadCenterline:R_F_ADD VISIBLE NONE;
+                            '*Primary Table:To Right' RoadCenterline:R_T_ADD VISIBLE NONE;'Primary Table:Prefix Direction' RoadCenterline:PRD VISIBLE NONE;
+                            'Primary Table:Prefix Type' RoadCenterline:STP VISIBLE NONE;'*Primary Table:Street Name' RoadCenterline:RD VISIBLE NONE;
+                            'Primary Table:Suffix Type' RoadCenterline:STS VISIBLE NONE;'Primary Table:Suffix Direction' RoadCenterline:POD VISIBLE NONE;
+                            'Primary Table:Left City or Place' RoadCenterline:MUNI_L VISIBLE NONE;'Primary Table:Right City or Place' RoadCenterline:MUNI_R VISIBLE NONE;
+                            'Primary Table:Left ZIP Code' RoadCenterline:ZIP_L VISIBLE NONE;'Primary Table:Right ZIP Code' RoadCenterline:ZIP_R VISIBLE NONE;
+                            'Primary Table:Left State' RoadCenterline:STATE_L VISIBLE NONE;'Primary Table:Right State' RoadCenterline:STATE_R VISIBLE NONE;
+                            'Primary Table:Left Street ID' <None> VISIBLE NONE;'Primary Table:Right Street ID' <None> VISIBLE NONE;
+                            'Primary Table:Display X' <None> VISIBLE NONE;'Primary Table:Display Y' <None> VISIBLE NONE;
+                            'Primary Table:Min X value for extent' <None> VISIBLE NONE;'Primary Table:Max X value for extent' <None> VISIBLE NONE;
+                            'Primary Table:Min Y value for extent' <None> VISIBLE NONE;'Primary Table:Max Y value for extent' <None> VISIBLE NONE;
+                            'Primary Table:Left parity' <None> VISIBLE NONE;'Primary Table:Right parity' <None> VISIBLE NONE;
+                            'Primary Table:Left Additional Field' <None> VISIBLE NONE;'Primary Table:Right Additional Field' <None> VISIBLE NONE;
+                            '*Primary Table:Altname JoinID' RoadCenterline:SEGID VISIBLE NONE;'*Alias Table:Alias' RoadAlias:SEGID VISIBLE NONE;
+                            '*Alias Table:Street' RoadAlias:A_RD VISIBLE NONE;'Alias Table:City' <None> VISIBLE NONE;'Alias Table:State' <None> VISIBLE NONE;
+                            'Alias Table:ZIP' <None> VISIBLE NONE"""
+                            CreateAddressLocator_geocoding("US Address - Dual Ranges", streetPath + " 'Primary Table';" + roadAliasPath + " 'Alias Table'", fieldMap, Locator, "", "DISABLED")
+                        except Exception as E:
+                            userMessage(Locator)
+                            userMessage("Cannot create address locator. Please email kristen@kgs.ku.edu this error message: " + str(E))
 
 
-        if Exists(Locator):
-            userMessage("Geocoding addresses...")
+            if Exists(Locator):
+                userMessage("Geocoding addresses...")
 
-            #geocode table address
-            deleteExisting(output)
+                #geocode table address
+                deleteExisting(output)
 
-            #define geocoding exception table
-            ge = join(gdb, "GeocodeExceptions")
+                #define geocoding exception table
+                ge = join(gdb, "GeocodeExceptions")
 
-            i = 0
+                i = 0
 
-            #set up geocoding
-            gc_fieldMap = "Street " + a_obj.LABEL + " VISIBLE NONE;City " + a_obj.MUNI + " VISIBLE NONE;State " + a_obj.STATE + " VISIBLE NONE;ZIP " + a_obj.ZIP + " VISIBLE NONE"
+                #set up geocoding
+                gc_fieldMap = "Street " + a_obj.LABEL + " VISIBLE NONE;City " + a_obj.MUNI + " VISIBLE NONE;State " + a_obj.STATE + " VISIBLE NONE;ZIP " + a_obj.ZIP + " VISIBLE NONE"
 
-            #geocode addresses
-            try:
-                GeocodeAddresses_geocoding(gc_table, Locator, gc_fieldMap, output, "STATIC")
-                i = 1
-            except:
-                gc_fieldMap =  "Street " + a_obj.LABEL + " VISIBLE NONE;City " + a_obj.MUNI + " VISIBLE NONE;State " + a_obj.STATE + " VISIBLE NONE"
-
+                #geocode addresses
                 try:
                     GeocodeAddresses_geocoding(gc_table, Locator, gc_fieldMap, output, "STATIC")
                     i = 1
                 except:
-                    userMessage("Could not geocode address points")
+                    gc_fieldMap =  "Street " + a_obj.LABEL + " VISIBLE NONE;City " + a_obj.MUNI + " VISIBLE NONE;State " + a_obj.STATE + " VISIBLE NONE"
 
-            #report records that didn't geocode
-            if i == 1:
-                wc = "Status <> 'M'"
-                lyr = "lyr"
+                    try:
+                        GeocodeAddresses_geocoding(gc_table, Locator, gc_fieldMap, output, "STATIC")
+                        i = 1
+                    except:
+                        userMessage("Could not geocode address points")
 
-                MakeFeatureLayer_management(output, lyr, wc)
+                #report records that didn't geocode
+                if i == 1:
+                    wc = "Status <> 'M'"
+                    lyr = "lyr"
 
-                rCount = getFastCount(lyr)
-                if rCount > 0:
-                    #set up parameters to report records that didn't geocode
-                    values = []
-                    recordType = "fieldValues"
-                    today = strftime("%m/%d/%y")
-                    filename = "AddressPoints"
+                    MakeFeatureLayer_management(output, lyr, wc)
 
-                    rfields = (a_obj.UNIQUEID, "Status", a_obj.LOCTYPE)
-                    with SearchCursor(output, rfields, wc) as rRows:
-                        for rRow in rRows:
-                            fID = rRow[0]
+                    rCount = getFastCount(lyr)
+                    if rCount > 0:
+                        #set up parameters to report records that didn't geocode
+                        values = []
+                        recordType = "fieldValues"
+                        today = strftime("%m/%d/%y")
+                        filename = "AddressPoints"
 
-                            #see if the fID exists as an exception
-                            if Exists(ge):
-                                wcGE = a_obj.UNIQUEID + " = '" + fID + "'"
-                                tblGE = "tblGE"
-                                MakeTableView_management(ge, tblGE, wcGE)
+                        rfields = (a_obj.UNIQUEID, "Status", a_obj.LOCTYPE)
+                        with SearchCursor(output, rfields, wc) as rRows:
+                            for rRow in rRows:
+                                fID = rRow[0]
 
-                                geCount = getFastCount(tblGE)
+                                #see if the fID exists as an exception
+                                if Exists(ge):
+                                    wcGE = a_obj.UNIQUEID + " = '" + fID + "'"
+                                    tblGE = "tblGE"
+                                    MakeTableView_management(ge, tblGE, wcGE)
 
-                                if geCount != 0:
-                                    userMessage(fID + " has already been marked as a geocoding exception")
-                                    rCount = rCount - 1
-                                else:
-                                    #report as an error
-                                    if rRow[1] == "U":
-                                        report = str(fID) + " did not geocode against centerline."
-                                    elif rRow[1] == "T":
-                                        report = str(fID) + " geocoded against more than one centerline segment. Possible address range overlap."
-                                    if rRow[2] != "PRIMARY":
-                                        report = "Notice: " + report
+                                    geCount = getFastCount(tblGE)
+
+                                    if geCount != 0:
+                                        userMessage(fID + " has already been marked as a geocoding exception")
                                         rCount = rCount - 1
                                     else:
-                                        report = "Error: " + report
+                                        #report as an error
+                                        if rRow[1] == "U":
+                                            report = str(fID) + " did not geocode against centerline."
+                                        elif rRow[1] == "T":
+                                            report = str(fID) + " geocoded against more than one centerline segment. Possible address range overlap."
+                                        if rRow[2] != "PRIMARY":
+                                            report = "Notice: " + report
+                                            rCount = rCount - 1
+                                        else:
+                                            report = "Error: " + report
+                                        val = (today, report, filename, "", fID)
+                                        values.append(val)
+                                    Delete_management(tblGE)
+
+                                else:
+                                    report = "Error: " + str(fID) + " did not geocode against centerline"
                                     val = (today, report, filename, "", fID)
                                     values.append(val)
-                                Delete_management(tblGE)
 
-                            else:
-                                report = "Error: " + str(fID) + " did not geocode against centerline"
-                                val = (today, report, filename, "", fID)
-                                values.append(val)
+                        if rCount > 0:
+                            userMessage("Completed geocoding with " + str(rCount) + " errors.")
+                            #report records
+                            if values != []:
+                                RecordResults(recordType, values, gdb)
+                        else:
+                            userMessage("Some records did not geocode, but they are marked as exceptions.")
 
-                    if rCount > 0:
-                        userMessage("Completed geocoding with " + str(rCount) + " errors.")
-                        #report records
-                        if values != []:
-                            RecordResults(recordType, values, gdb)
                     else:
-                        userMessage("Some records did not geocode, but they are marked as exceptions.")
+                        #this means all the records geocoded
+                        userMessage("All records geocoded successfully.")
+                        try:
+                            Delete_management(output)
+                        except:
+                            userMessage("Geocoding table could not be deleted")
 
-                else:
-                    #this means all the records geocoded
-                    userMessage("All records geocoded successfully.")
-                    try:
-                        Delete_management(output)
-                    except:
-                        userMessage("Geocoding table could not be deleted")
+                    Delete_management(lyr)
+                    del lyr
+            else:
+                userMessage("Could not geocode addresses")
 
-                Delete_management(lyr)
-                del lyr
-        else:
-            userMessage("Could not geocode addresses")
+    else:
+        AddWarning("One or more layers necessary for geocoding do no exist.")
 
 def checkDirectionality(fc,gdb):
     userMessage("Checking road directionality...")
 
-    #set variables
-    values = []
-    recordType = "fieldValues"
-    today = strftime("%m/%d/%y")
-    filename = "RoadCenterline"
-    report = "Notice: Segment's address range is from high to low instead of low to high"
+    if Exists(fc):
+        #set variables
+        values = []
+        recordType = "fieldValues"
+        today = strftime("%m/%d/%y")
+        filename = "RoadCenterline"
+        report = "Notice: Segment's address range is from high to low instead of low to high"
 
-    fields = ("SHAPE@", rc_obj.UNIQUEID, rc_obj.L_F_ADD, rc_obj.L_T_ADD, rc_obj.R_F_ADD, rc_obj.R_T_ADD)
+        fields = ("SHAPE@", rc_obj.UNIQUEID, rc_obj.L_F_ADD, rc_obj.L_T_ADD, rc_obj.R_F_ADD, rc_obj.R_T_ADD)
 
-    lyr400 = "lyr400"
-    #only check roads marked for submission
-    if fieldExists(fc, "SUBMIT"):
-        MakeFeatureLayer_management(fc, lyr400, rc_obj.SUBMIT + " not in ('N')")
+        lyr400 = "lyr400"
+        #only check roads marked for submission
+        if fieldExists(fc, "SUBMIT"):
+            MakeFeatureLayer_management(fc, lyr400, rc_obj.SUBMIT + " not in ('N')")
+        else:
+            MakeFeatureLayer_management(fc, lyr400)
+
+        with SearchCursor(lyr400, fields) as rows:
+            for row in rows:
+
+                #get unique id and from/to values
+                segid = row[1]
+                addyList = [row[2],row[3],row[4],row[5]]
+
+                #make sure it's not a blank road
+                if addyList != [0,0,0,0]:
+
+                    #set up values
+                    lFrom = addyList[0]
+                    lTo = addyList[1]
+                    rFrom = addyList[2]
+                    rTo = addyList[3]
+
+                    check = "both"
+                    issue = "no"
+
+                    #see if we're working with any 0's
+                    if lFrom == 0 or lTo == 0:
+                        check = "right"
+                    elif rFrom ==0 or rTo == 0:
+                        check = "left"
+
+                    #see if any road values don't follow low to high pattern
+                    if check == "both":
+                        if rTo < rFrom or lTo < lFrom:
+                            issue = "yes"
+                    elif check == "right":
+                        if rTo < rFrom:
+                            issue = "yes"
+                    elif check == "left":
+                        if lTo < lFrom:
+                            issue = "yes"
+
+                    if issue == "yes":
+                        val = (today, report, filename, "", segid)
+                        values.append(val)
+
+        Delete_management(lyr400)
+
     else:
-        MakeFeatureLayer_management(fc, lyr400)
-
-    with SearchCursor(lyr400, fields) as rows:
-        for row in rows:
-
-            #get unique id and from/to values
-            segid = row[1]
-            addyList = [row[2],row[3],row[4],row[5]]
-
-            #make sure it's not a blank road
-            if addyList != [0,0,0,0]:
-
-                #set up values
-                lFrom = addyList[0]
-                lTo = addyList[1]
-                rFrom = addyList[2]
-                rTo = addyList[3]
-
-                check = "both"
-                issue = "no"
-
-                #see if we're working with any 0's
-                if lFrom == 0 or lTo == 0:
-                    check = "right"
-                elif rFrom ==0 or rTo == 0:
-                    check = "left"
-
-                #see if any road values don't follow low to high pattern
-                if check == "both":
-                    if rTo < rFrom or lTo < lFrom:
-                        issue = "yes"
-                elif check == "right":
-                    if rTo < rFrom:
-                        issue = "yes"
-                elif check == "left":
-                    if lTo < lFrom:
-                        issue = "yes"
-
-                if issue == "yes":
-                    val = (today, report, filename, "", segid)
-                    values.append(val)
-
-    Delete_management(lyr400)
+        AddWarning(fc + " does not exist")
 
     #report records
     if values != []:
@@ -545,69 +554,74 @@ def checkESNandMuniAttribute(currentPathSettings):
     address_points = gdb_object.AddressPoints
     muni = gdb_object.MunicipalBoundary
 
-    addy_lyr = "addy_lyr"
-    MakeFeatureLayer_management(address_points, addy_lyr)
+    if Exists(address_points):
 
-    values = []
-    recordType = "fieldValues"
-    today = strftime("%m/%d/%y")
-    filename = "AddressPoints"
+        addy_lyr = "addy_lyr"
+        MakeFeatureLayer_management(address_points, addy_lyr)
 
-    searchDict = {esz: (esz_obj.ESN, esz_obj.UNIQUEID), muni: (mb_obj.MUNI, mb_obj.UNIQUEID)}
+        values = []
+        recordType = "fieldValues"
+        today = strftime("%m/%d/%y")
+        filename = "AddressPoints"
 
-    for layer, fieldList in searchDict.iteritems():
+        searchDict = {esz: (esz_obj.ESN, esz_obj.UNIQUEID), muni: (mb_obj.MUNI, mb_obj.UNIQUEID)}
 
-        if Exists(layer):
+        for layer, fieldList in searchDict.iteritems():
 
-            with SearchCursor(layer, fieldList) as polys:
-                for poly in polys:
-                    feature = fieldList[0]
-                    feature_value = poly[0]
+            if Exists(layer):
 
-                    #make feature layer
-                    lyr1 = "lyr1"
-                    qry = fieldList[1] + " = '" + str(poly[1]) + "'"
-                    MakeFeatureLayer_management(layer, lyr1, qry)
+                with SearchCursor(layer, fieldList) as polys:
+                    for poly in polys:
+                        feature = fieldList[0]
+                        feature_value = poly[0]
 
-                    #select by location
-                    SelectLayerByLocation_management(addy_lyr, "INTERSECT", lyr1)
+                        #make feature layer
+                        lyr1 = "lyr1"
+                        qry = fieldList[1] + " = '" + str(poly[1]) + "'"
+                        MakeFeatureLayer_management(layer, lyr1, qry)
 
-                    #loop through address points
-                    with SearchCursor(addy_lyr, (feature, a_obj.UNIQUEID, a_obj.LOCTYPE, "OBJECTID")) as rows:
-                        for row in rows:
-                            #get value
-                            value_addy = row[0]
-                            segID = row[1]
-                            objectID = row[3]
+                        #select by location
+                        SelectLayerByLocation_management(addy_lyr, "INTERSECT", lyr1)
 
-                            if segID is not None:
-                                try:
-                                    #see if the values match
-                                    if value_addy.strip() != feature_value.strip():
-                                        #this issue has been demoted to a notice
-                                        report = "Notice: Address point " + feature + " does not match " + feature + " in " + basename(layer) + " layer"
-                                        val = (today, report, filename, feature, segID)
-                                        values.append(val)
-                                except:
+                        #loop through address points
+                        with SearchCursor(addy_lyr, (feature, a_obj.UNIQUEID, a_obj.LOCTYPE, "OBJECTID")) as rows:
+                            for row in rows:
+                                #get value
+                                value_addy = row[0]
+                                segID = row[1]
+                                objectID = row[3]
+
+                                if segID is not None:
+                                    try:
+                                        #see if the values match
+                                        if value_addy.strip() != feature_value.strip():
+                                            #this issue has been demoted to a notice
+                                            report = "Notice: Address point " + feature + " does not match " + feature + " in " + basename(layer) + " layer"
+                                            val = (today, report, filename, feature, segID)
+                                            values.append(val)
+                                    except:
+                                        userMessage("Issue comparing value for " + feature + " with OBJECTID: " + str(objectID))
+                                else:
                                     userMessage("Issue comparing value for " + feature + " with OBJECTID: " + str(objectID))
-                            else:
-                                userMessage("Issue comparing value for " + feature + " with OBJECTID: " + str(objectID))
 
-                    Delete_management(lyr1)
-                    del lyr1
+                        Delete_management(lyr1)
+                        del lyr1
 
-            try:
-                del poly, polys
-            except:
-                userMessage("Poly/polys didn't exist in the Muni/ESN check. No worries.")
-    Delete_management(addy_lyr)
+                try:
+                    del poly, polys
+                except:
+                    userMessage("Poly/polys didn't exist in the Muni/ESN check. No worries.")
+        Delete_management(addy_lyr)
 
-    #report records
-    if values != []:
-        RecordResults(recordType, values, NG911gdb)
-        userMessage("Address point ESN/Municipality check complete. " + str(len(values)) + " issues found. Results are in the FieldValuesCheckResults table.")
+        #report records
+        if values != []:
+            RecordResults(recordType, values, NG911gdb)
+            userMessage("Address point ESN/Municipality check complete. " + str(len(values)) + " issues found. Results are in the FieldValuesCheckResults table.")
+        else:
+            userMessage("Address point ESN/Municipality check complete. No issues found.")
+
     else:
-        userMessage("Address point ESN/Municipality check complete. No issues found.")
+        AddWarning(address_points + " does not exist")
 
 def checkUniqueIDFrequency(currentPathSettings):
     gdb = currentPathSettings.gdbPath
@@ -647,8 +661,11 @@ def checkUniqueIDFrequency(currentPathSettings):
 
 
     for fc in fcList:
-        fc = basename(fc)
-        layerList.append(fc)
+        if Exists(fc):
+            fc = basename(fc)
+            layerList.append(fc)
+        else:
+            AddWarning(fc + " does not exist")
 
     #loop through layers in the gdb that aren't esb & ESB_IDS
 ##    layers = getCurrentLayerList(esb)
@@ -719,107 +736,111 @@ def checkUniqueIDFrequency(currentPathSettings):
     deleteExisting(table)
 
 def checkFrequency(fc, freq, fields, gdb):
-    fl = "fl"
-    fl1 = "fl1"
-    wc = "FREQUENCY > 1"
+    if Exists(fc):
+        fl = "fl"
+        fl1 = "fl1"
+        wc = "FREQUENCY > 1"
 
-    #remove the frequency table if it exists already
-    try:
-        deleteExisting(freq)
-    except:
-        userMessage("Please manually delete " + freq + " and then run the frequency check again")
+        #remove the frequency table if it exists already
+        try:
+            deleteExisting(freq)
+        except:
+            userMessage("Please manually delete " + freq + " and then run the frequency check again")
 
-    if not Exists(freq):
-##        try:
-            #see if we're working with address points or roads, create a where clause
-            filename = ""
-            if freq == join(gdb, "AP_Freq"):
-                filename = "AddressPoints"
-                wc1 = a_obj.HNO + " <> 0 and " + a_obj.LOCTYPE + " = 'PRIMARY'"
-            elif freq == join(gdb, "Road_Freq"):
-                filename = "RoadCenterline"
-                wc1 = rc_obj.L_F_ADD + " <> 0 AND " + rc_obj.L_T_ADD + " <> 0 AND " + rc_obj.R_F_ADD + " <> 0 AND " + rc_obj.R_T_ADD + " <> 0"
+        if not Exists(freq):
+    ##        try:
+                #see if we're working with address points or roads, create a where clause
+                filename = ""
+                if freq == join(gdb, "AP_Freq"):
+                    filename = "AddressPoints"
+                    wc1 = a_obj.HNO + " <> 0 and " + a_obj.LOCTYPE + " = 'PRIMARY'"
+                elif freq == join(gdb, "Road_Freq"):
+                    filename = "RoadCenterline"
+                    wc1 = rc_obj.L_F_ADD + " <> 0 AND " + rc_obj.L_T_ADD + " <> 0 AND " + rc_obj.R_F_ADD + " <> 0 AND " + rc_obj.R_T_ADD + " <> 0"
 
-            if fieldExists(fc, "SUBMIT"):
-                wc1 = wc1 + " AND " + rc_obj.SUBMIT + " not in ('N')"
+                if fieldExists(fc, "SUBMIT"):
+                    wc1 = wc1 + " AND " + rc_obj.SUBMIT + " not in ('N')"
 
-            #run query on fc to make sure 0's are ignored
-            MakeTableView_management(fc, fl1, wc1)
+                #run query on fc to make sure 0's are ignored
+                MakeTableView_management(fc, fl1, wc1)
 
-            #split field names
-            fieldsList = fields.split(";")
-            fieldCountList = []
-            fl_fields = []
-            for f in fieldsList:
-                f = f.strip()
-                fList = [f,"COUNT"]
-                fieldCountList.append(fList)
-                fl_fields.append(f)
+                #split field names
+                fieldsList = fields.split(";")
+                fieldCountList = []
+                fl_fields = []
+                for f in fieldsList:
+                    f = f.strip()
+                    fList = [f,"COUNT"]
+                    fieldCountList.append(fList)
+                    fl_fields.append(f)
 
-            #run frequency analysis
-            Statistics_analysis(fl1, freq, fieldCountList, fields)
+                #run frequency analysis
+                Statistics_analysis(fl1, freq, fieldCountList, fields)
 
-            #make feature layer
-            MakeTableView_management(freq, fl, wc)
+                #make feature layer
+                MakeTableView_management(freq, fl, wc)
 
-            #get count of the results
-            if getFastCount(fl) > 0:
+                #get count of the results
+                if getFastCount(fl) > 0:
 
-                #set up parameters to report duplicate records
-                values = []
-                recordType = "fieldValues"
-                today = strftime("%m/%d/%y")
+                    #set up parameters to report duplicate records
+                    values = []
+                    recordType = "fieldValues"
+                    today = strftime("%m/%d/%y")
 
-                #add information to FieldValuesCheckResults for all duplicates
+                    #add information to FieldValuesCheckResults for all duplicates
 
-                #get field count
-                fCount = len(fl_fields)
+                    #get field count
+                    fCount = len(fl_fields)
 
-                #get the unique ID field name
-                id1 = getUniqueIDField(filename.upper())
+                    #get the unique ID field name
+                    id1 = getUniqueIDField(filename.upper())
 
-                #run a search on the frequency table to report duplicate records
-                with SearchCursor(freq, fl_fields, wc) as rows:
-                    for row in rows:
-                        i = 0
-                        #generate where clause to find duplicate ID's
-                        wc = ""
-                        while i < fCount:
-                            stuff = ""
-                            if row[i] != None:
-                                try:
-                                    stuff = " = '" + row[i] + "' "
-                                except:
-                                    stuff = " = " + str(row[i]) + " "
-                            else:
-                                stuff = " is null "
-                            wc = wc + fl_fields[i] + stuff + "and "
-                            i += 1
+                    #run a search on the frequency table to report duplicate records
+                    with SearchCursor(freq, fl_fields, wc) as rows:
+                        for row in rows:
+                            i = 0
+                            #generate where clause to find duplicate ID's
+                            wc = ""
+                            while i < fCount:
+                                stuff = ""
+                                if row[i] != None:
+                                    try:
+                                        stuff = " = '" + row[i] + "' "
+                                    except:
+                                        stuff = " = " + str(row[i]) + " "
+                                else:
+                                    stuff = " is null "
+                                wc = wc + fl_fields[i] + stuff + "and "
+                                i += 1
 
-                        #trim last "and " off where clause
-                        wc = wc[0:-5]
+                            #trim last "and " off where clause
+                            wc = wc[0:-5]
 
-                        #find records with duplicates to get their unique ID's
-                        with SearchCursor(fl1, (id1), wc) as sRows:
-                            for sRow in sRows:
-                                fID = sRow[0]
-                                report = "Error: " + str(fID) + " has duplicate field information"
-                                val = (today, report, filename, "", fID)
-                                values.append(val)
+                            #find records with duplicates to get their unique ID's
+                            with SearchCursor(fl1, (id1), wc) as sRows:
+                                for sRow in sRows:
+                                    fID = sRow[0]
+                                    report = "Error: " + str(fID) + " has duplicate field information"
+                                    val = (today, report, filename, "", fID)
+                                    values.append(val)
 
-                #report duplicate records
-                if values != []:
-                    RecordResults(recordType, values, gdb)
-                    userMessage("Checked frequency. Results are in table FieldValuesCheckResults")
+                    #report duplicate records
+                    if values != []:
+                        RecordResults(recordType, values, gdb)
+                        userMessage("Checked frequency. Results are in table FieldValuesCheckResults")
 
-            else:
-                userMessage("Checked frequency. All records are unique.")
+                else:
+                    userMessage("Checked frequency. All records are unique.")
 
-            #clean up
-            try:
-                cleanUp([fl, fl1, freq])
-            except:
-                userMessage("Issue deleting a feature layer or frequency table.")
+                #clean up
+                try:
+                    cleanUp([fl, fl1, freq])
+                except:
+                    userMessage("Issue deleting a feature layer or frequency table.")
+
+    else:
+        AddWarning(fc + " does not exist")
 ##        except:
 ##            userMessage("Could not fully run frequency check")
 
@@ -975,103 +996,107 @@ def checkValuesAgainstDomain(pathsInfoObject):
     env.workspace = gdb
 
     for fullPath in fcList:
-        fc = basename(fullPath).replace("'", "")
-        layer = fc.upper()
-        if fc in esb:
-            layer = "ESB"
+        if Exists(fullPath):
+            fc = basename(fullPath).replace("'", "")
+            layer = fc.upper()
+            if fc in esb:
+                layer = "ESB"
 
-        #only check records marked for submission
-        fullPathlyr = "fullPathlyr"
-        worked = 0
-        if not fieldExists(fullPath, "SUBMIT"):
-            MakeTableView_management(fullPath, fullPathlyr)
-            worked = 1
-        else:
-            wc2 = rc_obj.SUBMIT + " not in ('N')"
-            try:
-                MakeTableView_management(fullPath, fullPathlyr, wc2)
+            #only check records marked for submission
+            fullPathlyr = "fullPathlyr"
+            worked = 0
+            if not fieldExists(fullPath, "SUBMIT"):
+                MakeTableView_management(fullPath, fullPathlyr)
                 worked = 1
-            except:
-                userMessage("Cannot check required field values for " + layer)
+            else:
+                wc2 = rc_obj.SUBMIT + " not in ('N')"
+                try:
+                    MakeTableView_management(fullPath, fullPathlyr, wc2)
+                    worked = 1
+                except:
+                    userMessage("Cannot check required field values for " + layer)
 
-        if worked == 1:
+            if worked == 1:
 
-            #get list of fields with domains
-            fieldsWDoms = fieldsWithDomains(fullPath)
+                #get list of fields with domains
+                fieldsWDoms = fieldsWithDomains(fullPath)
 
-    ##        #remove "STATUS" field if we aren't working with road centerline- edit suggested by Sherry M., 6/16/2015
-    ##        if layer != "ROADCENTERLINE":
-    ##            if "STATUS" in fieldsWDoms:
-    ##                fieldsWDoms.remove("STATUS")
+        ##        #remove "STATUS" field if we aren't working with road centerline- edit suggested by Sherry M., 6/16/2015
+        ##        if layer != "ROADCENTERLINE":
+        ##            if "STATUS" in fieldsWDoms:
+        ##                fieldsWDoms.remove("STATUS")
 
-            id1 = getUniqueIDField(layer)
-            if id1 != "":
-                #create complete field list
-                fieldNames = ListFieldNames(fc)
+                id1 = getUniqueIDField(layer)
+                if id1 != "":
+                    #create complete field list
+                    fieldNames = ListFieldNames(fc)
 
-                #see if fields from complete list have domains
-                for fieldN in fieldNames:
+                    #see if fields from complete list have domains
+                    for fieldN in fieldNames:
 
-                    #userMessage(fieldN)
-                    #if field has a domain
-                    if fieldN in fieldsWDoms:
-                        domain = ""
-                        if fieldN[0:2] == "A_":
-                            domain = fieldN[2:]
-                        else:
-                            domain = fieldN
+                        #userMessage(fieldN)
+                        #if field has a domain
+                        if fieldN in fieldsWDoms:
+                            domain = ""
+                            if fieldN[0:2] == "A_":
+                                domain = fieldN[2:]
+                            else:
+                                domain = fieldN
 
-                        userMessage("Checking: " + fieldN)
-                        #get the full domain dictionary
-                        domainDict = getFieldDomain(domain, folder)
+                            userMessage("Checking: " + fieldN)
+                            #get the full domain dictionary
+                            domainDict = getFieldDomain(domain, folder)
 
-                        if domainDict != {}:
-                            #put domain values in a list
-                            domainList = []
+                            if domainDict != {}:
+                                #put domain values in a list
+                                domainList = []
 
-                            for val in domainDict.iterkeys():
-                                domainList.append(val)
+                                for val in domainDict.iterkeys():
+                                    domainList.append(val)
 
-                            #add values for some CAD users of blank and space (edit suggested by Sherry M. & Keith S. Dec 2014)
-                            domainList.append('')
-                            domainList.append(" ")
+                                #add values for some CAD users of blank and space (edit suggested by Sherry M. & Keith S. Dec 2014)
+                                domainList.append('')
+                                domainList.append(" ")
 
-                            #if the domain is counties, add county names to the list without "COUNTY" so both will work (edit suggest by Keith S. Dec 2014)
-                            if fieldN == "COUNTY":
-                                q = len(domainList)
-                                i = 0
-                                while i < q:
-                                    dl1 = domainList[i].split(" ")[0]
-        ##                            userMessage(dl1)
-                                    domainList.append(dl1)
-                                    i += 1
+                                #if the domain is counties, add county names to the list without "COUNTY" so both will work (edit suggest by Keith S. Dec 2014)
+                                if fieldN == "COUNTY":
+                                    q = len(domainList)
+                                    i = 0
+                                    while i < q:
+                                        dl1 = domainList[i].split(" ")[0]
+            ##                            userMessage(dl1)
+                                        domainList.append(dl1)
+                                        i += 1
 
-                            #loop through records for that particular field to see if all values match domain
-                            wc = fieldN + " is not null"
-                            with SearchCursor(fullPathlyr, (id1, fieldN), wc) as rows:
-                                for row in rows:
-                                    if row[1] is not None:
-                                        fID = row[0]
-                                        #see if field domain is actually a range
-                                        if fieldN == a_obj.HNO:
-                                            hno = row[1]
-                                            if hno > 999999 or hno < 0:
-                                                report = "Error: Value " + str(row[1]) + " not in approved domain for field " + fieldN
-                                                val = (today, report, fc, fieldN, fID)
-                                                values.append(val)
-                                        #otherwise, compare row value to domain list
-                                        else:
-    ##                                        userMessage("Checking value: " + row[1])
-                                            if row[1] not in domainList:
-                                                report = "Error: Value " + str(row[1]) + " not in approved domain for field " + fieldN
-                                                val = (today, report, fc, fieldN, fID)
-                                                values.append(val)
+                                #loop through records for that particular field to see if all values match domain
+                                wc = fieldN + " is not null"
+                                with SearchCursor(fullPathlyr, (id1, fieldN), wc) as rows:
+                                    for row in rows:
+                                        if row[1] is not None:
+                                            fID = row[0]
+                                            #see if field domain is actually a range
+                                            if fieldN == a_obj.HNO:
+                                                hno = row[1]
+                                                if hno > 999999 or hno < 0:
+                                                    report = "Error: Value " + str(row[1]) + " not in approved domain for field " + fieldN
+                                                    val = (today, report, fc, fieldN, fID)
+                                                    values.append(val)
+                                            #otherwise, compare row value to domain list
+                                            else:
+        ##                                        userMessage("Checking value: " + row[1])
+                                                if row[1] not in domainList:
+                                                    report = "Error: Value " + str(row[1]) + " not in approved domain for field " + fieldN
+                                                    val = (today, report, fc, fieldN, fID)
+                                                    values.append(val)
 
-                        else:
-                            userMessage("Could not compare domain for " + fieldN)
-            userMessage("Checked " + layer)
+                            else:
+                                userMessage("Could not compare domain for " + fieldN)
+                userMessage("Checked " + layer)
 
-        Delete_management(fullPathlyr)
+            Delete_management(fullPathlyr)
+
+        else:
+            AddWarning(fullPath + " does not exist")
 
     if values != []:
         RecordResults(resultType, values, gdb)
@@ -1105,104 +1130,105 @@ def checkRequiredFieldValues(pathsInfoObject):
 ##                    fullPath = path.join(gdb, filename)
 ##        userMessage(fcList)
         for filename in fcList:
-##            userMessage(filename)
-            for l in ['FIRE','LAW','EMS','ESB','PSAP']:
-                if l in filename.upper():
-                    layer = "ESB"
-                else:
-                    layer = basename(filename).upper()
-##            userMessage(layer)
-            id1 = getUniqueIDField(layer)
-            if id1 != "":
-
-                #get the keyword to acquire required field names
-                keyword = getKeyword(layer, esb)
-
-                #goal: get list of required fields that are present in the feature class
-                #get the appropriate required field list
-                if keyword in rfDict:
-                    requiredFieldList = rfDict[keyword]
-
-                rfl = []
-                for rf in requiredFieldList:
-                    rfl.append(rf.upper())
-
-                #get list of fields in the feature class
-                fields = ListFieldNames(filename)
-
-                #convert lists to sets
-                set1 = set(rfl)
-                set2 = set(fields)
-
-                #get the set of fields that are the same
-                matchingFields = list(set1 & set2)
-
-                #only work with records that are for submission
-                lyr2 = "lyr2"
-                worked = 0
-                if not fieldExists(filename, "SUBMIT"):
-                    MakeTableView_management(filename, lyr2)
-                    worked = 1
-                else:
-                    wc2 = rc_obj.SUBMIT + " not in ('N')"
-                    try:
-                        MakeTableView_management(filename, lyr2, wc2)
-                        worked = 1
-                    except:
-                        userMessage("Cannot check required field values for " + layer)
-
-                if worked == 1:
-
-                    #get count of the results
-                    if getFastCount(lyr2) > 0:
-
-                        #create where clause to select any records where required values aren't populated
-                        wc = ""
-
-                        for field in matchingFields:
-                            wc = wc + " " + field + " is null or "
-
-                        wc = wc[0:-4]
-
-                        #make table view using where clause
-                        lyr = "lyr"
-                        MakeTableView_management(lyr2, lyr, wc)
-
-                        #if count is greater than 0, it means a required value somewhere isn't filled in
-                        if getFastCount(lyr) > 0:
-                            #make sure the objectID gets included in the search for reporting
-                            if id1 not in matchingFields:
-                                matchingFields.append(id1)
-
-                            #run a search cursor to get any/all records where a required field value is null
-                            with SearchCursor(lyr, (matchingFields), wc) as rows:
-                                for row in rows:
-                                    k = 0
-                                    #get object ID of the field
-                                    oid = str(row[matchingFields.index(id1)])
-
-                                    #loop through row
-                                    while k < len(matchingFields):
-                                        #see if the value is nothing
-                                        if row[k] is None:
-                                            #report the value if it is indeed null
-                                            report = "Error: " + matchingFields[k] + " is null for Feature ID " + oid
-                                            userMessage(report)
-                                            val = (today, report, filename, matchingFields[k], oid)
-                                            values.append(val)
-
-                                        #iterate!
-                                        k = k + 1
-                        else:
-                            userMessage( "All required values present for " + layer)
-
-                        Delete_management(lyr)
-                        del lyr
-
+            if Exists(filename):
+                for l in ['FIRE','LAW','EMS','ESB','PSAP']:
+                    if l in filename.upper():
+                        layer = "ESB"
                     else:
-                        userMessage(layer + " has no records marked for submission. Data will not be verified.")
-                    Delete_management(lyr2)
+                        layer = basename(filename).upper()
 
+                id1 = getUniqueIDField(layer)
+                if id1 != "":
+
+                    #get the keyword to acquire required field names
+                    keyword = getKeyword(layer, esb)
+
+                    #goal: get list of required fields that are present in the feature class
+                    #get the appropriate required field list
+                    if keyword in rfDict:
+                        requiredFieldList = rfDict[keyword]
+
+                    rfl = []
+                    for rf in requiredFieldList:
+                        rfl.append(rf.upper())
+
+                    #get list of fields in the feature class
+                    fields = ListFieldNames(filename)
+
+                    #convert lists to sets
+                    set1 = set(rfl)
+                    set2 = set(fields)
+
+                    #get the set of fields that are the same
+                    matchingFields = list(set1 & set2)
+
+                    #only work with records that are for submission
+                    lyr2 = "lyr2"
+                    worked = 0
+                    if not fieldExists(filename, "SUBMIT"):
+                        MakeTableView_management(filename, lyr2)
+                        worked = 1
+                    else:
+                        wc2 = rc_obj.SUBMIT + " not in ('N')"
+                        try:
+                            MakeTableView_management(filename, lyr2, wc2)
+                            worked = 1
+                        except:
+                            userMessage("Cannot check required field values for " + layer)
+
+                    if worked == 1:
+
+                        #get count of the results
+                        if getFastCount(lyr2) > 0:
+
+                            #create where clause to select any records where required values aren't populated
+                            wc = ""
+
+                            for field in matchingFields:
+                                wc = wc + " " + field + " is null or "
+
+                            wc = wc[0:-4]
+
+                            #make table view using where clause
+                            lyr = "lyr"
+                            MakeTableView_management(lyr2, lyr, wc)
+
+                            #if count is greater than 0, it means a required value somewhere isn't filled in
+                            if getFastCount(lyr) > 0:
+                                #make sure the objectID gets included in the search for reporting
+                                if id1 not in matchingFields:
+                                    matchingFields.append(id1)
+
+                                #run a search cursor to get any/all records where a required field value is null
+                                with SearchCursor(lyr, (matchingFields), wc) as rows:
+                                    for row in rows:
+                                        k = 0
+                                        #get object ID of the field
+                                        oid = str(row[matchingFields.index(id1)])
+
+                                        #loop through row
+                                        while k < len(matchingFields):
+                                            #see if the value is nothing
+                                            if row[k] is None:
+                                                #report the value if it is indeed null
+                                                report = "Error: " + matchingFields[k] + " is null for Feature ID " + oid
+                                                userMessage(report)
+                                                val = (today, report, filename, matchingFields[k], oid)
+                                                values.append(val)
+
+                                            #iterate!
+                                            k = k + 1
+                            else:
+                                userMessage( "All required values present for " + layer)
+
+                            Delete_management(lyr)
+                            del lyr
+
+                        else:
+                            userMessage(layer + " has no records marked for submission. Data will not be verified.")
+                        Delete_management(lyr2)
+            else:
+                AddWarning(filename + " does not exist.")
         if values != []:
             RecordResults("fieldValues", values, gdb)
 
@@ -1233,32 +1259,34 @@ def checkRequiredFields(pathsInfoObject):
         for dirpath, dirnames, filenames in Walk(gdb, True, '', False, ["Table","FeatureClass"]):
             for filename in filenames:
                 fullPath = path.join(gdb, filename)
+                if Exists(fullPath):
 
-                #list fields
-                fields = ListFieldNames(fullPath)
+                    #list fields
+                    fields = ListFieldNames(fullPath)
 
-                #get the keyword to acquire required field names
-                keyword = getKeyword(filename, esb)
+                    #get the keyword to acquire required field names
+                    keyword = getKeyword(filename, esb)
 
-                #get the appropriate comparison list
-                if keyword in rfDict:
-                    comparisonList = rfDict[keyword]
-                    ## print comparisonList
+                    #get the appropriate comparison list
+                    if keyword in rfDict:
+                        comparisonList = rfDict[keyword]
+                        ## print comparisonList
 
-                    #work around for geodatabases in version 1.0
-                    if not fieldExists(fullPath, "EXCEPTION"):
-                        if rc_obj.EXCEPTION in comparisonList:
-                            comparisonList.remove(rc_obj.EXCEPTION)
+                        #work around for geodatabases in version 1.0
+                        if not fieldExists(fullPath, "EXCEPTION"):
+                            if rc_obj.EXCEPTION in comparisonList:
+                                comparisonList.remove(rc_obj.EXCEPTION)
 
-                    #loop through required fields to make sure they exist in the geodatabase
-                    for comparisonField in comparisonList:
-                        if comparisonField.upper() not in fields:
-                            report = "Error: " + filename + " does not have required field " + comparisonField
-                            userMessage(report)
-                            #add issue to list of values
-                            val = (today, report, "Field")
-                            values.append(val)
-
+                        #loop through required fields to make sure they exist in the geodatabase
+                        for comparisonField in comparisonList:
+                            if comparisonField.upper() not in fields:
+                                report = "Error: " + filename + " does not have required field " + comparisonField
+                                userMessage(report)
+                                #add issue to list of values
+                                val = (today, report, "Field")
+                                values.append(val)
+                else:
+                    AddWarning(fullPath + " does not exist")
         #record issues if any exist
         if values != []:
             RecordResults("template", values, gdb)
@@ -1286,30 +1314,33 @@ def checkSubmissionNumbers(pathsInfoObject):
     values = []
 
     for fc in fcList:
-        #count records that are for submission
-        lyr2 = "lyr2"
-        if not fieldExists(fc, "SUBMIT"):
-            MakeTableView_management(fc, lyr2)
+        if Exists(fc):
+            #count records that are for submission
+            lyr2 = "lyr2"
+            if not fieldExists(fc, "SUBMIT"):
+                MakeTableView_management(fc, lyr2)
+            else:
+                wc2 = rc_obj.SUBMIT + " not in ('N')"
+                if "AddressPoints" in fc:
+                    wc2 = wc2 + " AND " + a_obj.LOCTYPE + " = 'PRIMARY'"
+                MakeTableView_management(fc, lyr2, wc2)
+
+            #get count of the results
+            count = getFastCount(lyr2)
+
+            userMessage(basename(fc) + ": " + str(count) + " records marked for submission")
+
+            if count == 0:
+                report = "Error: " + basename(fc) + " has 0 records for submission"
+                if "MunicipalBoundary" in fc:
+                    report = report.replace("Error", "Notice")
+                #add issue to list of values
+                val = (today, report, "Submission")
+                values.append(val)
+
+            Delete_management(lyr2)
         else:
-            wc2 = rc_obj.SUBMIT + " not in ('N')"
-            if "AddressPoints" in fc:
-                wc2 = wc2 + " AND " + a_obj.LOCTYPE + " = 'PRIMARY'"
-            MakeTableView_management(fc, lyr2, wc2)
-
-        #get count of the results
-        count = getFastCount(lyr2)
-
-        userMessage(basename(fc) + ": " + str(count) + " records marked for submission")
-
-        if count == 0:
-            report = "Error: " + basename(fc) + " has 0 records for submission"
-            if "MunicipalBoundary" in fc:
-                report = report.replace("Error", "Notice")
-            #add issue to list of values
-            val = (today, report, "Submission")
-            values.append(val)
-
-        Delete_management(lyr2)
+            AddWarning(fc + " does not exist")
 
     #record issues if any exist
     if values != []:
@@ -1342,62 +1373,69 @@ def checkFeatureLocations(pathsInfoObject):
 
     #see if authoritative boundary has more than 1 feature
     #if more than one feature is in the authoritative boundary, use the county boundary instead
-    if getFastCount(authBound) > 1:
+    if Exists(authBound):
+        if getFastCount(authBound) > 1:
+            authBound = gdbObject.CountyBoundary
+    else:
         authBound = gdbObject.CountyBoundary
 
     MakeFeatureLayer_management(authBound, ab)
 
     for fullPath in fcList:
-        if "CountyBoundary" not in fullPath:
-            userMessage(fullPath)
-            fl = "fl"
-            if fieldExists(fullPath, "SUBMIT") == False:
-                MakeFeatureLayer_management(fullPath, fl)
-            else:
-                wc = rc_obj.SUBMIT + " not in ('N')"
-                if "RoadCenterline" in fullPath:
-                    wc = wc + " AND " + rc_obj.EXCEPTION + " not in ('EXCEPTION INSIDE', 'EXCEPTION BOTH')"
-                MakeFeatureLayer_management(fullPath, fl, wc)
-
-            try:
-
-                #select by location to get count of features outside the authoritative boundary
-                SelectLayerByLocation_management(fl, "WITHIN", ab)
-                SelectLayerByAttribute_management(fl, "SWITCH_SELECTION", "")
-                #get count of selected records
-                #report results
-                if getFastCount(fl) > 0:
-                    layer = basename(fullPath)
-                    if layer in esb:
-                        layerName = "ESB"
-                    else:
-                        layerName = layer
-                    id1 = getUniqueIDField(layerName.upper())
-                    if id1 != '':
-                        fields = (id1)
-                        if "AddressPoints" in fullPath:
-                            fields = (id1, a_obj.LOCTYPE)
-                        with SearchCursor(fl, fields) as rows:
-                            for row in rows:
-                                fID = row[0]
-                                report = "Error: Feature not inside authoritative boundary"
-                                if "AddressPoints" in fullPath:
-                                    if row[1] != 'PRIMARY':
-                                        report = report.replace("Error:", "Notice:")
-
-                                val = (today, report, layer, " ", fID)
-                                values.append(val)
-                    else:
-                        userMessage("Could not process features in " + fullPath)
+        if Exists(fullPath):
+            if "CountyBoundary" not in fullPath:
+                userMessage(fullPath)
+                fl = "fl"
+                if fieldExists(fullPath, "SUBMIT") == False:
+                    MakeFeatureLayer_management(fullPath, fl)
                 else:
-                    userMessage( fullPath + ": all records inside authoritative boundary")
-            except:
-                userMessage("Could not check locations of " + fullPath)
+                    wc = rc_obj.SUBMIT + " not in ('N')"
+                    if "RoadCenterline" in fullPath:
+                        wc = wc + " AND " + rc_obj.EXCEPTION + " not in ('EXCEPTION INSIDE', 'EXCEPTION BOTH')"
+                    MakeFeatureLayer_management(fullPath, fl, wc)
 
-            finally:
+                try:
 
-                #clean up
-                Delete_management(fl)
+                    #select by location to get count of features outside the authoritative boundary
+                    SelectLayerByLocation_management(fl, "WITHIN", ab)
+                    SelectLayerByAttribute_management(fl, "SWITCH_SELECTION", "")
+                    #get count of selected records
+                    #report results
+                    if getFastCount(fl) > 0:
+                        layer = basename(fullPath)
+                        if layer in esb:
+                            layerName = "ESB"
+                        else:
+                            layerName = layer
+                        id1 = getUniqueIDField(layerName.upper())
+                        if id1 != '':
+                            fields = (id1)
+                            if "AddressPoints" in fullPath:
+                                fields = (id1, a_obj.LOCTYPE)
+                            with SearchCursor(fl, fields) as rows:
+                                for row in rows:
+                                    fID = row[0]
+                                    report = "Error: Feature not inside authoritative boundary"
+                                    if "AddressPoints" in fullPath:
+                                        if row[1] != 'PRIMARY':
+                                            report = report.replace("Error:", "Notice:")
+
+                                    val = (today, report, layer, " ", fID)
+                                    values.append(val)
+                        else:
+                            userMessage("Could not process features in " + fullPath)
+                    else:
+                        userMessage( fullPath + ": all records inside authoritative boundary")
+                except:
+                    userMessage("Could not check locations of " + fullPath)
+
+                finally:
+
+                    #clean up
+                    Delete_management(fl)
+
+            else:
+                AddWarning(fullPath + " does not exist")
 
     if values != []:
         RecordResults("fieldValues", values, gdb)
@@ -1424,43 +1462,47 @@ def findInvalidGeometry(pathsInfoObject):
     #loop through feature classes
     for fullPath in fcList:
 
-        #get the unique ID column
-        layer = basename(fullPath)
+        if Exists(fullPath):
+            #get the unique ID column
+            layer = basename(fullPath)
 
-        if layer.upper() != "ROADALIAS":
-            if layer in esb:
-                layerName = "ESB"
-            else:
-                layerName = layer
+            if layer.upper() != "ROADALIAS":
+                if layer in esb:
+                    layerName = "ESB"
+                else:
+                    layerName = layer
 
-            id_column = getUniqueIDField(layerName.upper())
+                id_column = getUniqueIDField(layerName.upper())
 
-            #set up fields for cursor
-            fields = ("SHAPE@", id_column)
+                #set up fields for cursor
+                fields = ("SHAPE@", id_column)
 
-            with SearchCursor(fullPath, fields) as rows:
-                for row in rows:
-                    geom = row[0]
-                    fid = row[1]
+                with SearchCursor(fullPath, fields) as rows:
+                    for row in rows:
+                        geom = row[0]
+                        fid = row[1]
 
-                    try:
-                        #get geometry type
-                        geomType = geom.type
+                        try:
+                            #get geometry type
+                            geomType = geom.type
 
-                        #find the minimum number of required points
-                        minNum = invalidDict[geomType]
+                            #find the minimum number of required points
+                            minNum = invalidDict[geomType]
 
-                        #get the count of points in the geometry
-                        count = geom.pointCount
+                            #get the count of points in the geometry
+                            count = geom.pointCount
 
-                        #if the count is smaller than the minimum number, there's a problem
-                        if count < minNum:
+                            #if the count is smaller than the minimum number, there's a problem
+                            if count < minNum:
+                                val = (today, report, layer, " ", fid)
+                                values.append(val)
+                        except:
+                            #if this errors, there's an error accessing the geometry, hence problems
                             val = (today, report, layer, " ", fid)
                             values.append(val)
-                    except:
-                        #if this errors, there's an error accessing the geometry, hence problems
-                        val = (today, report, layer, " ", fid)
-                        values.append(val)
+
+        else:
+            AddWarning(fullPath + " does not exist")
 
     if values != []:
         RecordResults("fieldValues", values, gdb)
@@ -1475,65 +1517,70 @@ def checkCutbacks(pathsInfoObject):
     road_fc = gdbObject.RoadCenterline
     roads = "roads"
 
-    #make feature layer so only roads marked for submission are checked
-    if fieldExists(road_fc, "SUBMIT"):
-        MakeFeatureLayer_management(road_fc, roads, rc_obj.SUBMIT + " not in ('N')")
+    if Exists(road_fc):
+
+
+        #make feature layer so only roads marked for submission are checked
+        if fieldExists(road_fc, "SUBMIT"):
+            MakeFeatureLayer_management(road_fc, roads, rc_obj.SUBMIT + " not in ('N')")
+        else:
+            MakeFeatureLayer_management(road_fc, roads)
+
+        #set up tracking variables
+        cutbacks = []
+        values = []
+        today = strftime("%m/%d/%y")
+        layer = "RoadCenterline"
+
+        k = 0
+
+        #set up search cursor on roads layer
+        with SearchCursor(roads, ("SHAPE@",rc_obj.UNIQUEID)) as rows:
+            for row in rows:
+                try:
+                    geom = row[0]
+                    segid = row[1]
+
+                    #loop through geometry parts
+                    for part in geom:
+                        part_coords = []
+
+                        #don't check simple roads
+                        if len(part) > 4:
+                            #loop through points
+                            for pnt in part:
+                                #set up points in a straightforward list
+                                pc = []
+                                if pnt:
+                                    pc = [pnt.X, pnt.Y]
+                                    part_coords.append(pc)
+                                else:
+                                    print("interior ring")
+
+                            #loop through coordinate list
+                            if part_coords != []:
+                                i = 1
+                                while i < (len(part_coords)-1):
+
+                                    #calculate the angle between three points
+                                    angle = calcAngle(part_coords[i-1],part_coords[i],part_coords[i+1])
+        ##                            print angle
+
+                                    #if the angle is quite sharp, it might indicate a cutback
+                                    if 0 < angle < 55:
+                                        if segid not in cutbacks:
+                                            report = "Notice: This segment might contain a geometry cutback"
+                                            val = (today, report, layer, " ", segid)
+                                            values.append(val)
+                                            cutbacks.append(segid)
+                                    i += 1
+                except Exception as e:
+                    userMessage("Issue checking a cutback.")
+                    k += 1
+
+        Delete_management(roads)
     else:
-        MakeFeatureLayer_management(road_fc, roads)
-
-    #set up tracking variables
-    cutbacks = []
-    values = []
-    today = strftime("%m/%d/%y")
-    layer = "RoadCenterline"
-
-    k = 0
-
-    #set up search cursor on roads layer
-    with SearchCursor(roads, ("SHAPE@",rc_obj.UNIQUEID)) as rows:
-        for row in rows:
-            try:
-                geom = row[0]
-                segid = row[1]
-
-                #loop through geometry parts
-                for part in geom:
-                    part_coords = []
-
-                    #don't check simple roads
-                    if len(part) > 4:
-                        #loop through points
-                        for pnt in part:
-                            #set up points in a straightforward list
-                            pc = []
-                            if pnt:
-                                pc = [pnt.X, pnt.Y]
-                                part_coords.append(pc)
-                            else:
-                                print("interior ring")
-
-                        #loop through coordinate list
-                        if part_coords != []:
-                            i = 1
-                            while i < (len(part_coords)-1):
-
-                                #calculate the angle between three points
-                                angle = calcAngle(part_coords[i-1],part_coords[i],part_coords[i+1])
-    ##                            print angle
-
-                                #if the angle is quite sharp, it might indicate a cutback
-                                if 0 < angle < 55:
-                                    if segid not in cutbacks:
-                                        report = "Notice: This segment might contain a geometry cutback"
-                                        val = (today, report, layer, " ", segid)
-                                        values.append(val)
-                                        cutbacks.append(segid)
-                                i += 1
-            except Exception as e:
-                userMessage("Issue checking a cutback.")
-                k += 1
-
-    Delete_management(roads)
+        AddWarning(road_fc + " does not exist")
 
     if values != []:
         RecordResults("fieldValues", values, gdb)
@@ -1553,92 +1600,97 @@ def VerifyRoadAlias(gdb, domainFolder):
     roadAlias = gdbObject.RoadAlias
     fieldList = (ra_obj.A_RD, ra_obj.ALIASID)
 
-    #get highway values
-    hwy_text = join(domainFolder, "KS_HWY.txt")
+    if Exists(roadAlias):
 
-    hwy_dict = {}
+        #get highway values
+        hwy_text = join(domainFolder, "KS_HWY.txt")
 
-    #make sure file path exists
-    if exists(hwy_text):
-        fieldDefDoc = open(hwy_text, "r")
+        hwy_dict = {}
 
-        #get the header information
-        headerLine = fieldDefDoc.readline()
-        valueList = headerLine.split("|")
-        ## print valueList
+        #make sure file path exists
+        if exists(hwy_text):
+            fieldDefDoc = open(hwy_text, "r")
 
-        #get field indexes
-        rNameIndex = valueList.index("ROUTENAME")
-        rNumIndex = valueList.index("ROUTENUM\n")
+            #get the header information
+            headerLine = fieldDefDoc.readline()
+            valueList = headerLine.split("|")
+            ## print valueList
 
-        #parse the text to populate the field definition dictionary
-        for line in fieldDefDoc.readlines():
-            stuffList = line.split("|")
+            #get field indexes
+            rNameIndex = valueList.index("ROUTENAME")
+            rNumIndex = valueList.index("ROUTENUM\n")
 
-            #set up values
-            route_num = stuffList[1].rstrip()
-            route_name = stuffList[0]
+            #parse the text to populate the field definition dictionary
+            for line in fieldDefDoc.readlines():
+                stuffList = line.split("|")
 
-            #see if the road list already exists in the hwy dictionary
-            if route_num not in hwy_dict:
-                nameList = [route_name]
-            else:
-                nameList = hwy_dict[route_num]
-                nameList.append(route_name)
+                #set up values
+                route_num = stuffList[1].rstrip()
+                route_name = stuffList[0]
 
-            #set dictionary value to name list
-            hwy_dict[route_num] = nameList
+                #see if the road list already exists in the hwy dictionary
+                if route_num not in hwy_dict:
+                    nameList = [route_name]
+                else:
+                    nameList = hwy_dict[route_num]
+                    nameList.append(route_name)
 
-    #get variables set up
-    #where clause for the search cursor
-    wc = ra_obj.A_STS + " is null or " + ra_obj.A_STS + " in ('HWY', '', ' ')"
+                #set dictionary value to name list
+                hwy_dict[route_num] = nameList
 
-    #variables for error reporting
-    errorList = []
-    values = []
-    filename = basename(roadAlias)
-    field = ra_obj.A_RD
-    recordType = "fieldValues"
-    today = strftime("%m/%d/%y")
+        #get variables set up
+        #where clause for the search cursor
+        wc = ra_obj.A_STS + " is null or " + ra_obj.A_STS + " in ('HWY', '', ' ')"
 
-    #get a list of numbers
-    numbers = getNumbers()
+        #variables for error reporting
+        errorList = []
+        values = []
+        filename = basename(roadAlias)
+        field = ra_obj.A_RD
+        recordType = "fieldValues"
+        today = strftime("%m/%d/%y")
 
-    #start search cursor to examine records
-    with SearchCursor(roadAlias, fieldList, wc) as rows:
-        for row in rows:
-            fID = row[1] #road alias ID for reporting
-            try:
-                road = row[0]
-                first_char = road[0]
+        #get a list of numbers
+        numbers = getNumbers()
 
-                #see if first character indicates a highway
-                if first_char in "IUK0123456789":
+        #start search cursor to examine records
+        with SearchCursor(roadAlias, fieldList, wc) as rows:
+            for row in rows:
+                fID = row[1] #road alias ID for reporting
+                try:
+                    road = row[0]
+                    first_char = road[0]
 
-                    for n in numbers:
+                    #see if first character indicates a highway
+                    if first_char in "IUK0123456789":
 
-                        #see if the road name has numbers in it
-                        if n in road:
+                        for n in numbers:
 
-                            roadNum = road #working variable to strip out all alphabet characters
+                            #see if the road name has numbers in it
+                            if n in road:
 
-                            #get just the road number with no other characters
-                            for r in roadNum:
-                                if r not in numbers:
-                                    roadNum = roadNum.replace(r, "")
+                                roadNum = road #working variable to strip out all alphabet characters
 
-                            #see if the road number is in the highway dictionary
-                            if roadNum in hwy_dict:
-                                if road not in hwy_dict[roadNum]:
-                                    if fID not in errorList:
-                                        errorList.append(fID)
-                                        report = "Notice: " + road + " is not in the approved highway name list"
-                                        val = (today, report, filename, field, fID)
-                                        values.append(val)
-            except Exception as e:
-                report = "Error: Issue with road alias record"
-                val = (today, report, filename, field, fID)
-                values.append(val)
+                                #get just the road number with no other characters
+                                for r in roadNum:
+                                    if r not in numbers:
+                                        roadNum = roadNum.replace(r, "")
+
+                                #see if the road number is in the highway dictionary
+                                if roadNum in hwy_dict:
+                                    if road not in hwy_dict[roadNum]:
+                                        if fID not in errorList:
+                                            errorList.append(fID)
+                                            report = "Notice: " + road + " is not in the approved highway name list"
+                                            val = (today, report, filename, field, fID)
+                                            values.append(val)
+                except Exception as e:
+                    report = "Error: Issue with road alias record"
+                    val = (today, report, filename, field, fID)
+                    values.append(val)
+
+    else:
+        AddWarning(roadAlias + " does not exist")
 
 
     #report records
@@ -1702,38 +1754,45 @@ def checkRoadAliases(pathsInfoObject):
 
     #make road layer into a feature layer
     roads = gdbObject.RoadCenterline
-    rdslyr = "RoadCenterline"
-    if fieldExists(roads, rc_obj.SUBMIT):
-        MakeFeatureLayer_management(roads, rdslyr, rc_obj.SUBMIT + " not in ('N')")
-    else:
-        MakeFeatureLayer_management(roads, rdslyr)
-
-    #make road alias into a table view
     road_alias = gdbObject.RoadAlias
-    ra_tbl = "RoadAlias"
-    if fieldExists(road_alias, ra_obj.SUBMIT):
-        MakeTableView_management(road_alias, ra_tbl, ra_obj.SUBMIT + " not in ('N')")
+
+    if Exists(roads) and Exists(road_alias):
+        rdslyr = "RoadCenterline"
+        if fieldExists(roads, rc_obj.SUBMIT):
+            MakeFeatureLayer_management(roads, rdslyr, rc_obj.SUBMIT + " not in ('N')")
+        else:
+            MakeFeatureLayer_management(roads, rdslyr)
+
+        #make road alias into a table view
+
+        ra_tbl = "RoadAlias"
+        if fieldExists(road_alias, ra_obj.SUBMIT):
+            MakeTableView_management(road_alias, ra_tbl, ra_obj.SUBMIT + " not in ('N')")
+        else:
+            MakeTableView_management(road_alias, ra_tbl)
+
+        #make sure all road alias records relate back to the road centerline file
+        alias_count = checkJoin(gdb, ra_tbl, rdslyr, "RoadCenterline." + rc_obj.RD + " is null", "Notice: Road alias entry does not have a corresponding road centerline segment", "RoadAlias." + ra_obj.UNIQUEID)
+
+        #see if the highways link back to a road alias record
+        hwy_count = checkJoin(gdb, rdslyr, ra_tbl, "(RoadCenterline." + rc_obj.RD + " like '%HIGHWAY%' or RoadCenterline." + rc_obj.RD + " like '%HWY%' or RoadCenterline." + rc_obj.RD + " like '%INTERSTATE%') and RoadAlias." + ra_obj.A_RD + " is null",
+                                    "Notice: Road centerline highway segment does not have a corresponding road alias record", "RoadCenterline." + rc_obj.UNIQUEID)
+
+        total_count = alias_count + hwy_count
+
+        if total_count > 0:
+            userMessage("Checked road alias records. There were " + str(total_count) + " issues. Results are in table FieldValuesCheckResults")
+        else:
+            userMessage("Checked road alias records. No errors were found.")
+
+        #verify domain values
+        VerifyRoadAlias(gdb, pathsInfoObject.domainsFolderPath)
+
+        cleanUp([rdslyr, ra_tbl])
     else:
-        MakeTableView_management(road_alias, ra_tbl)
-
-    #make sure all road alias records relate back to the road centerline file
-    alias_count = checkJoin(gdb, ra_tbl, rdslyr, "RoadCenterline." + rc_obj.RD + " is null", "Notice: Road alias entry does not have a corresponding road centerline segment", "RoadAlias." + ra_obj.UNIQUEID)
-
-    #see if the highways link back to a road alias record
-    hwy_count = checkJoin(gdb, rdslyr, ra_tbl, "(RoadCenterline." + rc_obj.RD + " like '%HIGHWAY%' or RoadCenterline." + rc_obj.RD + " like '%HWY%' or RoadCenterline." + rc_obj.RD + " like '%INTERSTATE%') and RoadAlias." + ra_obj.A_RD + " is null",
-                                "Notice: Road centerline highway segment does not have a corresponding road alias record", "RoadCenterline." + rc_obj.UNIQUEID)
-
-    total_count = alias_count + hwy_count
-
-    if total_count > 0:
-        userMessage("Checked road alias records. There were " + str(total_count) + " issues. Results are in table FieldValuesCheckResults")
-    else:
-        userMessage("Checked road alias records. No errors were found.")
-
-    #verify domain values
-    VerifyRoadAlias(gdb, pathsInfoObject.domainsFolderPath)
-
-    cleanUp([rdslyr, ra_tbl])
+        if not Exists(roads):
+            AddWarning(roads + " does not exist")
+            AddWarning(road_alias + " does not exist")
 
 
 def checkToolboxVersionFinal():
@@ -1766,7 +1825,7 @@ def sanityCheck(currentPathSettings):
     checkUniqueIDFrequency(currentPathSettings)
 
     #check address points
-    geocodeAddressPoints(currentPathSettings)
+##    geocodeAddressPoints(currentPathSettings)
     addressPoints = gdbObject.AddressPoints
     AP_freq = gdbObject.AddressPointFrequency
     AP_fields = a_obj.FREQUENCY_FIELDS_STRING
@@ -1861,19 +1920,19 @@ def main_check(checkType, currentPathSettings):
         if checkList[1] == "true":
             checkFeatureLocations(currentPathSettings)
 
-        if checkList[2] == "true":
-            geocodeAddressPoints(currentPathSettings)
+##        if checkList[2] == "true":
+##            geocodeAddressPoints(currentPathSettings)
 
-        if checkList[3] == "true":
+        if checkList[2] == "true":
             addressPoints = gdbObject.AddressPoints
             AP_freq = gdbObject.AddressPointFrequency
             AP_fields = a_obj.FREQUENCY_FIELDS_STRING
             checkFrequency(addressPoints, AP_freq, AP_fields, currentPathSettings.gdbPath)
 
-        if checkList[4] == "true":
+        if checkList[3] == "true":
             checkUniqueIDFrequency(currentPathSettings)
 
-        if checkList[5] == "true":
+        if checkList[4] == "true":
             if Exists(currentPathSettings.ESZ):
                 checkESNandMuniAttribute(currentPathSettings)
             else:

@@ -42,7 +42,8 @@ def validateAllPrep(gdb, domain, esbList, ESZ, zipFlag, zipPath):
                 if e1 in layerList:
                     layerFlag = 1
                 else:
-                    esb.append(e1)
+                    if e1 not in esb:
+                        esb.append(e1)
 
     if layerFlag == 1:
         AddError("Please define PSAP and ESB layers like EMS, fire & law enforcement boundaries. One or more layers you identfied is a different layer type.")

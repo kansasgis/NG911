@@ -15,14 +15,14 @@ def main():
     domain = GetParameterAsText(1)
     esbList = GetParameterAsText(2).split(";")
     ESZ = GetParameterAsText(3)
-    template10 = GetParameterAsText(4)
-    zipOutput = GetParameterAsText(5)
+##    template10 = GetParameterAsText(4)
+    zipOutput = GetParameterAsText(4)
 
     if zipOutput[-3:] != "zip":
         userMessage("Output zip file is not valid. Please try again.")
 
     else:
-        validateAllPrep(gdb, domain, esbList, ESZ, template10, "true", zipOutput)
+        validateAllPrep(gdb, domain, esbList, ESZ, "true", zipOutput)
 
 if __name__ == '__main__':
     main()

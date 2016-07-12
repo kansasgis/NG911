@@ -22,15 +22,15 @@ def main():
     domainsFolder = GetParameterAsText(1)
     checkValuesAgainstDomain = GetParameterAsText(2)
     checkFeatureLocations = GetParameterAsText(3)
-    geocodeAddressPoints = GetParameterAsText(4)
-    checkAddressPointFrequency = GetParameterAsText(5)
-    checkUniqueIDs = GetParameterAsText(6)
-    checkESZ = GetParameterAsText(7)
-    ESZlayer = GetParameterAsText(8)
+##    geocodeAddressPoints = GetParameterAsText(4)
+    checkAddressPointFrequency = GetParameterAsText(4)
+    checkUniqueIDs = GetParameterAsText(5)
+    checkESZ = GetParameterAsText(6)
+    ESZlayer = GetParameterAsText(7)
 ##    template10 = GetParameterAsText(9)
 
     #create check list
-    checkList = [checkValuesAgainstDomain,checkFeatureLocations,geocodeAddressPoints,checkAddressPointFrequency,checkUniqueIDs,checkESZ]
+    checkList = [checkValuesAgainstDomain,checkFeatureLocations,checkAddressPointFrequency,checkUniqueIDs,checkESZ]
 
     #set object parameters
     checkType = "AddressPoints"
