@@ -22,7 +22,7 @@ The Kansas NG911 Toolbox contains a series of data quality assurance
 checks that need to be run before each NG911 GIS data submission. The
 toolbox includes the following modules:
 
--   Adjustment Tools
+-   [Adjustment Tools](https://github.com/kansasgis/NG911/blob/master/Doc_Online/AdjustmentTools.md)
 
 -   Comparison Tools
 
