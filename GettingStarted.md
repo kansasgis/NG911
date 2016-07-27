@@ -11,15 +11,12 @@ Kansas NG9-1-1 Toolbox – Getting Started
 
 Document Change Log
 
-  Date       Author           Change                             Reason
-  ---------- ---------------- ---------------------------------- -------------------------------
-  09/29/15   Kristen Jordan   None                               Original release
-  12/21/15   Kristen Jordan   Added “Verify Road Alias” tool     We added a new tool
-  06/30/15   Kristen Jordan   Clarified ArcGIS release version   Tool works in 10.3 and higher
-                                                                 
-                                                                 
-                                                                 
-                                                                 
+|Date|Author|Change|Reason|
+|----------|----------------------|----------------------------------|-------------------------------|
+|09/29/15|Kristen Jordan|None|Original release|
+|12/21/15|Kristen Jordan|Added “Verify Road Alias” tool|We added a new tool|
+|06/30/16|Kristen Jordan Koenig|Clarified ArcGIS release version|Tool works in 10.3 and higher|
+
 
 The Kansas NG911 Toolbox contains a series of data quality assurance
 checks that need to be run before each NG911 GIS data submission. The
