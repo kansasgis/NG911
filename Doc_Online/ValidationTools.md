@@ -64,10 +64,14 @@ The validation tools require:
     -   Validation\_UpdateDomains
 
     -   Validation\_VerifyTopologyExceptions
+    
+    -   NG911\_arcpy\_shortcuts
 
     -   NG911\_Config
 
     -   NG911\_DataCheck
+    
+    -   NG911\_GDB\_Objects
 
 -   One folder called “Domains” that contains text files of resource
     information
