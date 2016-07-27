@@ -1,12 +1,5 @@
----
-title: |
-    ![](media/image1.png){width="1.5138888888888888in"
-    height="0.9277777777777778in"}
-
-    Kansas NG9-1-1 Toolbox –
-
-    Getting Started
----
+Kansas NG9-1-1 Toolbox – Getting Started
+========================================
 
 > Original September 29, 2015
 >
