@@ -133,7 +133,7 @@ Running *Check TN List*:
 
 This tool requires a telephone number list to be extracted as a
 spreadsheet. Directions for obtaining the TN list are found in the
-Downloading\_TN\_records\_from\_911Net document.
+[Downloading\_TN\_records\_from\_911Net](https://github.com/kansasgis/NG911/blob/master/Doc/Downloading_TN_records_from_911NET.pdf) document.
 
 Open ArcCatalog and navigate to the toolbox called “Kansas NG911 GIS
 Tools”, expand the toolbox, then expand the toolset called “Enhancement
