@@ -51,7 +51,7 @@ Running *Compare NG911 Data*:
     Data Model.
 
 <a name="geodatabases"></a>
-Running Compare NG911 Geodatabases:
+Running *Compare NG911 Geodatabases*:
 
 1.  Open ArcCatalog and navigate to the toolbox called “Kansas NG911 GIS
     tools”, expand the toolbox, then expand the toolset called
