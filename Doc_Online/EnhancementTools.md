@@ -25,7 +25,7 @@ segments.
 the MSAG information in the NG911 Address Points and Road Centerlines.
 This tool requires a TN (telephone number) list. Directions for
 obtaining the TN list are found in the
-Downloading\_TN\_records\_from\_911Net document.
+[Downloading\_TN\_records\_from\_911Net](https://github.com/kansasgis/NG911/blob/master/Doc/Downloading_TN_records_from_911NET.docx) document.
 
 [*Create Road Alias Records*](#createRoadAlias): creates new road alias records based on
 road segments matching a user-provided road name.
