@@ -94,7 +94,7 @@ values and feature IDs.
 
 Errors
 ------
-<a name="TemplateCheckResults></a>
+<a name="TemplateCheckResults"></a>
 #### TemplateCheckResults
 
 |Error Message|Meaning|Fix Tips|
