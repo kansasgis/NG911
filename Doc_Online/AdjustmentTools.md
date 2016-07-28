@@ -9,7 +9,7 @@ exist in FieldValuesCheckResults, the tool adds those ADDIDs to the
 GeocodeException table. In the future, any ADDIDs noted in
 GeocodeExceptions will not be flagged as geocoding errors.
 
-[*Fix Domain Case:*](#domainCase) Based on domain issues that exist in
+[*Fix Domain Case*](#domainCase): Based on domain issues that exist in
 FieldValuesCheckResults, this tool edits case issues in data. For
 example, if FieldValuesCheckResults has the error “Value Primary not in
 approved domain for field LOCTYPE”, any occurrences of “Primary” in
