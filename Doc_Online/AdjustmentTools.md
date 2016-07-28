@@ -33,7 +33,7 @@ The adjustment tools require these Python scripts:
 
 -   NG911\_DataFixes.py
 
-Running Create Geocode Exceptions:
+Running *Create Geocode Exceptions*:
 
 1.  First, either run “Validation Tools” &gt; “2 Check Address Points”
     and make sure to check “Geocode Address Points” or “Validation
@@ -57,7 +57,7 @@ Running Create Geocode Exceptions:
     exceptions, you can manually delete the ADDID in an edit session
     in ArcMap.
 
-Running Fix Domain Case:
+Running *Fix Domain Case*:
 
 1.  First, run “Validation Tools” &gt; “9 Optional Check All Required”
     to make sure all domains of all feature classes are examined and all
