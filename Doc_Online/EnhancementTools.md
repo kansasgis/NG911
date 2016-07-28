@@ -3,77 +3,52 @@
 Description: These tools automate various tasks involved with data
 creation and perform various checks to enhance the quality of the data.
 
-*Add KSPID:* If your PSAP/county has GIS parcels, this tool will
+[*Add KSPID*](#KSPID): If your PSAP/county has GIS parcels, this tool will
 automatically determine, calculate and import the KSPID into the address
 points. The tool can use 16 or 19 digit PIDs, and the 19 digit version
 will be added to the address points.
 
-*Assign Unique Identifier*: creates a unique ID for all null features in
+[*Assign Unique Identifier*](#UniqueID): creates a unique ID for all null features in
 a feature class.
 
-*Calculate Label:* calculates the label field of either an address point
+[*Calculate Label*](#CalcLabel): calculates the label field of either an address point
 file or the road centerline file. For address points, the fields used
 for the calculation are: HNO, HNS, PRD, STP, RD, STS, POD, POM, BLD,
 FLR, UNIT, ROOM and SEAT. For road centerlines, the fields used for the
 calculation are: PRD, STP, RD, STS, POD and POM.
 
-*Check Road Elevation Direction*: makes sure the ELEV\_F and ELEV\_T
+[*Check Road Elevation Direction*](#elevDir): makes sure the ELEV\_F and ELEV\_T
 attributes correctly depict the elevation rise and fall of road
 segments.
 
-*Check TN List:* geocodes a list of telephone number addresses against
+[*Check TN List*](#TNlist): geocodes a list of telephone number addresses against
 the MSAG information in the NG911 Address Points and Road Centerlines.
 This tool requires a TN (telephone number) list. Directions for
 obtaining the TN list are found in the
 Downloading\_TN\_records\_from\_911Net document.
 
-*Create Road Alias Records:* creates new road alias records based on
+[*Create Road Alias Records*](#createRoadAlias): creates new road alias records based on
 road segments matching a user-provided road name.
 
-*Find Address Range Overlaps*: finds areas where address ranges
+[*Find Address Range Overlaps*](#overlaps): finds areas where address ranges
 overlaps. Overlapping address ranges can negatively affect geocoding
 accuracy.
 
-*Geocode Address Points*: geocodes the address points against the road
+[*Geocode Address Points*](#geocode): geocodes the address points against the road
 centerline data. This test respects exceptions created in the
 GeocodeExceptions table.
 
-*US National Grid Calculator:* generates US National Grid coordinates.
+[*US National Grid Calculator*](#USNG): generates US National Grid coordinates.
 If the Lat and Long fields are filled out, the USNG coordinates will be
 based on those fields. If the fields are not populated, the tool will
 calculate Lat/Long values, populated the Lat/Long fields and calculated
 USNG coordinates.
 
-*Verify Road Alias:* checks the road alias name against an approved
+[*Verify Road Alias*](#roadalias): checks the road alias name against an approved
 highway name list.
 
-The metadata enhancement tool requires:
-
--   Python scripts:
-
-    -   Enhancement\_AddKSPID.py
-
-    -   Enhancement\_AssignID.py
-
-    -   Enhancement\_CalculateLabel.py
-
-    -   Enhancement\_CheckRoadElevationDirection.py
-
-    -   Enhancement\_CheckTN.py
-
-    -   Enhancement\_CreateRoadAliasRecords.py
-
-    -   Enhancement\_FindAddressRangeOverlaps.py
-
-    -   Enhancement\_GeocodeAddressPoints.py
-
-    -   Enhancement\_XYUSNGCal.py
-
-    -   Enhancement\_VerifyRoadAlias.py
-
-    -   CoordConvertor.py
-
-Running “Add KSPID”:
+<a name="KSPID"></a>
+Running *Add KSPID*:
 
 1.  Open ArcCatalog and navigate to the toolbox called “Kansas NG911 GIS
     Tools”, expand the toolbox, then expand the toolset called
@@ -101,8 +76,9 @@ Running “Add KSPID”:
     points and parcels, so address points that do not sit inside a
     parcel will not be updated with a KSPID.
 
-Running “Assign Unique Identifier” and “Assign Unique Identifier Road
-Alias Table”:
+<a name="UniqueID"></a>
+Running *Assign Unique Identifier* and *Assign Unique Identifier Road
+Alias Table*:
 
 1.  Open ArcCatalog and navigate to the toolbox called “Kansas NG911 GIS
     Tools”, expand the toolbox, then expand the toolset called
@@ -118,7 +94,8 @@ Alias Table”:
 
 5.  Run the tool.
 
-Running “Calculate Label”:
+<a name="CalcLabel"></a>
+Running *Calculate Label*:
 
 1.  Open ArcCatalog and navigate to the toolbox called “Kansas NG911 GIS
     Tools”, expand the toolbox, then expand the toolset called
@@ -135,7 +112,8 @@ Running “Calculate Label”:
 
 5.  Run the tool.
 
-Running “Check Road Elevation Direction”:
+<a name="elevDir"></a>
+Running *Check Road Elevation Direction*:
 
 1.  Open ArcCatalog and navigate to the toolbox called “Kansas NG911 GIS
     Tools”, expand the toolbox, then expand the toolset called
@@ -150,7 +128,8 @@ Running “Check Road Elevation Direction”:
 
 5.  Results will be reported in the “FieldValuesCheckResults” table.
 
-Running “Check TN List”:
+<a name="TNlist"></a>
+Running *Check TN List*:
 
 This tool requires a telephone number list to be extracted as a
 spreadsheet. Directions for obtaining the TN list are found in the
@@ -170,7 +149,8 @@ Tools.”
 
 4.  Run the tool.
 
-Running “Create Road Alias Records”:
+<a name="createRoadAlias"></a>
+Running *Create Road Alias Records*:
 
 1.  Open ArcCatalog and navigate to the toolbox called “Kansas NG911 GIS
     Tools”, expand the toolbox, then expand the toolset called
@@ -210,7 +190,8 @@ Running “Create Road Alias Records”:
     value of “Road Name”, so records may be created outside your
     intended range or for incorrect road types.
 
-Running “Find Address Range Overlaps”:
+<a name="overlaps"></a>
+Running *Find Address Range Overlaps*:
 
 1.  Open ArcCatalog and navigate to the toolbox called “Kansas NG911 GIS
     Tools”, expand the toolbox, then expand the toolset called
@@ -227,7 +208,8 @@ Running “Find Address Range Overlaps”:
     feature class in the NG911 geodatabase
     called “AddressRange\_Overlap”.
 
-Running “Geocode Address Points”:
+<a name="geocode"></a>
+Running *Geocode Address Points*:
 
 1.  Open ArcCatalog and navigate to the toolbox called “Kansas NG911 GIS
     Tools”, expand the toolbox, then expand the tool set called
@@ -246,7 +228,8 @@ Running “Geocode Address Points”:
 6.  Geocoding exceptions can be added using the “Create Geocoding
     Exceptions” tool in the Adjustment Tools toolset.
 
-Running “US National Grid Calculator”:
+<a name="USNG"></a>
+Running *US National Grid Calculator*:
 
 1.  Open ArcCatalog and navigate to the toolbox called “Kansas NG911 GIS
     Tools”, expand the toolbox, then expand the toolset called
@@ -262,7 +245,8 @@ Running “US National Grid Calculator”:
 
 5.  Run the tool.
 
-Running “Verify Road Alias”:
+<a name="roadalias"></a>
+Running *Verify Road Alias*:
 
 1.  Open ArcCatalog and navigate to the toolbox called “Kansas NG911 GIS
     Tools”, expand the toolbox, then expand the toolset called
@@ -279,6 +263,33 @@ Running “Verify Road Alias”:
 5.  Run the tool.
 
 6.  Results will be in the “FieldValuesCheckResults” table.
+
+
+The enhancement tools require:
+
+-   Python scripts:
+
+    -   Enhancement\_AddKSPID.py
+
+    -   Enhancement\_AssignID.py
+
+    -   Enhancement\_CalculateLabel.py
+
+    -   Enhancement\_CheckRoadElevationDirection.py
+
+    -   Enhancement\_CheckTN.py
+
+    -   Enhancement\_CreateRoadAliasRecords.py
+
+    -   Enhancement\_FindAddressRangeOverlaps.py
+
+    -   Enhancement\_GeocodeAddressPoints.py
+
+    -   Enhancement\_XYUSNGCal.py
+
+    -   Enhancement\_VerifyRoadAlias.py
+
+    -   CoordConvertor.py
 
 Support Contact:
 
