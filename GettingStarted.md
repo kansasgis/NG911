@@ -127,7 +127,7 @@ points) or two NG911 geodatabases. The comparison tools are intended for
 PSAPs to see data differences between their own data from different time
 snapshots.
 
-[Submission Tools](https://github.com/kansasgis/NG911/blob/master/Doc_Online/SubmissionTools.md]
+[Submission Tools](https://github.com/kansasgis/NG911/blob/master/Doc_Online/SubmissionTools.md)
 ================
 
 The submission tools are designed to run through all of the data checks,
