@@ -126,7 +126,7 @@ Running *Check Road Elevation Direction*:
 
 4.  Run the tool.
 
-5.  Results will be reported in the “FieldValuesCheckResults” table.
+5.  Results will be reported in the “FieldValuesCheckResults” table. Documentation for [Interpreting Tool Results](https://github.com/kansasgis/NG911/blob/master/Doc_Online/Interpreting_Tool_Results.md).
 
 <a name="TNlist"></a>
 Running *Check TN List*:
@@ -223,7 +223,7 @@ Running *Geocode Address Points*:
 4.  Run the tool.
 
 5.  If geocoding errors exist, they will be recorded
-    in FielValuesCheckResults.
+    in FielValuesCheckResults. Documentation for [Interpreting Tool Results](https://github.com/kansasgis/NG911/blob/master/Doc_Online/Interpreting_Tool_Results.md).
 
 6.  Geocoding exceptions can be added using the “Create Geocoding
     Exceptions” tool in the Adjustment Tools toolset.
@@ -262,7 +262,7 @@ Running *Verify Road Alias*:
 
 5.  Run the tool.
 
-6.  Results will be in the “FieldValuesCheckResults” table.
+6.  Results will be in the “FieldValuesCheckResults” table. Documentation for [Interpreting Tool Results](https://github.com/kansasgis/NG911/blob/master/Doc_Online/Interpreting_Tool_Results.md).
 
 
 The enhancement tools require:
