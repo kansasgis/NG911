@@ -13,7 +13,7 @@ Document Change Log
 |09/29/15|Kristen Jordan|None|Original release|
 |12/21/15|Kristen Jordan|Added “Verify Road Alias” tool|We added a new tool|
 |06/30/16|Kristen Jordan Koenig|Clarified ArcGIS release version|Tool works in 10.3 and higher|
-|07/28/16|Kristen Jordan Koenig|Created online md version with links|
+|07/28/16|Kristen Jordan Koenig|Created online md version with links|Time to go really digital. Future edits will be noted in the GitHub change log.|
 
 
 The Kansas NG911 Toolbox contains a series of data quality assurance
