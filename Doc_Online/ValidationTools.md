@@ -87,39 +87,6 @@ Running *Validation scripts*:
     double check that all road centerline topology error are recorded as
     exceptions in the data and the topology.
 
-The validation tools require:
-
--   Python scripts called:
-
-    -   Validation\_CheckAddressPointsLaunch
-
-    -   Validation \_CheckAdminBndLaunch
-
-    -   Validation \_CheckAll
-
-    -   Valication\_CheckESBLaunch
-
-    -   Validation \_CheckRoadsLaunch
-
-    -   Validation \_CheckTemplateLaunch
-
-    -   Validation \_ClearOldResults
-
-    -   Validation\_UpdateDomains
-
-    -   Validation\_VerifyTopologyExceptions
-    
-    -   NG911\_arcpy\_shortcuts
-
-    -   NG911\_Config
-
-    -   NG911\_DataCheck
-    
-    -   NG911\_GDB\_Objects
-
--   One folder called “Domains” that contains text files of resource
-    information
-
 Support Contact:
 
 For issues or questions, please contact Kristen Jordan Koenig with the
