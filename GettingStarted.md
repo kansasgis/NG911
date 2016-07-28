@@ -1,9 +1,9 @@
 Kansas NG9-1-1 Toolbox – Getting Started
 ========================================
 
-Original September 29, 2015
-Last Revised July 28, 2016
-Prepared by DASC
+Original September 29, 2015<br>
+Last Revised July 28, 2016<br>
+Prepared by DASC<br>
 Prepared for Ken Nelson, GIS Committee Chair
 
 Document Change Log
