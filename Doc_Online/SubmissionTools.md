@@ -5,19 +5,6 @@ verification checks against the NG911 Data Model template to determine
 if the data is ready for submission. The scripts will run all required
 validation checks (1-5) and zip the data if it passes validation.
 
-The submission tools require:
-
--   Python scripts called:
-
-    -   Submission\_CheckAllAndZip
-
-    -   NG911\_Config
-
-    -   NG911\_DataCheck
-
--   One folder called “Domains” that contains text files of resource
-    information
-
 Running submission scripts.
 
 1.  Open ArcCatalog and navigate to the toolbox called “Kansas NG911 GIS
