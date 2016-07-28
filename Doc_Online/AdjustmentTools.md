@@ -3,19 +3,19 @@
 Description: The adjustment tools will help prepare data so it passes
 all data checks prior to submission into the NG911 Portal.
 
-*Create Geocode Exceptions*: This tool creates a table in the
+[*Create Geocode Exceptions*](#geocodeEx): This tool creates a table in the
 geodatabase called GeocodeExceptions. Based on geocoding errors that
 exist in FieldValuesCheckResults, the tool adds those ADDIDs to the
 GeocodeException table. In the future, any ADDIDs noted in
 GeocodeExceptions will not be flagged as geocoding errors.
 
-*Fix Domain Case:* Based on domain issues that exist in
+[*Fix Domain Case*](#domainCase): Based on domain issues that exist in
 FieldValuesCheckResults, this tool edits case issues in data. For
 example, if FieldValuesCheckResults has the error “Value Primary not in
 approved domain for field LOCTYPE”, any occurrences of “Primary” in
 LOCTYPE will be edited to “PRIMARY”.
 
-*Fix Duplicate ESBIDs*: For counties with three ESB layers, all ESBIDs
+[*Fix Duplicate ESBIDs*](#duplicateESBID): For counties with three ESB layers, all ESBIDs
 must be unique when comparing all three layers against one another. This
 tool creates unique ESBIDs by appending “E”, “F”, or “L” to the end of
 ESBIDs. Thus, if “1” is the ESBID in EMS, Fire, and Law, after running
@@ -33,7 +33,8 @@ The adjustment tools require these Python scripts:
 
 -   NG911\_DataFixes.py
 
-Running Create Geocode Exceptions:
+<a name="geocodeEx"></a>
+Running *Create Geocode Exceptions*:
 
 1.  First, either run “Validation Tools” &gt; “2 Check Address Points”
     and make sure to check “Geocode Address Points” or “Validation
@@ -57,7 +58,8 @@ Running Create Geocode Exceptions:
     exceptions, you can manually delete the ADDID in an edit session
     in ArcMap.
 
-Running Fix Domain Case:
+<a name="domainCase"></a>
+Running *Fix Domain Case*:
 
 1.  First, run “Validation Tools” &gt; “9 Optional Check All Required”
     to make sure all domains of all feature classes are examined and all
@@ -71,6 +73,16 @@ Running Fix Domain Case:
 
 4.  Run “Validation Tools” &gt; “9 Optional Check All Required” again.
     See the difference of results in FieldValuesCheckResults.
+
+<a name="duplicateESBID"></a>
+Running *Fix Duplicate ESB IDs*:
+
+1.	Open “Adjustment Tools” > “Fix Duplicate ESB IDs” and identify all the pertinent ESB layers according to the parameters.
+
+2.	Run the tool.
+
+3.	Run “Validation Tools” > “9 Optional Check All Required” again. See the difference of results in FieldValuesCheckResults.
+
 
 Support Contact:
 

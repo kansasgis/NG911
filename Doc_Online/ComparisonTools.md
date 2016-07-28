@@ -5,13 +5,13 @@ between two different data resources. These tools are intended to be run
 against same-PSAP data as it changes through time to flag edited,
 updated and deleted records.
 
-*Compare NG911 Data*: compares two NG911 feature classes of similar
+[*Compare NG911 Data*](#data): compares two NG911 feature classes of similar
 kinds (ex. Address points edited recently against address points from
 three months ago). This check will flag all attribute edits, spatial
 edits, new records and deleted records between the two feature classes
 compared.
 
-*Compare NG911 Geodatabases*: compares two NG911 geodatabases (ex.
+[*Compare NG911 Geodatabases*](#geodatabases): compares two NG911 geodatabases (ex.
 Geodatabase edited recently against geodatabase from a year ago). This
 check will flag all attribute edits, spatial edits, new records and
 deleted records between all common layers and tables in the two
@@ -21,7 +21,8 @@ The comparison tools require:
 
 -   One Python script called Comparison\_CompareDataLayers.py
 
-Running Compare NG911 Data:
+<a name="data"></a>
+Running *Compare NG911 Data*:
 
 1.  Open ArcCatalog and navigate to the toolbox called “Kansas NG911 GIS
     tools”, expand the toolbox, then expand the toolset called
@@ -49,7 +50,8 @@ Running Compare NG911 Data:
     object ID, but instead of the unique ID outlined in the Kansas NG911
     Data Model.
 
-Running Compare NG911 Geodatabases:
+<a name="geodatabases"></a>
+Running *Compare NG911 Geodatabases*:
 
 1.  Open ArcCatalog and navigate to the toolbox called “Kansas NG911 GIS
     tools”, expand the toolbox, then expand the toolset called

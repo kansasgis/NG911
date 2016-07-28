@@ -43,36 +43,7 @@ included data validation tools check for the following errors:
 
 -   Verifies topology exceptions (optional)
 
-The validation tools require:
-
--   Python scripts called:
-
-    -   Validation\_CheckAddressPointsLaunch
-
-    -   Validation \_CheckAdminBndLaunch
-
-    -   Validation \_CheckAll
-
-    -   Valication\_CheckESBLaunch
-
-    -   Validation \_CheckRoadsLaunch
-
-    -   Validation \_CheckTemplateLaunch
-
-    -   Validation \_ClearOldResults
-
-    -   Validation\_UpdateDomains
-
-    -   Validation\_VerifyTopologyExceptions
-
-    -   NG911\_Config
-
-    -   NG911\_DataCheck
-
--   One folder called “Domains” that contains text files of resource
-    information
-
-Running validation scripts.
+Running *Validation scripts*:
 
 1.  Open ArcCatalog and navigate to the toolbox called “Kansas NG911 GIS
     Tools”, expand the toolbox, then expand the toolset called
@@ -104,7 +75,7 @@ Running validation scripts.
     Results Table”.
 
 9.  Based on the results of the data check, you can edit your data
-    as necessary.
+    as necessary. Documentation for [Interpreting Tool Results](https://github.com/kansasgis/NG911/blob/master/Doc_Online/Interpreting_Tool_Results.md).
 
 10. After data is edited, the necessary data checks can be rerun.
 
@@ -115,6 +86,39 @@ Running validation scripts.
 12. The script called “8 Optional Verify Topology Exceptions” will
     double check that all road centerline topology error are recorded as
     exceptions in the data and the topology.
+
+The validation tools require:
+
+-   Python scripts called:
+
+    -   Validation\_CheckAddressPointsLaunch
+
+    -   Validation \_CheckAdminBndLaunch
+
+    -   Validation \_CheckAll
+
+    -   Valication\_CheckESBLaunch
+
+    -   Validation \_CheckRoadsLaunch
+
+    -   Validation \_CheckTemplateLaunch
+
+    -   Validation \_ClearOldResults
+
+    -   Validation\_UpdateDomains
+
+    -   Validation\_VerifyTopologyExceptions
+    
+    -   NG911\_arcpy\_shortcuts
+
+    -   NG911\_Config
+
+    -   NG911\_DataCheck
+    
+    -   NG911\_GDB\_Objects
+
+-   One folder called “Domains” that contains text files of resource
+    information
 
 Support Contact:
 

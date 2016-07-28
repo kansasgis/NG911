@@ -1,50 +1,38 @@
----
-title: |
-    ![](media/image1.png){width="1.5138888888888888in"
-    height="0.9277777777777778in"}
+Kansas NG9-1-1 Toolbox – Getting Started
+========================================
 
-    Kansas NG9-1-1 Toolbox –
-
-    Getting Started
----
-
-> Original September 29, 2015
->
-> Last Revised June 30, 2016
->
-> Prepared by DASC
->
-> Prepared for Ken Nelson, GIS Committee Chair
+Original September 29, 2015<br>
+Last Revised July 28, 2016<br>
+Prepared by DASC<br>
+Prepared for Ken Nelson, GIS Committee Chair
 
 Document Change Log
 
-  Date       Author           Change                             Reason
-  ---------- ---------------- ---------------------------------- -------------------------------
-  09/29/15   Kristen Jordan   None                               Original release
-  12/21/15   Kristen Jordan   Added “Verify Road Alias” tool     We added a new tool
-  06/30/15   Kristen Jordan   Clarified ArcGIS release version   Tool works in 10.3 and higher
-                                                                 
-                                                                 
-                                                                 
-                                                                 
+|Date|Author|Change|Reason|
+|----------|----------------------|----------------------------------|-------------------------------|
+|09/29/15|Kristen Jordan|None|Original release|
+|12/21/15|Kristen Jordan|Added “Verify Road Alias” tool|We added a new tool|
+|06/30/16|Kristen Jordan Koenig|Clarified ArcGIS release version|Tool works in 10.3 and higher|
+|07/28/16|Kristen Jordan Koenig|Created online md version with links|Time to go really digital. Future edits will be noted in the GitHub change log.|
+
 
 The Kansas NG911 Toolbox contains a series of data quality assurance
 checks that need to be run before each NG911 GIS data submission. The
 toolbox includes the following modules:
 
--   Adjustment Tools
+-   [Adjustment Tools](https://github.com/kansasgis/NG911/blob/master/Doc_Online/AdjustmentTools.md)
 
--   Comparison Tools
+-   [Comparison Tools](https://github.com/kansasgis/NG911/blob/master/Doc_Online/ComparisonTools.md)
 
--   Conversion Tools
+-   [Conversion Tools](https://github.com/kansasgis/NG911/blob/master/Doc_Online/ConversionTools.md)
 
--   Enhancement Tools
+-   [Enhancement Tools](https://github.com/kansasgis/NG911/blob/master/Doc_Online/EnhancementTools.md)
 
--   Metadata Tools (v1.0 ONLY)
+-   [Metadata Tools](https://github.com/kansasgis/NG911/blob/master/Doc_Online/MetadataTools.md) (v1.0 ONLY)
 
--   Submission Tools
+-   [Submission Tools](https://github.com/kansasgis/NG911/blob/master/Doc_Online/SubmissionTools.md)
 
--   Validation Tools
+-   [Validation Tools](https://github.com/kansasgis/NG911/blob/master/Doc_Online/ValidationTools.md)
 
 The Kansas NG911 Toolbox is compatible with ArcGIS Desktop versions 10.3
 and higher.
@@ -56,7 +44,7 @@ Unzip the NG911 Toolbox and leave all files and folders in the native
 structure. Maintaining this file and folder structure will aid in future
 tool updates.
 
-Validation Tools
+[Validation Tools](https://github.com/kansasgis/NG911/blob/master/Doc_Online/ValidationTools.md)
 ================
 
 The tools in the Validation toolset were written to review the NG911
@@ -94,7 +82,7 @@ as some optional checks. All checks should be run on data at least once
 before submission. Some checks are optional to allow the user to run an
 entire or partial check on a second pass.
 
-Interpreting the Results 
+[Interpreting the Results](https://github.com/kansasgis/NG911/blob/master/Doc_Online/Interpreting_Tool_Results.md)
 -------------------------
 
 The interactive window gives a few details about data feedback. All
@@ -122,13 +110,13 @@ table, use tool “6 Optional Clear Results Table”. The validation tools
 skip data marked as exceptions or that shouldn’t be submitted, so please
 be sure to keep the EXCEPTION and SUBMIT attributes up to date.
 
-Adjustment Tools
+[Adjustment Tools](https://github.com/kansasgis/NG911/blob/master/Doc_Online/AdjustmentTools.md)
 ================
 
 The adjustment tools are designed to quickly edit various data issues to
 prepare data for submission.
 
-Comparison Tools
+[Comparison Tools](https://github.com/kansasgis/NG911/blob/master/Doc_Online/ComparisonTools.md)
 ================
 
 The comparison tools generate a report detailed the differences between
@@ -137,20 +125,20 @@ points) or two NG911 geodatabases. The comparison tools are intended for
 PSAPs to see data differences between their own data from different time
 snapshots.
 
-Submission Tools
+[Submission Tools](https://github.com/kansasgis/NG911/blob/master/Doc_Online/SubmissionTools.md)
 ================
 
 The submission tools are designed to run through all of the data checks,
 generate a submission report, and zip up your data for submission. This
 should be the final step performed before data is submitted.
 
-Conversion and Enhancement Tools
+[Conversion](https://github.com/kansasgis/NG911/blob/master/Doc_Online/ConversionTools.md) and [Enhancement](https://github.com/kansasgis/NG911/blob/master/Doc_Online/EnhancementTools.md) Tools
 ================================
 
 Some tools are for making life easier and automating certain data
 creation tasks.
 
--   Conversion Tools:
+-   [Conversion Tools](https://github.com/kansasgis/NG911/blob/master/Doc_Online/ConversionTools.md):
 
     -   GDB to Shapefiles: Exports your entire NG911 data into
         shapefiles & DBFs
@@ -161,7 +149,7 @@ creation tasks.
     -   Zip NG911 Geodatabase: Creates a zip file of your NG911
         geodatabase to prepare it for submission to DASC
 
--   Enhancement Tools:
+-   [Enhancement Tools](https://github.com/kansasgis/NG911/blob/master/Doc_Online/EnhancementTools.md):
 
     -   Add KSPID: If your PSAP/county has GIS parcels, this tool will
         automatically determine, calculate and import the KSPID into the
@@ -186,7 +174,7 @@ journey for spotless data. Results will be added to the
 interactive window. Here are the tools designed to highlight some
 elusive data issues:
 
--   Enhancement Tools:
+-   [Enhancement Tools](https://github.com/kansasgis/NG911/blob/master/Doc_Online/EnhancementTools.md):
 
     -   Check Road Elevation Direction: Makes sure the ELEV\_F and
         ELEV\_T attributes correctly depict the elevation rise and fall
@@ -211,7 +199,7 @@ elusive data issues:
     -   Verify Road Alias: Verifies road alias names against the
         approved highway name list.
 
--   Validation Tools:
+-   [Validation Tools](https://github.com/kansasgis/NG911/blob/master/Doc_Online/ValidationTools.md):
 
     -   8 Optional Verify Topology Exceptions: Double check that all
         road centerline topology errors are noted as exceptions. Note:
