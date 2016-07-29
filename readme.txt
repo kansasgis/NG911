@@ -4,9 +4,14 @@ These tools assist with various tasks in preparing and validating data for the K
 
 These tools are intended for ArcGIS Desktop version 10.3 and higher.
 
+To get started using the tools, please read "GettingStarted.docx" located in this same folder or read
+the online version at https://github.com/kansasgis/NG911/blob/master/GettingStarted.md
+
 The project consists of:
 	readme.txt
 	Kansas NG911 GIS Tools.tbx
+	GettingStarted.docx
+	GettingStarted.md
 	Doc
 		AdjustmentTools.docx
 		ComparisonTools.docx
@@ -17,6 +22,9 @@ The project consists of:
 		MetadataTools.docx
 		SubmissionTools.docx
 		ValidationTools.docx
+	Doc_Online
+		.md versions of the documents listed above
+		Exception: The TN records document is not available online
 	Domains
 		AGENCYID_Domains.txt
 		COUNTRY_Domains.txt
@@ -50,12 +58,14 @@ The project consists of:
 		Conversion_GDBtoShapefile.py
 		Conversion_ZipNG911Geodatabase.py
 		CoordConvertor.py
+		Enhancement_AddKSPID.py
 		Enhancement_AssignID.py
 		Enhancement_CalculateLabel.py
 		Enhancement_CheckRoadElevationDirection.py
 		Enhancement_CheckTN.py
 		Enhancement_CreatRoadAliasRecords.py
 		Enhancement_FindAddressRangeOverlaps.py
+		Enhancement_GeocodeAddressPoints.py
 		Enhancement_XYUSNGCalc.py
 		Enhancement_VerifyRoadAlias.py
 		Metadata_EnhanceMetadata.py
@@ -81,7 +91,7 @@ The tool will be available as a package download from the Kansas Data Access and
 
 Support: for questions or issues, email a full description to Kristen: kristen at kgs.ku.edu
 
-Credits: Scripts written by Sherry Massey with Dickinson County, Kristen Jordan-Koenig with DASC, and Kyle Gonterwitz and Dirk Talley with Kansas Department of Transportation
+Credits: Scripts written by Sherry Massey with Dickinson County, Kristen Jordan Koenig with DASC, and Kyle Gonterwitz and Dirk Talley with Kansas Department of Transportation
 
 Disclaimer: The Kansas NG9-1-1 GIS Toolbox is provided by the Kansas 911 Coordinating Council, Kansas GIS Policy Board’s Data Access & Support Center (DASC), 
 and associated contributors "as is" and any express or implied warranties, including, but not limited to, the implied warranties of merchantability and fitness 

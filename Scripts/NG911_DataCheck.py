@@ -239,11 +239,12 @@ def RecordResults(resultType, values, gdb): # Guessed on whitespace formatting h
             userMessage(row)
     del cursor
 
-def geocodeAddressPoints(pathsInfoObject):
-    gdb = pathsInfoObject.gdbPath
-    gdbObject = getGDBObject(gdb)
-
+##def geocodeAddressPoints(pathsInfoObject):
+##    gdb = pathsInfoObject.gdbPath
 ##    version = pathsInfoObject.gdbVersion
+
+def geocodeAddressPoints(gdb):
+    gdbObject = getGDBObject(gdb)
 
     env.workspace = gdb
     addressPointPath = gdbObject.AddressPoints
@@ -256,7 +257,7 @@ def geocodeAddressPoints(pathsInfoObject):
 
         gc_table = gdbObject.GeocodeTable
         sl_field = "SingleLineInput"
-        Locator = gdbObject.Locator
+        Locator = join(dirname(gdb), basename(gdb).replace(".gdb", "_LOC"))
         addyview = "addy_view"
         output = "gc_test"
 
@@ -295,7 +296,7 @@ def geocodeAddressPoints(pathsInfoObject):
             AddField_management(gc_table, sl_field, "TEXT", "", "", 250)
 
             #calculate field
-            exp = '[' + a_obj.LABEL + '] & " " & [' + a_obj.ZIP + ']'
+            exp = '[' + a_obj.LABEL + '] & " " & [' + a_obj.MUNI + '] & " " & [' + ab_obj.STATE + '] & " " & [' + a_obj.ZIP + ']'
             CalculateField_management(gc_table, sl_field, exp, "VB")
 
             #generate locator
@@ -340,7 +341,7 @@ def geocodeAddressPoints(pathsInfoObject):
                         'Primary Table:Min X value for extent' <None> VISIBLE NONE;'Primary Table:Max X value for extent' <None> VISIBLE NONE;
                         'Primary Table:Min Y value for extent' <None> VISIBLE NONE;'Primary Table:Max Y value for extent' <None> VISIBLE NONE;
                         'Primary Table:Left Additional Field' <None> VISIBLE NONE;'Primary Table:Right Additional Field' <None> VISIBLE NONE;
-                        'Primary Table:Altname JoinID' RoadCenterline:SEGID VISIBLE NONE;'*Alternate Name Table:JoinID' RoadAlias:SEGID VISIBLE NONE;
+                        '*Primary Table:Altname JoinID' RoadCenterline:SEGID VISIBLE NONE;'*Alternate Name Table:JoinID' RoadAlias:SEGID VISIBLE NONE;
                         'Alternate Name Table:Prefix Direction' RoadAlias:A_PRD VISIBLE NONE;'Alternate Name Table:Prefix Type' <None> VISIBLE NONE;
                         'Alternate Name Table:Street Name' RoadAlias:A_RD VISIBLE NONE;'Alternate Name Table:Suffix Type' RoadAlias:A_STS VISIBLE NONE;
                         'Alternate Name Table:Suffix Direction' RoadAlias:A_POD VISIBLE NONE"""
@@ -438,18 +439,18 @@ def geocodeAddressPoints(pathsInfoObject):
                                             report = "Notice: " + report
                                             rCount = rCount - 1
                                         else:
-                                            report = "Error: " + report
+                                            report = "Notice: " + report
                                         val = (today, report, filename, "", fID)
                                         values.append(val)
                                     Delete_management(tblGE)
 
                                 else:
-                                    report = "Error: " + str(fID) + " did not geocode against centerline"
+                                    report = "Notice: " + str(fID) + " did not geocode against centerline"
                                     val = (today, report, filename, "", fID)
                                     values.append(val)
 
                         if rCount > 0:
-                            userMessage("Completed geocoding with " + str(rCount) + " errors.")
+                            userMessage("Completed geocoding with " + str(rCount) + " issues. These do not prohibit a successful data submission.")
                             #report records
                             if values != []:
                                 RecordResults(recordType, values, gdb)
@@ -1757,7 +1758,7 @@ def checkRoadAliases(pathsInfoObject):
     road_alias = gdbObject.RoadAlias
 
     if Exists(roads) and Exists(road_alias):
-        rdslyr = "RoadCenterline"
+        rdslyr = "RoadCenterlineQ"
         if fieldExists(roads, rc_obj.SUBMIT):
             MakeFeatureLayer_management(roads, rdslyr, rc_obj.SUBMIT + " not in ('N')")
         else:
@@ -1765,7 +1766,7 @@ def checkRoadAliases(pathsInfoObject):
 
         #make road alias into a table view
 
-        ra_tbl = "RoadAlias"
+        ra_tbl = "RoadAliasQ"
         if fieldExists(road_alias, ra_obj.SUBMIT):
             MakeTableView_management(road_alias, ra_tbl, ra_obj.SUBMIT + " not in ('N')")
         else:
@@ -1869,7 +1870,8 @@ def sanityCheck(currentPathSettings):
         RecordResults("DASCmessage", values, gdb)
         userMessage("Geodatabase passed all data checks.")
     else:
-        userMessage("There were " + str(numErrors) + " issues with the data. Please view errors in the TemplateCheckResults and:or FieldValuesCheckResults tables.")
+        AddWarning("There were " + str(numErrors) + " issues with the data. Please view errors in the TemplateCheckResults and:or FieldValuesCheckResults tables.")
+        AddWarning("For documentation on Interpreting Tool Results, please copy and paste this link into your web browser: https://goo.gl/aUlrLH")
 
     checkToolboxVersionFinal()
 
@@ -1974,6 +1976,27 @@ def main_check(checkType, currentPathSettings):
 
         if checkList[2] == "true":
             checkUniqueIDFrequency(currentPathSettings)
+
+    fieldCheckResults = gdbObject.FieldValuesCheckResults
+    templateResults = gdbObject.TemplateCheckResults
+    numErrors = 0
+
+    for table in [fieldCheckResults, templateResults]:
+        if Exists(table):
+            tbl = "tbl"
+            wc = "Description not like '%Notice%'"
+            MakeTableView_management(table, tbl, wc)
+            count = getFastCount(tbl)
+            numErrors = numErrors + count
+            Delete_management(tbl)
+
+    #change result = 1
+    if numErrors > 0:
+        BigMessage = """There were issues with the data. Please view errors in
+        the TemplateCheckResults and:or FieldValuesCheckResults tables. For
+        documentation on Interpreting Tool Results, please copy and paste this
+        link into your web browser: https://goo.gl/aUlrLH"""
+        AddWarning(BigMessage)
 
     checkToolboxVersionFinal()
 

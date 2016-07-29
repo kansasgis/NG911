@@ -38,12 +38,12 @@ gdb_object = getGDBObject(working_gdb)
 env.workspace = working_gdb
 input_fc = gdb_object.RoadCenterline         # Our street centerline feature class
 output_fc = join(gdb_object.gdbPath, "AddressRange_Overlap")
-a = getDefaultNG911RoadCenterlineObject()
-name_field = a.LABEL   # Should be concatenated with pre/post directionals and type
-left_from = a.L_F_ADD         # The left from address field
-left_to = a.L_T_ADD            # The left to address field
-right_from = a.R_F_ADD        # The right from address field
-right_to = a.R_T_ADD            # The right to address field
+rd_object = getDefaultNG911RoadCenterlineObject()
+name_field = rd_object.LABEL   # Should be concatenated with pre/post directionals and type
+left_from = rd_object.L_F_ADD         # The left from address field
+left_to = rd_object.L_T_ADD            # The left to address field
+right_from = rd_object.R_F_ADD        # The right from address field
+right_to = rd_object.R_T_ADD            # The right to address field
 OID_field = "OBJECTID"
 
 try:
@@ -56,7 +56,7 @@ try:
 
         # --- Parity check ---
     ##    parity_sql = left_from + " <> " + left_to + " or " + right_from +" <> " + right_to
-        parity_sql = a.PARITY_L + " in " + parity + " AND " + a.PARITY_R + " in " + parity
+        parity_sql = rd_object.PARITY_L + " in " + parity + " AND " + rd_object.PARITY_R + " in " + parity
 
         # Create search cursor to loop through unique road names
         overlap_list = []   # List to store the OIDs of overlapping segments
@@ -68,7 +68,7 @@ try:
         dictionary = {}     # Place to store data before heavy lifting
 
         #set up data for search cursor
-        fields = (name_field, OID_field, left_from, left_to, right_from, right_to, a.MUNI_L, a.MUNI_R)
+        fields = (name_field, OID_field, left_from, left_to, right_from, right_to, rd_object.MUNI_L, rd_object.MUNI_R)
         userMessage("Loading data into a dictionary")
 
         with SearchCursor(input_fc, fields, parity_sql) as segments:
