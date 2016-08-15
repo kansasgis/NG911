@@ -20,6 +20,7 @@ The project consists of:
 		EnhancementTools.docx
 		Interpreting_Tool_Results.docx
 		MetadataTools.docx
+		MSAGTools.docx
 		SubmissionTools.docx
 		ValidationTools.docx
 	Doc_Online
@@ -62,13 +63,16 @@ The project consists of:
 		Enhancement_AssignID.py
 		Enhancement_CalculateLabel.py
 		Enhancement_CheckRoadElevationDirection.py
-		Enhancement_CheckTN.py
 		Enhancement_CreatRoadAliasRecords.py
 		Enhancement_FindAddressRangeOverlaps.py
 		Enhancement_GeocodeAddressPoints.py
+		Enhancement_CompareRoadNames.py
 		Enhancement_XYUSNGCalc.py
 		Enhancement_VerifyRoadAlias.py
 		Metadata_EnhanceMetadata.py
+		MSAG_CheckTN.py
+		MSAG_CreateLocators.py
+		MSAG_GeocodeTNList_Prepped.py
 		NG911_arcpy_shortcuts.py
 		NG911_Config.py
 		NG911_DataCheck.py
