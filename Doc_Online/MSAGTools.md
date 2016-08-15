@@ -14,7 +14,7 @@ Description: These tools assist with verifying a PSAP’s TN list and MSAG infor
 
 - 1000 3RD ST, GREAT BEND
 
-<a href="TNList"></a>
+<a name="TNList"></a>
 Running *Check TN List*:
 This tool requires a telephone number list to be extracted as a spreadsheet. Directions for obtaining the TN list are found in the Downloading_TN_records_from_911Net document.
 
@@ -36,7 +36,7 @@ This tool requires a telephone number list to be extracted as a spreadsheet. Dir
   
   9.	To review TN_Geocode_Results_YYYYMMDD against the TN_List_YYYYMMDD, bring both tables into ArcMap and create a join from TN_List_YYYYMMDD to TN_Geocode_Results_YYYYMMDD based on the NGTNID.
 
-<a href="MSAGLoc"></a>  
+<a name="MSAGLoc"></a>  
 Running *Create MSAG Locator*:
 
   1.	Open ArcCatalog and navigate to the toolbox called “Kansas NG911 GIS Tools” > “MSAG Tools” > “Create MSAG Locator”.
@@ -51,7 +51,7 @@ Running *Create MSAG Locator*:
   
   6.	For comprehensive geocoding, please use the CompositeLoc since it is a combination of the AddressLocator and RoadLocator.
   
-<a href="GeocodePrepped"></a>  
+<a name="GeocodePrepped"></a>  
 Running *Geocode Prepped TN List*:
 
 1.	Open ArcCatalog and navigate to the toolbox called “Kansas NG911 GIS Tools” > “MSAG Tools” > “Geocode Prepped TN List”.
