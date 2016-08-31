@@ -74,38 +74,51 @@ def getGDBObject(gdb):
 
     return NG911_GDB
 
+
 def checkToolboxVersion():
-    import json, urllib
+    import json, urllib, sys
     from inspect import getsourcefile
     from os.path import abspath, dirname, join, exists
     from arcpy import AddMessage
 
-    #set lots of variables
+    v = sys.version_info.major
+    if v != 2:
+        if exists(r"C:\Program Files\ArcGIS\Pro\bin\Python\Lib\urllib"):
+            sys.path.append(r"C:\Program Files\ArcGIS\Pro\bin\Python\Lib\urllib")
+            import request
+
+#   set lots of variables
     message, toolData, toolVersion, response, mostRecentVersion = "", "", "0", "", "X"
 
-    #get version in the .json file that is already present
+#    get version in the .json file that is already present
     me_folder = dirname(abspath(getsourcefile(lambda:0)))
     jsonFile = join(me_folder, "ToolboxVersion.json")
 
-    #make sure the local json file exists
+#   make sure the local json file exists
     if exists(jsonFile):
         toolData = json.loads(open(jsonFile).read())
         toolVersion = toolData["toolboxVersion"]["version"]
         AddMessage(toolVersion)
 
-    #get version of toolbox live online
+#   get version of toolbox live online
     url = "https://raw.githubusercontent.com/kansasgis/NG911/master/Scripts/ToolboxVersion.json"
 
-    #Error trapping in case the computer is offline or can't get to the internet
+#   Error trapping in case the computer is offline or can't get to the internet
     try:
-        response = urllib.urlopen(url)
-        mostRecentData = json.loads(response.read())
+
+        try:
+            response = request.urlopen(url).read()
+            mostRecentData = json.loads(response.decode('utf-8'))
+        except:
+            response = urllib.urlopen(url)
+            mostRecentData = json.loads(response.read())
+
         mostRecentVersion = mostRecentData["toolboxVersion"]["version"]
         AddMessage(mostRecentVersion)
     except:
-        message("Unable to check toolbox version at this time.")
+        message = "Unable to check toolbox version at this time."
 
-    #compare the two
+#    compare the two
     if toolVersion == mostRecentVersion:
         message = "Your NG911 toolbox version is up-to-date."
     else:
@@ -115,6 +128,6 @@ def checkToolboxVersion():
             download an up-to-date copy of the toolbox at
             https://github.com/kansasgis/NG911/raw/master/KansasNG911GISTools.zip"""
 
-    #report back to the user
+#   report back to the user
     return message
 

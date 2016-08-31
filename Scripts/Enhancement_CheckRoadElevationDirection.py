@@ -58,7 +58,7 @@ def main():
     badSegs = []
 
     #loop through the road labels
-    for label in roadFullDict.iterkeys():
+    for label in roadFullDict:
         elevInfo = roadFullDict[label]
 
         elevString = ""

@@ -6,16 +6,12 @@
 #
 # Created:     24/11/2014
 #-------------------------------------------------------------------------------
+from NG911_Config import getGDBObject, currentPathSettings
+from arcpy import GetParameterAsText, Exists
+from os.path import basename
+from NG911_DataCheck import main_check, userMessage
 
 def main():
-    from arcpy import GetParameterAsText
-    from os.path import basename
-
-    from NG911_DataCheck import main_check, userMessage
-    try:
-        from NG911_Config import currentPathSettings # currentPathSettings should have all the path information available. ## import esb, gdb, folder
-    except:
-        userMessage( "Copy config file into command line")
 
     #get parameters
     gdb = GetParameterAsText(0)
@@ -28,6 +24,7 @@ def main():
     findInvalidGeometry = GetParameterAsText(7)
 ##    template10 = GetParameterAsText(8)
 
+    gdbObject = getGDBObject(gdb)
     #create esb list
     esb = []
 
@@ -39,12 +36,18 @@ def main():
     #create check list
     checkList = [checkLayerList,checkRequiredFields,checkRequiredFieldValues, checkSubmissionNumbers, findInvalidGeometry]
 
+    fcList = [gdbObject.AddressPoints, gdbObject.AuthoritativeBoundary, gdbObject.RoadAlias, gdbObject.RoadCenterline]
+
+    if Exists(gdbObject.MunicipalBoundary):
+        fcList.append(gdbObject.MunicipalBoundary)
+
     #set object parameters
     checkType = "template"
     currentPathSettings.gdbPath = gdb
     currentPathSettings.domainsFolderPath = domainsFolder
     currentPathSettings.esbList = esb
     currentPathSettings.checkList = checkList
+    currentPathSettings.fcList = fcList
 
 ##    if template10 == 'true':
 ##        currentPathSettings.gdbVersion = "10"

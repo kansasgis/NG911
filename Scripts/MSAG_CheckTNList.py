@@ -1,18 +1,25 @@
 #-------------------------------------------------------------------------------
-# Name:        Enhancement_CheckTNList
+# Name:        MSAG_CheckTNList
 # Purpose:     Check a county's TN list against MSAG communities in the NG911 Address Point and Road Centerline files
 #
 # Author:      kristen
 #
 # Created:     03/09/2015
 #-------------------------------------------------------------------------------
-from arcpy import (CreateAddressLocator_geocoding, GeocodeAddresses_geocoding, CopyRows_management, Delete_management, AddField_management, CalculateField_management,
-    GetParameterAsText, Exists, env, CreateTable_management, CreateCompositeAddressLocator_geocoding)
-from arcpy.da import InsertCursor
+from arcpy import (CreateAddressLocator_geocoding, GeocodeAddresses_geocoding,
+            CopyRows_management, Delete_management, AddField_management,
+            CalculateField_management, GetParameterAsText, Exists, env,
+            CreateTable_management, CreateCompositeAddressLocator_geocoding,
+            MakeFeatureLayer_management, AddMessage, CreateFileGDB_management)
+from arcpy.da import InsertCursor, SearchCursor
 from NG911_DataCheck import userMessage
 from NG911_Config import getGDBObject
-from os.path import join
-from NG911_GDB_Objects import getDefaultNG911AddressObject
+from os.path import join, dirname, basename, exists
+from os import mkdir
+from NG911_GDB_Objects import getDefaultNG911AddressObject, getTNObject
+from NG911_arcpy_shortcuts import getFastCount, fieldExists
+from time import strftime
+from sys import exit
 
 a_obj = getDefaultNG911AddressObject()
 
@@ -21,9 +28,20 @@ def createLocators(gdb_object):
     streetPath = gdb_object.RoadCenterline
     roadAliasPath = gdb_object.RoadAlias
 
-    AL1 = join(gdb_object.gdbPath, "AddressLocator")
-    AL2 = join(gdb_object.gdbPath, "RoadLocator")
-    AL3 = join(gdb_object.gdbPath, "CompositeLoc")
+    tn_object = getTNObject(gdb_object.gdbPath)
+    tn_gdb = tn_object.tn_gdb
+
+    LocatorFolder = tn_object.LocatorFolder
+
+    if not exists(LocatorFolder):
+        mkdir(LocatorFolder)
+
+    if not Exists(tn_gdb):
+        CreateFileGDB_management(dirname(tn_gdb), basename(tn_gdb))
+
+    AL1 = tn_object.AddressLocator
+    AL2 = tn_object.RoadLocator
+    AL3 = tn_object.CompositeLocator
 
     if not Exists(AL1):
         #Create address locator from NG911 Address points AL1
@@ -97,37 +115,68 @@ def createLocators(gdb_object):
                     try:
                         CreateAddressLocator_geocoding("US Address - Dual Ranges", streetPath + " 'Primary Table';" + roadAliasPath + " 'Alternate Name Table'", fieldMap, AL2, "")
                     except:
-                        userMessage("Could not create locator from road data")
+                        fieldMap = """'Primary Table:Feature ID' RoadCenterline:SEGID VISIBLE NONE;'*Primary Table:From Left' RoadCenterline:L_F_ADD VISIBLE NONE;
+                            '*Primary Table:To Left' RoadCenterline:L_T_ADD VISIBLE NONE;'*Primary Table:From Right' RoadCenterline:R_F_ADD VISIBLE NONE;
+                            '*Primary Table:To Right' RoadCenterline:R_T_ADD VISIBLE NONE;'Primary Table:Prefix Direction' RoadCenterline:PRD VISIBLE NONE;
+                            'Primary Table:Prefix Type' RoadCenterline:STP VISIBLE NONE;'*Primary Table:Street Name' RoadCenterline:RD VISIBLE NONE;
+                            'Primary Table:Suffix Type' RoadCenterline:STS VISIBLE NONE;'Primary Table:Suffix Direction' RoadCenterline:POD VISIBLE NONE;
+                            'Primary Table:Left City or Place' RoadCenterline:MSAGCO_L VISIBLE NONE;'Primary Table:Right City or Place' RoadCenterline:MSAGCO_R VISIBLE NONE;
+                            'Primary Table:Left ZIP Code' RoadCenterline:ZIP_L VISIBLE NONE;'Primary Table:Right ZIP Code' RoadCenterline:ZIP_R VISIBLE NONE;
+                            'Primary Table:Left State' RoadCenterline:STATE_L VISIBLE NONE;'Primary Table:Right State' RoadCenterline:STATE_R VISIBLE NONE;
+                            'Primary Table:Left Street ID' <None> VISIBLE NONE;'Primary Table:Right Street ID' <None> VISIBLE NONE;
+                            'Primary Table:Display X' <None> VISIBLE NONE;'Primary Table:Display Y' <None> VISIBLE NONE;
+                            'Primary Table:Min X value for extent' <None> VISIBLE NONE;'Primary Table:Max X value for extent' <None> VISIBLE NONE;
+                            'Primary Table:Min Y value for extent' <None> VISIBLE NONE;'Primary Table:Max Y value for extent' <None> VISIBLE NONE;
+                            'Primary Table:Left parity' <None> VISIBLE NONE;'Primary Table:Right parity' <None> VISIBLE NONE;
+                            'Primary Table:Left Additional Field' <None> VISIBLE NONE;'Primary Table:Right Additional Field' <None> VISIBLE NONE;
+                            '*Primary Table:Altname JoinID' RoadCenterline:SEGID VISIBLE NONE;'*Alias Table:Alias' RoadAlias:SEGID VISIBLE NONE;
+                            '*Alias Table:Street' RoadAlias:A_RD VISIBLE NONE;'Alias Table:City' <None> VISIBLE NONE;'Alias Table:State' <None> VISIBLE NONE;
+                            'Alias Table:ZIP' <None> VISIBLE NONE"""
+                        try:
+                            CreateAddressLocator_geocoding("US Address - Dual Ranges", streetPath + " 'Primary Table';" + roadAliasPath + " 'Alias Name Table'", fieldMap, AL2, "", "DISABLED")
+                        except Exception as e:
+                            userMessage("Could not create locator from road data. " + str(e))
 
             if Exists(AL2):
                 userMessage("Created road centerline locator")
 
         #Create composite address locator from addresspoints/road centerline AL3
         if not Exists(AL3):
-            userMessage("Creating composite address locator...")
-            compositeFieldMap = "Street \"Street or Intersection\" true true true 100 Text 0 0 ,First,#," + AL1 + ",Street,0,0," + AL2 + ",Street,0,0;City \"City or Placename\" true true false 40 Text 0 0 ,First,#,"  + \
-                AL1 + ",City,0,0," + AL2 + ",City,0,0;State \"State\" true true false 20 Text 0 0 ,First,#," + AL1 + ",State,0,0," + AL2 + ",State,0,0;ZIP \"ZIP Code\" true true false 10 Text 0 0 ,First,#," + \
-                AL1 + ",ZIP,0,0," + AL2 + ",ZIP,0,0"
+            if Exists(AL1) and Exists(AL2):
+                userMessage("Creating composite address locator...")
+                compositeFieldMap = "Street \"Street or Intersection\" true true true 100 Text 0 0 ,First,#," + AL1 + ",Street,0,0," + AL2 + ",Street,0,0;City \"City or Placename\" true true false 40 Text 0 0 ,First,#,"  + \
+                    AL1 + ",City,0,0," + AL2 + ",City,0,0;State \"State\" true true false 20 Text 0 0 ,First,#," + AL1 + ",State,0,0," + AL2 + ",State,0,0;ZIP \"ZIP Code\" true true false 10 Text 0 0 ,First,#," + \
+                    AL1 + ",ZIP,0,0," + AL2 + ",ZIP,0,0"
 
-            CreateCompositeAddressLocator_geocoding(AL1 + " AddyPt;" + AL2 + " Roads", compositeFieldMap, "AddyPt #;Roads #", AL3)
+                CreateCompositeAddressLocator_geocoding(AL1 + " AddyPt;" + AL2 + " Roads", compositeFieldMap, "AddyPt #;Roads #", AL3)
+
 
 def prepXLS(tnxls, gdb):
     import xlrd
 
     userMessage("Converting spreadsheet to geodatabase table...")
     #create gdb table
-    tname = "TN_Prepped"
-    outTable = join(gdb, tname)
+    tn_object = getTNObject(gdb)
+    outTable = tn_object.TN_List
+    tn_gdb = tn_object.tn_gdb
+    LocatorFolder = tn_object.LocatorFolder
+
+    if not exists(LocatorFolder):
+        mkdir(LocatorFolder)
+
+    if not Exists(tn_gdb):
+        CreateFileGDB_management(dirname(tn_gdb), basename(tn_gdb))
 
     if Exists(outTable):
         Delete_management(outTable)
 
-    CreateTable_management(gdb, tname)
+    tname = basename(outTable)
+    CreateTable_management(tn_gdb, tname)
 
     #add fields
-    fields = (a_obj.HNO, a_obj.HNS, a_obj.PRD, a_obj.RD, a_obj.MUNI, a_obj.STATE)
+    fields = (a_obj.HNO, a_obj.HNS, a_obj.PRD, a_obj.RD, a_obj.MUNI, a_obj.STATE,"NPA","NXX","PHONELINE")
 
-    colIDlist = (17,18,20,21,22,24)
+    colIDlist = (17,18,20,21,22,24,2,3,4)
 
     #add fields
     for field in fields:
@@ -174,15 +223,94 @@ def prepXLS(tnxls, gdb):
 
     userMessage("Creating single line input for geocoding...")
     #create SingleLineInput field
-    AddField_management(outTable, "SingleLineInput", "TEXT", "", "", 100)
+    sli = tn_object.DefaultFullAddress
+    AddField_management(outTable, sli, "TEXT", "", "", 100)
 
     #concatenate field
-    CalculateField_management(outTable, "SingleLineInput", '[' + a_obj.HNO + '] & " " & [' + a_obj.HNS + '] & " " & [' + a_obj.PRD + '] & " " & [' + a_obj.RD + '] & " " & [' + a_obj.MUNI + ']& " " & [' + a_obj.STATE + ']', "VB")
+    fldList = [a_obj.HNO,a_obj.HNS,a_obj.PRD,a_obj.RD,a_obj.MUNI,a_obj.STATE]
+    CalculateField_management(outTable, sli, '!' +  ('! + " " + !').join(fldList) + '!', "PYTHON")
     #replace three spaces in a row with one
-    CalculateField_management(outTable, "SingleLineInput", 'Replace([SingleLineInput], "   ", " ")', "VB")
+    CalculateField_management(outTable, sli, '!' + sli + '!.replace("   ", " ")', "PYTHON")
     #replace two spaces in a row with one
-    CalculateField_management(outTable, "SingleLineInput", 'Replace([SingleLineInput], "  ", " ")', "VB")
+    CalculateField_management(outTable, sli, '!' + sli + '!.replace("  ", " ")', "PYTHON")
     userMessage("Single line input succesfully created.")
+
+def AddUniqueIDField(outTable, uniqueIDField):
+    AddField_management(outTable, uniqueIDField, "TEXT", "", "", 38)
+
+    if not fieldExists(outTable, "NXX"):
+        CalculateField_management(outTable, uniqueIDField, "uniqueID() + str(!OBJECTID!)", "PYTHON", "def uniqueID():\\n  x = '%d' % time.time()\\n  str(x)\\n  return x")
+    else:
+        CalculateField_management(outTable, uniqueIDField, "!NPA! + !NXX! + !PHONELINE!", "PYTHON")
+
+def geocodeTable(gdb, field):
+    #geocode addresses
+    tn_object = getTNObject(gdb)
+    AL3 = tn_object.CompositeLocator
+    tname = tn_object.TN_List
+    GC_output = tn_object.ResultsFC
+    uniqueFieldID = tn_object.UNIQUEID
+    tn_gdb = tn_object.tn_gdb
+
+    #add unique ID to TN List table
+    AddUniqueIDField(tname, uniqueFieldID)
+
+    #delete geocoding output if it exists already
+    if Exists(GC_output):
+        Delete_management(GC_output)
+
+    #try composite first
+    AddMessage("Geocoding TN addresses...")
+    try:
+        in_address_fields = "SingleLine " + field + " VISIBLE NONE"
+        GeocodeAddresses_geocoding(tname, AL3, in_address_fields, GC_output, "STATIC")
+    except Exception as e:
+        userMessage("Cannot geocode addresses. " + str(e))
+        exit()
+
+    #see if any records did not match
+    wc = "Status <> 'M'"
+    lyr = "lyr"
+    MakeFeatureLayer_management(GC_output, lyr, wc)
+
+    rCount = getFastCount(lyr)
+    if rCount > 0:
+        userMessage("Geocoding complete. " + str(rCount) + " records did not geocode. Processing results...")
+        if fieldExists(GC_output, uniqueFieldID):
+            idName = uniqueFieldID
+        else:
+            idName = "USER_" + uniqueFieldID
+
+        fieldList = ("Status", idName)
+
+        #create report table
+        reportTable = tn_object.ResultsTable
+        reportTableName = basename(reportTable)
+
+        if Exists(reportTable):
+            Delete_management(reportTable)
+        CreateTable_management(tn_gdb, reportTableName)
+
+        #add reporting fields
+        AddField_management(reportTable, idName, "TEXT", "", "", 38)
+        AddField_management(reportTable, "STATUS", "TEXT", "", "", 1)
+        AddField_management(reportTable, "DESCRIPTION", "TEXT", "", "", 100)
+
+        with SearchCursor(lyr, fieldList) as rows:
+            for row in rows:
+                cursor = InsertCursor(reportTable, [idName, "STATUS", "DESCRIPTION"])
+                message = "Record did not geocode against the data."
+                if row[0] == "T":
+                    message = "Record was a geocoding tie."
+                try:
+                    cursor.insertRow([row[1], row[0], message])
+                except Exception as e:
+                    userMessage(str(e))
+
+                del cursor
+        userMessage("Results processed. Please see results in " + reportTable)
+    else:
+        userMessage("Geocoding complete. All records geocoded successfully.")
 
 def main():
 
@@ -191,7 +319,6 @@ def main():
 
     #prep TN list
     prepXLS(tnxls, gdb)
-    outTable = join(gdb, "TN_Prepped")
 
     #get gdb object
     gdb_object = getGDBObject(gdb)
@@ -200,14 +327,8 @@ def main():
     createLocators(gdb_object)
 
     #geocode addresses
-    AL3 = join(gdb_object.gdbPath, "CompositeLoc")
-    GC_output = join(gdb, "TN_GC_Output")
+    geocodeTable(gdb, "SingleLineInput")
 
-    #try composite first
-    userMessage("Geocoding TN addresses...")
-    in_address_fields = "SingleLine SingleLineInput VISIBLE NONE"
-    GeocodeAddresses_geocoding(outTable, AL3, in_address_fields, GC_output, "STATIC")
-    userMessage("Geocoding complete. Results are in: " + GC_output)
 
 if __name__ == '__main__':
     main()

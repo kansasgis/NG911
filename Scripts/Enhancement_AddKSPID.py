@@ -138,7 +138,7 @@ def main():
     MakeFeatureLayer_management(a_lyr, j_lyr, j_wc)
 
     #import the KSPID over to the address file
-    CalculateField_management(j_lyr, "ADDRESSPOINTS." + a.KSPID, "[ADDYKSPID_WORKING.KSPID19]", "VB")
+    CalculateField_management(j_lyr, "ADDRESSPOINTS." + a.KSPID, "!ADDYKSPID_WORKING.KSPID19!", "PYTHON")
 
     #clean up
     cleanUp([w_lyr, a_lyr, p_lyr, j_lyr, workingFile])

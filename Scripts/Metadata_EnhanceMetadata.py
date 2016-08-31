@@ -365,7 +365,7 @@ def main(gdb, domainFolder, ESBlist, version):
 
     #loop through metadata dictionary
     for key, list1 in mDict.iteritems():
-        print key
+        print(key)
         updateMetadata(key, list1, domainFolder, esb, version)
 
     #clean up log files

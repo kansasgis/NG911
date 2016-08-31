@@ -53,9 +53,9 @@ def CompareThatData(fc1, fc2, resultsTable, keyword):
         fields.remove("L_UPDATE")
     if "UPDATEBY" in fields:
         fields.remove("UPDATEBY")
-    exp = 'Replace([' + ('] & [').join(fields) + '], " ", "")'
-    CalculateField_management(fc1, compare + "1", exp, "VB")
-    CalculateField_management(fc2, compare + "2", exp, "VB")
+    exp = '(!' + ('! + !').join(fields) + '!).replace(" ", "")'
+    CalculateField_management(fc1, compare + "1", exp, "PYTHON")
+    CalculateField_management(fc2, compare + "2", exp, "PYTHON")
 
     #convert to feature layer
     lyr1 = MakeLayer(fc1, "lyr1", "")
@@ -181,7 +181,8 @@ def CompareThatData(fc1, fc2, resultsTable, keyword):
 
         cursor = InsertCursor(resultsTable, insertFields)
 
-        for message, IDlist in issueDict.iteritems():
+        for message in issueDict:
+            IDlist = issueDict[message]
             if IDlist != []:
                 for id_num in IDlist:
                     cursor.insertRow((today, fc1, fc2, message, id_num))
@@ -272,8 +273,9 @@ def CompareAllData(gdb1, gdb2, resultsTable):
                             checkList[fcFull1] = fcFull2
 
     #launch the comparison for each active data lyaer
-    for fc1, fc2 in checkList.iteritems():
-            LaunchDataCompare(fc1, fc2, resultsTable)
+    for fc1 in checkList:
+        fc2 = checkList[fc1]
+        LaunchDataCompare(fc1, fc2, resultsTable)
 
     userMessage("Results of the data comparison are in " + resultsTable)
 

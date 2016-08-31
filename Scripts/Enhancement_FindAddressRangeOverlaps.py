@@ -22,7 +22,9 @@
 #-------------------------------------------------------------------------------
 
 # Import modules
-from arcpy import env, GetParameterAsText, ListFields, MakeTableView_management, MakeFeatureLayer_management, SelectLayerByAttribute_management, CopyFeatures_management, Exists, Append_management
+from arcpy import (env, GetParameterAsText, ListFields, MakeTableView_management,
+        MakeFeatureLayer_management, SelectLayerByAttribute_management,
+        CopyFeatures_management, Exists, Append_management, AddWarning)
 from arcpy.da import SearchCursor
 from NG911_Config import getGDBObject
 from NG911_DataCheck import userMessage
@@ -81,12 +83,12 @@ try:
                 # print "Summary for segment: "str(segment.GetValue(name_field)), str(addresses)
                 for a in range(4):
                     curaddr = addresses[a]
-                    if (curaddr > cur_road_HIGH and curaddr <> 0):
+                    if (curaddr > cur_road_HIGH) and (curaddr != 0):
                         cur_road_HIGH = curaddr
                     lowval = cur_road_HIGH
                 for a in range(4):
                     curaddr = addresses[a]
-                    if (curaddr < lowval and curaddr <> 0):
+                    if (curaddr < lowval) and (curaddr != 0):
                         lowval = curaddr
                         cur_road_LOW = lowval
                 cur_road_name = segment[0] + segment[6] + segment[7]
@@ -95,7 +97,7 @@ try:
                 if cur_road_HIGH > 0:   # drop dumb record that fouls up things anyways :)
                     append_list = []    # clear out the list
                     # check if dictionary key exists
-                    if dictionary.has_key (str(cur_road_name)) == 0:
+                    if cur_road_name not in dictionary:
                         # add the dictionary key and populate it with values
                         cur_road_list = [cur_road_OID, cur_road_LOW, cur_road_HIGH]
                         dictionary[cur_road_name] = cur_road_list
@@ -109,7 +111,8 @@ try:
         userMessage("Sorting address ranges")
         lyr = "lyr"
         MakeFeatureLayer_management(input_fc, lyr, parity_sql)
-        for key, value in dictionary.iteritems():
+        for key in dictionary:
+            value = dictionary[key]
             # dictionary {} is structured thusly:
             # ... {STOVER CREEK: [241, 3700, 3713, 214, 3800, 3809] ... }
             # therefore, the logic is to step through each dictionary entry (STOVER CREEK) and
@@ -146,7 +149,8 @@ try:
                         i = 0 # since we had to re-order, redo the whole comparison from the beginning.
                     else: i = i + 1
                 # loop through the records searching for discrepancies
-                for k in range(loop - 1):
+                intLoop = int(loop)
+                for k in range(intLoop - 1):
                     if value[((k+1)*3+1)] < value[((k+1)*3-1)]:
                         # print k, key, value[((k+1)*3-1)], "should be smaller than ", value[((k+1)*3+1)]
                         overlap_list.append(value[((k+1)*3-3)])
@@ -178,7 +182,7 @@ try:
             overlap_sql = OID_field + " in (" + overlap_string + ")" # constructing the complete SQL statement
 
             # print overlap_sql
-            userMessage("The final count of errors processed is "+str(overlap_error_total))
+            AddWarning("The final count of errors processed is "+str(overlap_error_total))
             userMessage("Adding the remaining features to a feature layer")
 
             SelectLayerByAttribute_management(lyr, "ADD_TO_SELECTION", overlap_sql)
@@ -188,10 +192,10 @@ try:
                 CopyFeatures_management(lyr, str(output_fc))
             else:
                 Append_management(lyr, output_fc, "NO_TEST")
-            userMessage("Overlapping address ranges in: " + output_fc)
+            AddWarning("Overlapping address ranges in: " + output_fc)
 
         else:
             userMessage("No overlaps found. Good job!")
 
-except "FieldError":
-    userMessage("Fields in the input table: " + input_fc + " do not exist")
+except:
+    userMessage("Error processing the data.")

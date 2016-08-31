@@ -26,7 +26,7 @@ def FixDomainCase(gdb, domainFolder):
 
         #read FieldValuesCheckResults, limit table view to only domain errors
         tbl = "tbl"
-        wc = fvcr_object.DESCRIPTION + " IS LIKE '%not in approved domain for field%'"
+        wc = fvcr_object.DESCRIPTION + " LIKE '%not in approved domain for field%'"
         MakeTableView_management(table, tbl, wc)
 
         outTableInMemory = r"in_memory\outputFrequency"
@@ -53,12 +53,12 @@ def FixDomainCase(gdb, domainFolder):
                     domainDict = getFieldDomain(fieldName, domainFolder)
                     domainList = []
 
-                    for val in domainDict.iterkeys():
+                    for val in domainDict:
                         domainList.append(val)
 
                     if value.upper() in domainList:
                         #if yes, load into a master dictionary of stuff to fix (key is layer name, value is a list of fields that need help)
-                        if layerName in fixDict.iterkeys():
+                        if layerName in fixDict:
                             fieldsToFix = fixDict[layerName]
 
                             #see if field name is already in list of those to fix
@@ -76,7 +76,8 @@ def FixDomainCase(gdb, domainFolder):
         if fixDict != {}:
             report = ""
             userMessage(fixDict)
-            for layer, fields in fixDict.iteritems():
+            for layer in fixDict:
+                fields = fixDict[layer]
                 report = report + layer + ": "
                 #for each value in the key, calculate the attribute field to be all upper case
                 for field in fields:

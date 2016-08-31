@@ -403,3 +403,38 @@ def getDefaultNG911MunicipalBoundaryObject():
 
     return NG911_MunicipalBoundary_Default
 
+class TN_Object(object):
+
+    def __init__(self, u_LocatorFolder, u_AddressLocator, u_RoadLocator, u_CompositeLocator, u_TN_List, u_ResultsFC, u_ResultsTable, u_UNIQUEID,
+            u_defaultFullAddress, u_tn_gdb):
+
+        self.LocatorFolder = u_LocatorFolder
+        self.AddressLocator = u_AddressLocator
+        self.RoadLocator = u_RoadLocator
+        self.CompositeLocator = u_CompositeLocator
+        self.TN_List = u_TN_List
+        self.ResultsFC = u_ResultsFC
+        self.ResultsTable = u_ResultsTable
+        self.UNIQUEID = u_UNIQUEID
+        self.DefaultFullAddress = u_defaultFullAddress
+        self.tn_gdb = u_tn_gdb
+
+
+def getTNObject(gdb):
+    from os.path import join,dirname,basename
+    from time import strftime
+
+    LocatorFolder = join(dirname(gdb), basename(gdb).replace(".gdb","") + "_TN")
+    today = strftime('%Y%m%d')
+    tn_gdb = join(LocatorFolder, "TN_Working.gdb")
+    tname = join(tn_gdb, "TN_List_" + today)
+    output_fc = join(tn_gdb, "TN_GC_Output_" + today)
+    resultsTable = join(tn_gdb, "TN_Geocode_Results_" + today)
+
+
+    NG911_TN_Default = TN_Object(LocatorFolder, join(LocatorFolder, "AddressLocator"), join(LocatorFolder, "RoadLocator"),
+                                join(LocatorFolder, "CompositeLoc"), tname, output_fc, resultsTable, "NGTNID", "SingleLineInput",
+                                tn_gdb)
+
+    return NG911_TN_Default
+

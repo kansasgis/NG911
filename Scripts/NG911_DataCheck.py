@@ -59,8 +59,11 @@ def getCurrentLayerList(esb):
 
 def userMessage(msg):
     #print stuff
-    print msg
-    AddMessage(msg)
+    try:
+        print(msg)
+        AddMessage(msg)
+    except:
+        pass
 
 def getCurrentDomainList():
     domainList = ["AddressNumbers", "AddressParity", "AgencyID", "Counties", "Country",
@@ -296,8 +299,8 @@ def geocodeAddressPoints(gdb):
             AddField_management(gc_table, sl_field, "TEXT", "", "", 250)
 
             #calculate field
-            exp = '[' + a_obj.LABEL + '] & " " & [' + a_obj.MUNI + '] & " " & [' + ab_obj.STATE + '] & " " & [' + a_obj.ZIP + ']'
-            CalculateField_management(gc_table, sl_field, exp, "VB")
+            exp = '!' + a_obj.LABEL + '! + " " + !' + a_obj.MUNI + '! + " " + !' + ab_obj.STATE + '! + " " + !' + a_obj.ZIP + '!'
+            CalculateField_management(gc_table, sl_field, exp, "PYTHON")
 
             #generate locator
             fieldMap = """'Primary Table:Feature ID' RoadCenterline:SEGID VISIBLE NONE;'*Primary Table:From Left' RoadCenterline:L_F_ADD VISIBLE NONE;
@@ -413,42 +416,48 @@ def geocodeAddressPoints(gdb):
                         today = strftime("%m/%d/%y")
                         filename = "AddressPoints"
 
-                        rfields = (a_obj.UNIQUEID, "Status", a_obj.LOCTYPE)
-                        with SearchCursor(output, rfields, wc) as rRows:
-                            for rRow in rRows:
-                                fID = rRow[0]
+                        if fieldExists(output, a_obj.LOCTYPE):
+                            rfields = (a_obj.UNIQUEID, "Status", a_obj.LOCTYPE)
+                        else:
+                            rfields = ("USER_" + a_obj.UNIQUEID, "Status", "USER_" + a_obj.LOCTYPE)
+                        try:
+                            with SearchCursor(output, rfields, wc) as rRows:
+                                for rRow in rRows:
+                                    fID = rRow[0]
 
-                                #see if the fID exists as an exception
-                                if Exists(ge):
-                                    wcGE = a_obj.UNIQUEID + " = '" + fID + "'"
-                                    tblGE = "tblGE"
-                                    MakeTableView_management(ge, tblGE, wcGE)
+                                    #see if the fID exists as an exception
+                                    if Exists(ge):
+                                        wcGE = a_obj.UNIQUEID + " = '" + fID + "'"
+                                        tblGE = "tblGE"
+                                        MakeTableView_management(ge, tblGE, wcGE)
 
-                                    geCount = getFastCount(tblGE)
+                                        geCount = getFastCount(tblGE)
 
-                                    if geCount != 0:
-                                        userMessage(fID + " has already been marked as a geocoding exception")
-                                        rCount = rCount - 1
-                                    else:
-                                        #report as an error
-                                        if rRow[1] == "U":
-                                            report = str(fID) + " did not geocode against centerline."
-                                        elif rRow[1] == "T":
-                                            report = str(fID) + " geocoded against more than one centerline segment. Possible address range overlap."
-                                        if rRow[2] != "PRIMARY":
-                                            report = "Notice: " + report
+                                        if geCount != 0:
+                                            userMessage(fID + " has already been marked as a geocoding exception")
                                             rCount = rCount - 1
                                         else:
-                                            report = "Notice: " + report
+                                            #report as an error
+                                            if rRow[1] == "U":
+                                                report = str(fID) + " did not geocode against centerline."
+                                            elif rRow[1] == "T":
+                                                report = str(fID) + " geocoded against more than one centerline segment. Possible address range overlap."
+                                            if rRow[2] != "PRIMARY":
+                                                report = "Notice: " + report
+                                                rCount = rCount - 1
+                                            else:
+                                                report = "Notice: " + report
+                                            val = (today, report, filename, "", fID)
+                                            values.append(val)
+                                        Delete_management(tblGE)
+
+                                    else:
+                                        report = "Notice: " + str(fID) + " did not geocode against centerline"
                                         val = (today, report, filename, "", fID)
                                         values.append(val)
-                                    Delete_management(tblGE)
 
-                                else:
-                                    report = "Notice: " + str(fID) + " did not geocode against centerline"
-                                    val = (today, report, filename, "", fID)
-                                    values.append(val)
-
+                        except Exception as e:
+                            userMessage("Error processing unmatched records. " + str(e))
                         if rCount > 0:
                             userMessage("Completed geocoding with " + str(rCount) + " issues. These do not prohibit a successful data submission.")
                             #report records
@@ -567,8 +576,8 @@ def checkESNandMuniAttribute(currentPathSettings):
 
         searchDict = {esz: (esz_obj.ESN, esz_obj.UNIQUEID), muni: (mb_obj.MUNI, mb_obj.UNIQUEID)}
 
-        for layer, fieldList in searchDict.iteritems():
-
+        for layer in searchDict.keys():
+            fieldList = searchDict[layer]
             if Exists(layer):
 
                 with SearchCursor(layer, fieldList) as polys:
@@ -658,7 +667,7 @@ def checkUniqueIDFrequency(currentPathSettings):
             #clean up
             del rows, row, cursor
         except:
-            print "objects cannot be deleted, they don't exist"
+            userMessage("objects cannot be deleted, they don't exist")
 
 
     for fc in fcList:
@@ -930,7 +939,7 @@ def getRequiredFields(folder):
             fieldList = []
 
             #see if field list already exists
-            if fc in rfDict.iterkeys():
+            if fc in rfDict.keys():
                 fieldList = rfDict[fc]
 
             #append new value onto list
@@ -1052,7 +1061,7 @@ def checkValuesAgainstDomain(pathsInfoObject):
                                 #put domain values in a list
                                 domainList = []
 
-                                for val in domainDict.iterkeys():
+                                for val in domainDict.keys():
                                     domainList.append(val)
 
                                 #add values for some CAD users of blank and space (edit suggested by Sherry M. & Keith S. Dec 2014)
@@ -1214,7 +1223,7 @@ def checkRequiredFieldValues(pathsInfoObject):
                                                 #report the value if it is indeed null
                                                 report = "Error: " + matchingFields[k] + " is null for Feature ID " + oid
                                                 userMessage(report)
-                                                val = (today, report, filename, matchingFields[k], oid)
+                                                val = (today, report, basename(filename), matchingFields[k], oid)
                                                 values.append(val)
 
                                             #iterate!
@@ -1730,7 +1739,7 @@ def checkJoin(gdb, inputTable, joinTable, where_clause, errorMessage, field):
             for row in rows:
                 if row[1] is not None:
                     if " TO " in row[1] or "RAMP" in row[1] or "OLD" in row[1]:
-                        print "this is probably an exception"
+                        print("this is probably an exception")
                     else:
                         val = (today, errorMessage, layer, "", row[0])
                         values.append(val)
@@ -1878,10 +1887,6 @@ def sanityCheck(currentPathSettings):
     return sanity
 
 def main_check(checkType, currentPathSettings):
-##    try:
-##        from NG911_Config import currentPathSettings # currentPathSettings should have all the path information available. ## import esb, gdb, folder
-##    except:
-##        userMessage( "Copy config file into command line")
 
     checkList = currentPathSettings.checkList
     env.workspace = currentPathSettings.gdbPath

@@ -479,7 +479,7 @@ class CoordTranslator:
 if __name__ == '__main__':
     # Create an instance of the Translator
     a = CoordTranslator()
-    print a.AsUTM('0 0 0 0 0 0')
+    print(a.AsUTM('0 0 0 0 0 0'))
     # Ten thousand two-way conversions
     from random import random
     i = 0
@@ -493,10 +493,10 @@ if __name__ == '__main__':
         mgrs = a.UTMtoMGRS(utm)
         utm2 = a.MGRStoUTM(mgrs)
         if utm != utm2:
-            print i
-            print lat, lon
-            print utm, mgrs
-            print utm2
+            print(i)
+            print(lat, lon)
+            print(utm, mgrs)
+            print(utm2)
             miss += 1
         i += 1
-    print 'Percent missed: ', 100*miss/float(i)
+    print('Percent missed: ', 100*miss/float(i))
