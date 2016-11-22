@@ -12,7 +12,8 @@ from arcpy import GetParameterAsText, Exists, CalculateField_management, MakeFea
 from arcpy.da import UpdateCursor, Editor
 from os.path import basename, dirname
 from NG911_DataCheck import userMessage
-from NG911_GDB_Objects import getDefaultNG911AddressObject, getDefaultNG911RoadCenterlineObject
+from NG911_GDB_Objects import getFCObject
+from NG911_arcpy_shortcuts import fieldExists
 
 def main():
     layer = GetParameterAsText(0)
@@ -23,11 +24,8 @@ def main():
     field_list = []
 
     #define object & field list
-    if basename(layer) == "RoadCenterline":
-        a = getDefaultNG911RoadCenterlineObject()
-        field_list = a.LABEL_FIELDS
-    elif basename(layer) == "AddressPoints":
-        a = getDefaultNG911AddressObject()
+    if basename(layer) in ("RoadCenterline", "AddressPoints"):
+        a = getFCObject(layer)
         field_list = a.LABEL_FIELDS
     else:
         userMessage(layer + " does not work with this tool. Please select the NG911 road centerline or address point file.")

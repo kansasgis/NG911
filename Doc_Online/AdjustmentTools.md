@@ -5,8 +5,8 @@ all data checks prior to submission into the NG911 Portal.
 
 [*Create Geocode Exceptions*](#geocodeEx): This tool creates a table in the
 geodatabase called GeocodeExceptions. Based on geocoding errors that
-exist in FieldValuesCheckResults, the tool adds those ADDIDs to the
-GeocodeException table. In the future, any ADDIDs noted in
+exist in FieldValuesCheckResults, the tool adds those ADDIDs/NGADDIDs to the
+GeocodeException table. In the future, any ADDIDs/NGADDIDs noted in
 GeocodeExceptions will not be flagged as geocoding errors.
 
 [*Fix Domain Case*](#domainCase): Based on domain issues that exist in
@@ -15,11 +15,11 @@ example, if FieldValuesCheckResults has the error “Value Primary not in
 approved domain for field LOCTYPE”, any occurrences of “Primary” in
 LOCTYPE will be edited to “PRIMARY”.
 
-[*Fix Duplicate ESBIDs*](#duplicateESBID): For counties with three ESB layers, all ESBIDs
+[*Fix Duplicate ESBIDs*](#duplicateESBID): For counties with three ESB layers, all ESBIDs/NGESBIDs
 must be unique when comparing all three layers against one another. This
-tool creates unique ESBIDs by appending “E”, “F”, or “L” to the end of
-ESBIDs. Thus, if “1” is the ESBID in EMS, Fire, and Law, after running
-the tool, features will have unique ESBIDs like “1E”, “1F”, & “1L”.
+tool creates unique ESBIDs/NGESBIDs by appending “E”, “F”, or “L” to the end of
+ESBIDs/NGESBIDs. Thus, if “1” is the ESBID/NGESBID in EMS, Fire, and Law, after running
+the tool, features will have unique ESBIDs/NGESBIDs like “1E”, “1F”, & “1L”.
 
 The adjustment tools require these Python scripts:
 
@@ -36,10 +36,8 @@ The adjustment tools require these Python scripts:
 <a name="geocodeEx"></a>
 Running *Create Geocode Exceptions*:
 
-1.  First, either run “Validation Tools” &gt; “2 Check Address Points”
-    and make sure to check “Geocode Address Points” or “Validation
-    Tools” &gt; “9 Optional Check All Required”. Running these will
-    record any geocoding errors in FieldValuesCheckResults.
+1.  First, run "Enhancement Tools" &gt; “Geocode Address Points”. 
+	Running this will record any geocoding errors in FieldValuesCheckResults.
 
 2.  Verify that ALL geocoding errors recorded in FieldValuesCheckResults
     are indeed exceptions.
@@ -50,11 +48,11 @@ Running *Create Geocode Exceptions*:
 4.  Run the tool.
 
 5.  The tool will create a table called “GeocodeException” with one
-    field called ADDID. This tool copies over all ADDIDs flagged as
+    field called ADDID/NGADDIDs. This tool copies over all ADDIDs/NGADDIDs flagged as
     geocoding errors from FieldValuesCheckResults as
     geocoding exceptions.
 
-6.  If any of the ADDIDs copied over are genuine errors and are not
+6.  If any of the ADDIDs/NGADDIDs copied over are genuine errors and are not
     exceptions, you can manually delete the ADDID in an edit session
     in ArcMap.
 

@@ -15,7 +15,7 @@ from inspect import getsourcefile
 from os.path import abspath, dirname, join, exists
 from NG911_DataCheck import userMessage
 from NG911_arcpy_shortcuts import ListFieldNames, cleanUp
-from NG911_GDB_Objects import getDefaultNG911AddressObject
+from NG911_GDB_Objects import getFCObject
 from sys import exit
 
 def PIDreplace(pid, ch):
@@ -66,7 +66,7 @@ def main():
 
     #set geodatabase
     gdb = dirname(dirname(addy_pts))
-    a = getDefaultNG911AddressObject()
+    a = getFCObject(addy_pts)
 
     #see if pid_column is already set to KSPID, and if so, edit accordingly
     if pid_column == "KSPID":
@@ -108,7 +108,8 @@ def main():
     sj_fields = ListFieldNames(workingFile)
     for sj_field in sj_fields:
         if sj_field not in [pid_column, a.UNIQUEID, "KSPID19", "OBJECTID", "SHAPE"]:
-            DeleteField_management(workingFile, sj_field)
+            if "OBJECTID" not in sj_field:
+                DeleteField_management(workingFile, sj_field)
 
     #make sure the KSPID column is populated with a properly formatted KSPID
     userMessage("Calculating KSPID values...")

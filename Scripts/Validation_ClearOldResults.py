@@ -8,7 +8,7 @@
 #-------------------------------------------------------------------------------
 from arcpy import GetParameterAsText, DeleteRows_management, Exists, AddMessage
 from os.path import join, basename
-from NG911_Config import getGDBObject
+from NG911_GDB_Objects import getGDBObject
 
 def main():
 

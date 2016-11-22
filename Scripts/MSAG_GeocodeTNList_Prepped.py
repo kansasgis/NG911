@@ -9,8 +9,7 @@
 from MSAG_CheckTNList import createLocators, geocodeTable
 from arcpy import (GetParameterAsText, GeocodeAddresses_geocoding,
         ExcelToTable_conversion, Exists, Delete_management)
-from NG911_Config import getGDBObject
-from NG911_GDB_Objects import getTNObject
+from NG911_GDB_Objects import getTNObject, getGDBObject
 from os.path import join, dirname, basename
 from NG911_DataCheck import userMessage
 from time import strftime

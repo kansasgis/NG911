@@ -22,7 +22,7 @@ def main():
     from os.path import basename, join
 
     #get domain folder
-    domainFolder = GetParameterAsText(0)
+    domainFolder = join(dirname(dirname(realpath(__file__))), "Domains")
 
     rootURL = r'https://raw.githubusercontent.com/kansasgis/NG911/master/Domains/'
 

@@ -5,6 +5,8 @@ between two different data resources. These tools are intended to be run
 against same-PSAP data as it changes through time to flag edited,
 updated and deleted records.
 
+Note: 1.1 geodatabases can only be compared with other 1.1 geodatabase, and 2.0 geodatabases can only be compared with 2.0 geodatabases.
+
 [*Compare NG911 Data*](#data): compares two NG911 feature classes of similar
 kinds (ex. Address points edited recently against address points from
 three months ago). This check will flag all attribute edits, spatial

@@ -9,11 +9,11 @@
 #import modules
 from arcpy import MakeFeatureLayer_management, GetParameterAsText
 from arcpy.da import SearchCursor
-from NG911_Config import getGDBObject
+from NG911_arcpy_shortcuts import fieldExists
 from NG911_DataCheck import RecordResults, userMessage
 from os.path import join
 from time import strftime
-from NG911_GDB_Objects import getDefaultNG911RoadCenterlineObject
+from NG911_GDB_Objects import getFCObject, getGDBObject
 
 def main():
     gdb = GetParameterAsText(0)
@@ -21,7 +21,7 @@ def main():
     #set variables
     gdb_object = getGDBObject(gdb)
     roads = gdb_object.RoadCenterline
-    a = getDefaultNG911RoadCenterlineObject()
+    a = getFCObject(roads)
 
     #userMessage
     userMessage("Comparing elevation indicators...")

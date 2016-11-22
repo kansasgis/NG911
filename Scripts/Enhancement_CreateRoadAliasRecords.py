@@ -8,11 +8,7 @@
 #-------------------------------------------------------------------------------
 from arcpy import GetParameterAsText, CalculateField_management, MakeFeatureLayer_management, AddMessage, AddWarning
 from arcpy.da import InsertCursor, SearchCursor
-from NG911_GDB_Objects import getDefaultNG911RoadAliasObject, getDefaultNG911RoadCenterlineObject
-from NG911_Config import getGDBObject
-
-rc_obj = getDefaultNG911RoadCenterlineObject()
-ra_obj = getDefaultNG911RoadAliasObject()
+from NG911_GDB_Objects import getFCObject, getGDBObject
 
 def uniqueID():
     x = str(int(time.time()))
@@ -31,6 +27,9 @@ def main():
     gdbObject = getGDBObject(gdb)
     rc_file = gdbObject.RoadCenterline
     ra_file = gdbObject.RoadAlias
+
+    rc_obj = getFCObject(rc_file)
+    ra_obj = getFCObject(ra_file)
 
     #set where clause for query
     wc = rc_obj.RD + " = '" + road_name + "'"

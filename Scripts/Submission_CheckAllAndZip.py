@@ -12,17 +12,13 @@ from arcpy import GetParameterAsText
 
 def main():
     gdb = GetParameterAsText(0)
-    domain = GetParameterAsText(1)
-    esbList = GetParameterAsText(2).split(";")
-    ESZ = GetParameterAsText(3)
-##    template10 = GetParameterAsText(4)
-    zipOutput = GetParameterAsText(4)
+    zipOutput = GetParameterAsText(1)
 
     if zipOutput[-3:] != "zip":
         userMessage("Output zip file is not valid. Please try again.")
 
     else:
-        validateAllPrep(gdb, domain, esbList, ESZ, "true", zipOutput)
+        validateAllPrep(gdb, "true", zipOutput)
 
 if __name__ == '__main__':
     main()

@@ -1,0 +1,4 @@
+Values|Definition
+Y|YES
+N|NO
+U|UNKNOWN

@@ -9,11 +9,11 @@
 from arcpy import (ExportTopologyErrors_management, AddJoin_management, GetParameterAsText,
 MakeFeatureLayer_management, MakeTableView_management, RemoveJoin_management, Delete_management, Exists, ListFields)
 from arcpy.da import SearchCursor
-from NG911_Config import getGDBObject
 from NG911_DataCheck import RecordResults, userMessage
 from os.path import join, basename
 from time import strftime
-from NG911_GDB_Objects import getDefaultNG911RoadCenterlineObject
+from NG911_GDB_Objects import getFCObject, getGDBObject
+from NG911_arcpy_shortcuts import fieldExists
 
 def main():
 
@@ -26,7 +26,8 @@ def main():
     #export topology errors as feature class
     topology = gdbObject.Topology
     out_basename = "NG911"
-    rc_obj = getDefaultNG911RoadCenterlineObject()
+    road = gdbObject.RoadCenterline
+    rc_obj = getFCObject(road)
 
     userMessage("Exporting topology errors...")
     ExportTopologyErrors_management(topology, gdb, out_basename)
@@ -37,13 +38,10 @@ def main():
     pointErrors = out_basename + "_point"
 
     #create feature layer from the road centerline file
-    road = gdbObject.RoadCenterline
     rd = "rd"
     MakeFeatureLayer_management(road, rd)
 
-    flds = ListFields(rd)
-
-    if rc_obj.EXCEPTION in flds:
+    if fieldExists(road, rc_obj.EXCEPTION):
 
         #set variables for working with the data
         recordType = "fieldValues"

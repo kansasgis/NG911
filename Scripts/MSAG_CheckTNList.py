@@ -13,20 +13,21 @@ from arcpy import (CreateAddressLocator_geocoding, GeocodeAddresses_geocoding,
             MakeFeatureLayer_management, AddMessage, CreateFileGDB_management)
 from arcpy.da import InsertCursor, SearchCursor
 from NG911_DataCheck import userMessage
-from NG911_Config import getGDBObject
 from os.path import join, dirname, basename, exists
 from os import mkdir
-from NG911_GDB_Objects import getDefaultNG911AddressObject, getTNObject
+from NG911_GDB_Objects import getFCObject, getTNObject, getGDBObject
 from NG911_arcpy_shortcuts import getFastCount, fieldExists
 from time import strftime
 from sys import exit
 
-a_obj = getDefaultNG911AddressObject()
 
 def createLocators(gdb_object):
     addressPointPath = gdb_object.AddressPoints
     streetPath = gdb_object.RoadCenterline
     roadAliasPath = gdb_object.RoadAlias
+
+    rc_obj = getFCObject(streetPath)
+    ra_obj = getFCObject(roadAliasPath)
 
     tn_object = getTNObject(gdb_object.gdbPath)
     tn_gdb = tn_object.tn_gdb
@@ -81,7 +82,7 @@ def createLocators(gdb_object):
                 'Primary Table:Min X value for extent' <None> VISIBLE NONE;'Primary Table:Max X value for extent' <None> VISIBLE NONE;
                 'Primary Table:Min Y value for extent' <None> VISIBLE NONE;'Primary Table:Max Y value for extent' <None> VISIBLE NONE;
                 'Primary Table:Left Additional Field' <None> VISIBLE NONE;'Primary Table:Right Additional Field' <None> VISIBLE NONE;
-                'Primary Table:Altname JoinID' RoadCenterline:SEGID VISIBLE NONE;'*Alternate Name Table:JoinID' RoadAlias:SEGID VISIBLE NONE;
+                'Primary Table:Altname JoinID' RoadCenterline:""" + rc_obj.UNIQUEID + """ VISIBLE NONE;'*Alternate Name Table:JoinID' RoadAlias:""" + ra_obj.SEGID + """ VISIBLE NONE;
                 'Alternate Name Table:Prefix Direction' RoadAlias:A_PRD VISIBLE NONE;'Alternate Name Table:Prefix Type' RoadAlias:A_STP VISIBLE NONE;
                 'Alternate Name Table:Street Name' RoadAlias:A_RD VISIBLE NONE;'Alternate Name Table:Suffix Type' RoadAlias:A_STS VISIBLE NONE;
                 'Alternate Name Table:Suffix Direction' RoadAlias:A_POD VISIBLE NONE"""
@@ -106,7 +107,7 @@ def createLocators(gdb_object):
                     'Primary Table:Min X value for extent' <None> VISIBLE NONE;'Primary Table:Max X value for extent' <None> VISIBLE NONE;
                     'Primary Table:Min Y value for extent' <None> VISIBLE NONE;'Primary Table:Max Y value for extent' <None> VISIBLE NONE;
                     'Primary Table:Left Additional Field' <None> VISIBLE NONE;'Primary Table:Right Additional Field' <None> VISIBLE NONE;
-                    'Primary Table:Altname JoinID' RoadCenterline:SEGID VISIBLE NONE;'*Alternate Name Table:JoinID' RoadAlias:SEGID VISIBLE NONE;
+                    'Primary Table:Altname JoinID' RoadCenterline:""" + rc_obj.UNIQUEID + """ VISIBLE NONE;'*Alternate Name Table:JoinID' RoadAlias:""" + ra_obj.SEGID + """ VISIBLE NONE;
                     'Alternate Name Table:Prefix Direction' RoadAlias:A_PRD VISIBLE NONE;'Alternate Name Table:Prefix Type' RoadAlias:A_STP VISIBLE NONE;
                     'Alternate Name Table:Street Name' RoadAlias:A_RD VISIBLE NONE;'Alternate Name Table:Suffix Type' RoadAlias:A_STS VISIBLE NONE;
                     'Alternate Name Table:Suffix Direction' RoadAlias:A_POD VISIBLE NONE"""
@@ -129,7 +130,7 @@ def createLocators(gdb_object):
                             'Primary Table:Min Y value for extent' <None> VISIBLE NONE;'Primary Table:Max Y value for extent' <None> VISIBLE NONE;
                             'Primary Table:Left parity' <None> VISIBLE NONE;'Primary Table:Right parity' <None> VISIBLE NONE;
                             'Primary Table:Left Additional Field' <None> VISIBLE NONE;'Primary Table:Right Additional Field' <None> VISIBLE NONE;
-                            '*Primary Table:Altname JoinID' RoadCenterline:SEGID VISIBLE NONE;'*Alias Table:Alias' RoadAlias:SEGID VISIBLE NONE;
+                            '*Primary Table:Altname JoinID' RoadCenterline:""" + rc_obj.UNIQUEID + """ VISIBLE NONE;'*Alias Table:Alias' RoadAlias:""" + ra_obj.SEGID + """ VISIBLE NONE;
                             '*Alias Table:Street' RoadAlias:A_RD VISIBLE NONE;'Alias Table:City' <None> VISIBLE NONE;'Alias Table:State' <None> VISIBLE NONE;
                             'Alias Table:ZIP' <None> VISIBLE NONE"""
                         try:
@@ -160,6 +161,10 @@ def prepXLS(tnxls, gdb):
     outTable = tn_object.TN_List
     tn_gdb = tn_object.tn_gdb
     LocatorFolder = tn_object.LocatorFolder
+
+    #get the correct address point object
+    address_points = join(gdb, "NG911", "AddressPoints")
+    a_obj = getFCObject(address_points)
 
     if not exists(LocatorFolder):
         mkdir(LocatorFolder)
@@ -236,7 +241,8 @@ def prepXLS(tnxls, gdb):
     userMessage("Single line input succesfully created.")
 
 def AddUniqueIDField(outTable, uniqueIDField):
-    AddField_management(outTable, uniqueIDField, "TEXT", "", "", 38)
+    if not fieldExists(outTable, uniqueIDField):
+        AddField_management(outTable, uniqueIDField, "TEXT", "", "", 50) #KK EDIT: changed from 38 to 50
 
     if not fieldExists(outTable, "NXX"):
         CalculateField_management(outTable, uniqueIDField, "uniqueID() + str(!OBJECTID!)", "PYTHON", "def uniqueID():\\n  x = '%d' % time.time()\\n  str(x)\\n  return x")
@@ -248,6 +254,7 @@ def geocodeTable(gdb, field):
     tn_object = getTNObject(gdb)
     AL3 = tn_object.CompositeLocator
     tname = tn_object.TN_List
+##    tname = r"E:\Kristen\Data\NG911\Template20\KSNG911N_20_DK_TN\TN_Working.gdb\TN_List_20161026_1"
     GC_output = tn_object.ResultsFC
     uniqueFieldID = tn_object.UNIQUEID
     tn_gdb = tn_object.tn_gdb

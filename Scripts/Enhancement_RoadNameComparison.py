@@ -13,21 +13,21 @@ from arcpy import (Exists, AddJoin_management, RemoveJoin_management,
                     Dissolve_management, AddField_management, CopyFeatures_management,
                     MakeFeatureLayer_management, Delete_management)
 from arcpy.da import SearchCursor, Editor, UpdateCursor
-from NG911_GDB_Objects import getDefaultNG911RoadCenterlineObject, getDefaultNG911AddressObject
-from NG911_Config import getGDBObject
+from NG911_GDB_Objects import getFCObject, getGDBObject
 from NG911_DataCheck import userMessage, RecordResults
-from NG911_arcpy_shortcuts import getFastCount
+from NG911_arcpy_shortcuts import getFastCount, fieldExists
 from os.path import join
 from time import strftime
-
-a_obj = getDefaultNG911AddressObject()
-rc_obj = getDefaultNG911RoadCenterlineObject()
 
 def main():
     gdb = GetParameterAsText(0)
     gdb_object = getGDBObject(gdb)
     addressPoints = gdb_object.AddressPoints
     roads = gdb_object.RoadCenterline
+
+    #get address point and road objects
+    a_obj = getFCObject(addressPoints)
+    rc_obj = getFCObject(roads)
 
     #define working layers & tables
     road_name_table = join(gdb, "Road_Names")

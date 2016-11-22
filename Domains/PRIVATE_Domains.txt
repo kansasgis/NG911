@@ -1,0 +1,4 @@
+Values|Definition
+YES|General ownership of the hydrant
+NO|General ownership of the hydrant
+UNKNOWN|General ownership of the hydrant

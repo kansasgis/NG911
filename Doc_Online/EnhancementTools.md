@@ -34,6 +34,8 @@ accuracy.
 centerline data. This test respects exceptions created in the
 GeocodeExceptions table.
 
+[*Split Single ESB Layer*](#splitESB): splits out a single ESB layer into three separate ESB layers for EMS, FIRE and LAW
+
 [*US National Grid Calculator*](#USNG): generates US National Grid coordinates.
 If the Lat and Long fields are filled out, the USNG coordinates will be
 based on those fields. If the fields are not populated, the tool will
@@ -186,6 +188,18 @@ Running *Geocode Address Points*:
 
 5.  Geocoding exceptions can be added using the “Create Geocoding
     Exceptions” tool in the Adjustment Tools toolset.
+	
+<a name="splitESB"></a>
+Running *Split Single ESB Layer*:
+
+1.	Open ArcCatalog and navigate to the toolbox called “Kansas NG911 GIS Tools” > “Enhancement Tools” > “Split Single ESB Layer”.
+
+2.	In the “Input ESB Layer” parameter, enter the path to the single ESB layer you want to split.
+
+3.	In the “Output Dataset or Workspace” parameter, enter where you want the three ESB layers saved. This will most likely be the NG911 feature dataset of your NG911 geodatabase.
+
+4.	Run the tool.
+
 
 <a name="USNG"></a>
 Running *US National Grid Calculator*:
@@ -235,10 +249,12 @@ The enhancement tools require:
     -   Enhancement\_GeocodeAddressPoints.py
     
     -   Enhancement\_RoadNameComparison.py
-
-    -   Enhancement\_XYUSNGCal.py
+	
+	-   Enhancement\_SplitSingleESBLayer.py
 
     -   Enhancement\_VerifyRoadAlias.py
+
+    -   Enhancement\_XYUSNGCal.py
 
     -   CoordConvertor.py
 

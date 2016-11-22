@@ -16,7 +16,8 @@ def main():
     from arcpy import GetParameterAsText, AddMessage, Describe, SpatialReference, PointGeometry, Point, MakeFeatureLayer_management
     from arcpy.da import Editor, UpdateCursor
     from os.path import dirname
-    from NG911_GDB_Objects import getDefaultNG911AddressObject
+    from NG911_GDB_Objects import getFCObject
+    from NG911_arcpy_shortcuts import fieldExists
 
     ct = CoordConvertor.CoordTranslator()
 
@@ -28,7 +29,7 @@ def main():
     AddMessage("Calculating coordinates. For large datasets, this process can a while.")
 
     #get default address point object
-    a = getDefaultNG911AddressObject()
+    a = getFCObject(fc)
 
     #set field names based on object
     xField = a.X

@@ -1,14 +1,15 @@
 #-------------------------------------------------------------------------------
-# Name:        NG911_CheckRoadsLaunch
-# Purpose:     Launches script to check NG911 road centerlines
+# Name:        Validation_CheckBoundariesLaunch
+# Purpose:     Launches script to check NG911 boundaries- ESB and Admin
 #
 # Author:      kristen
 #
-# Created:     25/11/2014
+# Created:     25/11/2014, edited Oct. 20, 2016, merging ESB & Admin checks
 #-------------------------------------------------------------------------------
 
 def main():
-    from arcpy import GetParameterAsText
+    from arcpy import GetParameterAsText, Exists
+    from os.path import join
     from NG911_DataCheck import main_check
     from NG911_GDB_Objects import NG911_Session
 
@@ -16,26 +17,25 @@ def main():
     gdb = GetParameterAsText(0)
     checkValuesAgainstDomain = GetParameterAsText(1)
     checkFeatureLocations = GetParameterAsText(2)
-    checkRoadFrequency = GetParameterAsText(3)
-    checkUniqueIDs = GetParameterAsText(4)
-    checkCutbacks = GetParameterAsText(5)
-    checkDirectionality = GetParameterAsText(6)
-    checkRoadAliases = GetParameterAsText(7)
+    checkUniqueIDs = GetParameterAsText(3)
 
     #create check list
-    checkList = [checkValuesAgainstDomain,checkFeatureLocations,checkRoadFrequency,checkUniqueIDs,checkCutbacks,checkDirectionality, checkRoadAliases]
-
-    session_object = NG911_Session(gdb)
-    gdbObject = session_object.gdbObject
-    roadFile = gdbObject.RoadCenterline
-    aliasFile = gdbObject.RoadAlias
-
-    fcList = [roadFile, aliasFile]
+    checkList = [checkValuesAgainstDomain,checkFeatureLocations,checkUniqueIDs]
 
     #set object parameters
-    checkType = "Roads"
+    checkType = "standard"
+    session_object = NG911_Session(gdb)
+    NG911_Session.checkList = checkList
+    gdbObject = session_object.gdbObject
+
+    fcPossList = gdbObject.AdminBoundaryList + session_object.gdbObject.esbList
+    fcList = []
+    for fc in fcPossList:
+        if Exists(fc):
+            fcList.append(fc)
+
+    #redo various settings to limit what is checked
     session_object.gdbObject.fcList = fcList
-    session_object.gdbObject.esbList = []
     session_object.checkList = checkList
 
     #launch the data check

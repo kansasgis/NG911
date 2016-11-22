@@ -6,61 +6,34 @@
 #
 # Created:     20/10/2015
 #-------------------------------------------------------------------------------
-from NG911_Config import getGDBObject, currentPathSettings
-from NG911_DataCheck import sanityCheck, userMessage, getLayerList
-from arcpy import Exists, GetParameterAsText, AddError
-from os.path import basename
+from NG911_DataCheck import sanityCheck, userMessage
+from arcpy import GetParameterAsText, Exists
 from Conversion_ZipNG911Geodatabase import createNG911Zip
+from NG911_GDB_Objects import NG911_Session
+from os.path import dirname, realpath, join, basename
+from NG911_arcpy_shortcuts import hasRecords
 
-def validateAllPrep(gdb, domain, esbList, ESZ, zipFlag, zipPath):
+def validateAllPrep(gdb, zipFlag, zipPath):
 
-##    if template10 == 'true':
-##        version = "10"
-##    else:
-##        version = "11"
+    #get session object
+    session_object = NG911_Session(gdb)
 
-    gdbObject = getGDBObject(gdb)
-    fcList = [gdbObject.AddressPoints, gdbObject.AuthoritativeBoundary, gdbObject.RoadAlias, gdbObject.RoadCenterline]
+    #make sure all existing layers are checked
+    fcPossList = session_object.gdbObject.fcList
 
-    if Exists(gdbObject.MunicipalBoundary):
-        fcList.append(gdbObject.MunicipalBoundary)
+    fcList = []
+    for fc in fcPossList:
+        if Exists(fc):
+            if hasRecords(fc):
+                fcList.append(fc)
+            else:
+                userMessage(basename(fc) + " has no records and will not be checked.")
 
-    #create esb name list
-    esb = []
-    esbPath = []
-
-    layerList = getLayerList()
-
-    layerFlag = 0
-
-    for e in esbList:
-        e = e.replace("'", "")
-        for l in ['EMS','FIRE','LAW','PSAP','ESB']:
-            if l in e.upper():
-                fcList.append(e)
-                e1 = basename(e)
-                if e1 in layerList:
-                    layerFlag = 1
-                else:
-                    if e1 not in esb:
-                        esb.append(e1)
-
-    if layerFlag == 1:
-        AddError("Please define PSAP and ESB layers like EMS, fire & law enforcement boundaries. One or more layers you identfied is a different layer type.")
-        print("Please define PSAP and ESB layers like EMS, fire & law enforcement boundaries. One or more layers you identfied is a different layer type.")
-        sys.exit()
-
-    #set up currentPathSettings
-    currentPathSettings.gdbPath = gdb
-    currentPathSettings.domainsFolderPath = domain
-    currentPathSettings.esbList = esb
-    currentPathSettings.fcList = fcList + esbPath
-##    currentPathSettings.gdbVersion = version
-    currentPathSettings.ESZ = ESZ
+    session_object.gdbObject.fcList = fcList
 
     #run sanity checks
     sanity = 0
-    sanity = sanityCheck(currentPathSettings)
+    sanity = sanityCheck(session_object)
 
     if sanity == 1 and zipFlag == "true":
         createNG911Zip(gdb, zipPath)
@@ -70,12 +43,7 @@ def validateAllPrep(gdb, domain, esbList, ESZ, zipFlag, zipPath):
 
 def main():
     gdb = GetParameterAsText(0)
-    domain = GetParameterAsText(1)
-    esbList = GetParameterAsText(2).split(";")
-    ESZ = GetParameterAsText(3)
-##    template10 = GetParameterAsText(4)
-
-    validateAllPrep(gdb, domain, esbList, ESZ, "false", "")
+    validateAllPrep(gdb, "false", "")
 
 if __name__ == '__main__':
     main()

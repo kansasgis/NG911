@@ -14,6 +14,8 @@ Description: These tools assist with verifying a PSAP’s TN list and MSAG infor
 
 - 1000 3RD ST, GREAT BEND
 
+[*MSAG NG911 Comparison*](#https://github.com/kansasgis/NG911/tree/master/Doc_Online/MSAG_NG911_comparison.pdf): see link for full tool documentation
+
 <a name="TNList"></a>
 Running *Check TN List*:
 This tool requires a telephone number list to be extracted as a spreadsheet. Directions for obtaining the TN list are found in the Downloading_TN_records_from_911Net document.

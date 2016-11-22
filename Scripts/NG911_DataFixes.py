@@ -12,15 +12,15 @@ from arcpy.da import SearchCursor, InsertCursor
 from os.path import join, dirname, basename
 from NG911_DataCheck import getFieldDomain, userMessage, RecordResults
 from time import strftime
-from NG911_GDB_Objects import getDefaultNG911AddressObject, getDefaultNG911GeocodeExceptionsObject, getDefaultNG911FieldValuesCheckResultsObject, getDefaultNG911ESBObject
-from NG911_Config import getGDBObject
+from NG911_GDB_Objects import getGDBObject, getFCObject
+from NG911_arcpy_shortcuts import fieldExists
 
 def FixDomainCase(gdb, domainFolder):
     env.workspace = gdb
-    gdb_object = getGDBObject(gdb)
+    gdbObject = getGDBObject(gdb)
 
-    table = gdb_object.FieldValuesCheckResults
-    fvcr_object = getDefaultNG911FieldValuesCheckResultsObject()
+    table = gdbObject.FieldValuesCheckResults
+    fvcr_object = getFCObject(table)
 
     if Exists(table):
 
@@ -90,7 +90,7 @@ def FixDomainCase(gdb, domainFolder):
         userMessage(basename(table) + " must be present for this tool to run.")
 
 def FixDuplicateESBIDs(FireESB, EMSESB, LawESB):
-    e = getDefaultNG911ESBObject()
+    e = getFCObject(FireESB)
 
     CalculateField_management(FireESB, e.ESBID, '!' + e.ESBID + '! + "F"', "PYTHON_9.3")
     CalculateField_management(EMSESB, e.ESBID, '!' + e.ESBID + '! + "E"', "PYTHON_9.3")
@@ -100,32 +100,29 @@ def FixDuplicateESBIDs(FireESB, EMSESB, LawESB):
 
 def CreateGeocodeExceptions(gdb):
 
-    gdb_object = getGDBObject(gdb)
+    gdbObject = getGDBObject(gdb)
 
-    table = gdb_object.GeocodeExceptions
-    addressPoints = gdb_object.AddressPoints
-    a = getDefaultNG911AddressObject()
-    ge = getDefaultNG911GeocodeExceptionsObject()
-    fvcr_obj = getDefaultNG911FieldValuesCheckResultsObject()
+    table = gdbObject.GeocodeExceptions
+    addressPoints = gdbObject.AddressPoints
+    a = getFCObject(addressPoints)
+    FVCR = gdbObject.FieldValuesCheckResults
+    fvcr_obj = getFCObject(FVCR)
 
+    #set up table if it doesn't exist yet
     if not Exists(table):
         CreateTable_management(gdb, basename(table))
 
-    table_fields = ListFields(table)
-    lstTable_fields = []
+    if not fieldExists(table, a.UNIQUEID):
+        AddField_management(table, a.UNIQUEID, "TEXT", "", "", 38)
+    if not fieldExists(table, a.LABEL):
+        AddField_management(table, a.LABEL, "TEXT", "", "", 300)
+    if not fieldExists(table, a.NOTES):
+        AddField_management(table, a.NOTES, "TEXT", "", "", 100)
 
-    for tf in table_fields:
-        lstTable_fields.append(tf.name)
-
-    if ge.ADDID not in lstTable_fields:
-        AddField_management(table, ge.ADDID, "TEXT", "", "", 38)
-    if ge.LABEL not in lstTable_fields:
-        AddField_management(table, ge.LABEL, "TEXT", "", "", 300)
-    if ge.NOTES not in lstTable_fields:
-        AddField_management(table, ge.NOTES, "TEXT", "", "", 100)
+    #after the table is set up, get the geocoding exceptions object
+    ge = getFCObject(gdbObject.GeocodeExceptions)
 
     #read FieldValuesCheckResults for geocoding errors
-    FVCR = gdb_object.FieldValuesCheckResults
     fields = (fvcr_obj.DESCRIPTION, fvcr_obj.FEATUREID)
     wc = fvcr_obj.DESCRIPTION + " like '%did not geocode%'"
 
@@ -134,7 +131,7 @@ def CreateGeocodeExceptions(gdb):
             for row in rows:
                 addid = row[1]
                 #create query clause to see if the geocoding exception already exists
-                newWC = ge.ADDID + " = '" + addid + "'"
+                newWC = ge.UNIQUEID + " = '" + addid + "'"
                 tbl = "tbl"
                 MakeTableView_management(table, tbl, newWC)
 
@@ -148,7 +145,7 @@ def CreateGeocodeExceptions(gdb):
                             label = addy_row[0]
                             userMessage(label)
 
-                            newRow = InsertCursor(table, (ge.ADDID, ge.LABEL))
+                            newRow = InsertCursor(table, (ge.UNIQUEID, ge.LABEL))
                             newVal = (addid, label)
                             newRow.insertRow(newVal)
                             del newRow

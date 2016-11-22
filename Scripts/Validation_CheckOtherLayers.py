@@ -1,16 +1,16 @@
 #-------------------------------------------------------------------------------
-# Name:        NG911_CheckAdminBndLaunch
-# Purpose:     Launches script to check NG911 administrative boundaries
+# Name:        Validation_CheckOtherLayers
+# Purpose:     Launches script to check NG911 other data (like parcels, gates, hydrants, cell sites)
 #
 # Author:      kristen
 #
-# Created:     25/11/2014
+# Created:     Oct. 20, 2016
 #-------------------------------------------------------------------------------
 
 def main():
     from arcpy import GetParameterAsText, Exists
     from os.path import join
-    from NG911_DataCheck import main_check
+    from NG911_DataCheck import main_check, userMessage
     from NG911_GDB_Objects import NG911_Session
 
     #get parameters
@@ -23,25 +23,29 @@ def main():
     checkList = [checkValuesAgainstDomain,checkFeatureLocations,checkUniqueIDs]
 
     #set object parameters
-    checkType = "admin"
+    checkType = "standard"
     session_object = NG911_Session(gdb)
     NG911_Session.checkList = checkList
     gdbObject = session_object.gdbObject
 
-    adminList = gdbObject.AdminBoundaryList
+    otherList = gdbObject.otherLayers
     fcList = []
-    for admin in adminList:
-        path = join(gdb, admin)
-        if Exists(path):
-            fcList.append(path)
+    for fc in otherList:
+        if Exists(fc):
+            if hasRecords(fc):
+                fcList.append(fc)
+            else:
+                userMessage(basename(fc) + " has no records and will not be checked.")
 
     #redo various settings to limit what is checked
     session_object.gdbObject.fcList = fcList
-    session_object.gdbObject.esbList = []
     session_object.checkList = checkList
 
     #launch the data check
-    main_check(checkType, session_object)
+    if len(fcList) > 0:
+        main_check(checkType, session_object)
+    else:
+        userMessage("You do not have any additional layers in the geodatabase to check.")
 
 if __name__ == '__main__':
     main()

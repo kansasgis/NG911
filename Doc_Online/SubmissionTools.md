@@ -14,31 +14,20 @@ Running submission scripts.
 2.  In the “NG911 Geodatabase” parameter, select the geodatabase of data
     to be checked.
 
-3.  In the “Domain Folder” parameter, select the “Domains” folder.
 
-4.  In the “PSAP Emergency Services Boundary Layers” parameter (if
-    shown), select ALL layers that represent emergency services (ESB,
-    Law, Fire, etc.).
-
-5.  In the “ESZ Layer (optional)” parameter, choose your ESZ layer.
-
-6.  Check the box next to “This is a 1.0 template GDB (optional)” if you
-    have not upgraded to the NG9-1-1 GIS Data Model 1.1
-    template geodatabase.
-
-7.  In the “Output Zip File” parameter, enter the path name including
+3.  In the “Output Zip File” parameter, enter the path name including
     “.zip” of where the data should be saved.
 
-8.  Run the tool.
+4.  Run the tool.
 
-9.  The basic results of the data checks are shared in the ArcGIS
+5.  The basic results of the data checks are shared in the ArcGIS
     dialog box. The detailed results of the data checks will appear in
     two tables that are added to your geodatabase: TemplateCheckResults
     & FieldValuesCheckResults. The results reported in these tables will
     accumulate until you run the script titled “6 Optional Clear
     Results Table”.
 
-10. If the data did not pass the validation check, the data will not
+6. If the data did not pass the validation check, the data will not
     be zipped.
 
 Support Contact:

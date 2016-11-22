@@ -1,0 +1,3 @@
+Values|Definition
+FIRE HYDRANT|Standard pressurized fire hydrant
+DRAFTING HYDRANT|Non-pressurized hydrant, also known as a dry hydrant or standpipe

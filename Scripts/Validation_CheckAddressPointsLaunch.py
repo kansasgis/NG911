@@ -9,47 +9,30 @@
 
 def main():
     from arcpy import GetParameterAsText
-    from os.path import join
+    from NG911_DataCheck import main_check
+    from NG911_GDB_Objects import NG911_Session
 
-    from NG911_DataCheck import main_check, userMessage
-    try:
-        from NG911_Config import currentPathSettings, getGDBObject # currentPathSettings should have all the path information available. ## import esb, gdb, folder
-    except:
-        userMessage( "Copy config file into command line")
 
     #get parameters
     gdb = GetParameterAsText(0)
-    domainsFolder = GetParameterAsText(1)
-    checkValuesAgainstDomain = GetParameterAsText(2)
-    checkFeatureLocations = GetParameterAsText(3)
-##    geocodeAddressPoints = GetParameterAsText(4)
-    checkAddressPointFrequency = GetParameterAsText(4)
-    checkUniqueIDs = GetParameterAsText(5)
-    checkESZ = GetParameterAsText(6)
-    ESZlayer = GetParameterAsText(7)
-##    template10 = GetParameterAsText(9)
+    checkValuesAgainstDomain = GetParameterAsText(1)
+    checkFeatureLocations = GetParameterAsText(2)
+    checkAddressPointFrequency = GetParameterAsText(3)
+    checkUniqueIDs = GetParameterAsText(4)
+    checkESZ = GetParameterAsText(5)
 
     #create check list
     checkList = [checkValuesAgainstDomain,checkFeatureLocations,checkAddressPointFrequency,checkUniqueIDs,checkESZ]
 
     #set object parameters
     checkType = "AddressPoints"
-    gdbObject = getGDBObject(gdb)
-    currentPathSettings.gdbPath = gdb
-    currentPathSettings.domainsFolderPath = domainsFolder
-    currentPathSettings.addressPointsPath = gdbObject.AddressPoints
-    currentPathSettings.fcList = [currentPathSettings.addressPointsPath]
-    currentPathSettings.esbList = []
-    currentPathSettings.checkList = checkList
-    currentPathSettings.ESZ = ESZlayer
-
-##    if template10 == 'true':
-##        currentPathSettings.gdbVersion = "10"
-##    else:
-##        currentPathSettings.gdbVersion = "11"
+    session_object = NG911_Session(gdb)
+    session_object.checkList = checkList
+    session_object.gdbObject.fcList = [session_object.gdbObject.AddressPoints] #make sure fcList is limited to just address points
+    session_object.gdbObject.esbList = []
 
     #launch the data check
-    main_check(checkType, currentPathSettings)
+    main_check(checkType, session_object)
 
 if __name__ == '__main__':
     main()

@@ -26,10 +26,10 @@ from arcpy import (env, GetParameterAsText, ListFields, MakeTableView_management
         MakeFeatureLayer_management, SelectLayerByAttribute_management,
         CopyFeatures_management, Exists, Append_management, AddWarning)
 from arcpy.da import SearchCursor
-from NG911_Config import getGDBObject
 from NG911_DataCheck import userMessage
 from os.path import join
-from NG911_GDB_Objects import getDefaultNG911RoadCenterlineObject
+from NG911_GDB_Objects import getFCObject, getGDBObject
+from NG911_arcpy_shortcuts import fieldExists
 
 # Set important parameters here
 working_gdb = GetParameterAsText(0)
@@ -40,7 +40,7 @@ gdb_object = getGDBObject(working_gdb)
 env.workspace = working_gdb
 input_fc = gdb_object.RoadCenterline         # Our street centerline feature class
 output_fc = join(gdb_object.gdbPath, "AddressRange_Overlap")
-rd_object = getDefaultNG911RoadCenterlineObject()
+rd_object = getFCObject(input_fc)
 name_field = rd_object.LABEL   # Should be concatenated with pre/post directionals and type
 left_from = rd_object.L_F_ADD         # The left from address field
 left_to = rd_object.L_T_ADD            # The left to address field

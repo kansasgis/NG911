@@ -1,0 +1,8 @@
+Values|Definition
+STEEL ROAD GATE|Steel road gate
+BOLLARD|Bollard
+RIGHT ANGLE GATE|Right angle gate
+KISSING|Kissing
+WIDTH LIMITER|Width limiter
+PRIVATE COMMUNITY GATE|Private community gate
+UNKNOWN|Unknown

@@ -7,9 +7,9 @@
 #
 # Created:     01/08/2016
 #-------------------------------------------------------------------------------
-from Enhancement_CheckTN import createLocators
+from MSAG_CheckTNList import createLocators
 from arcpy import GetParameterAsText
-from NG911_Config import getGDBObject
+from NG911_GDB_Objects import getGDBObject
 
 def main():
 

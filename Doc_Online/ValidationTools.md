@@ -53,37 +53,31 @@ Running *Validation scripts*:
 2.  In the “Geodatabase” parameter, select the geodatabase of data to
     be checked.
 
-3.  In the “Domain Folder” parameter, select the “Domains” folder.
-
-4.  In the “Emergency Services Boundary Layers” parameter (if shown),
-    select ALL layers that represent emergency services (ESB, Law,
-    Fire, etc.).
-
-5.  Check which data checks you want to run. When running each tool for
+3.  Check which data checks you want to run. When running each tool for
     the first time, we recommend choosing all options.
 
-6.  Run the tool.
+4.  Run the tool.
 
-7.  Alternatively, to run all checks, open and run “9 Optional Check
+5.  Alternatively, to run all checks, open and run “9 Optional Check
     All Required”.
 
-8.  The basic results of the data checks are shared in the ArcGIS
+6.  The basic results of the data checks are shared in the ArcGIS
     dialog box. The detailed results of the data checks will appear in
     two tables that are added to your geodatabase: TemplateCheckResults
     & FieldValuesCheckResults. The results reported in these tables will
     accumulate until you run the script titled “6 Optional Clear
     Results Table”.
 
-9.  Based on the results of the data check, you can edit your data
+7.  Based on the results of the data check, you can edit your data
     as necessary. Documentation for [Interpreting Tool Results](https://github.com/kansasgis/NG911/blob/master/Doc_Online/Interpreting_Tool_Results.md).
 
-10. After data is edited, the necessary data checks can be rerun.
+8. After data is edited, the necessary data checks can be rerun.
 
-11. The script called “7 Optional Update Domains” will sync your domains
+9. The script called “7 Optional Update Domains” will sync your domains
     with the master copy on GitHub. This tool requires internet access
     to <https://raw.githubusercontent.com/kansasgis>
 
-12. The script called “8 Optional Verify Topology Exceptions” will
+10. The script called “8 Optional Verify Topology Exceptions” will
     double check that all road centerline topology error are recorded as
     exceptions in the data and the topology.
 
