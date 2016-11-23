@@ -70,7 +70,8 @@ def main():
                 target = gdb20object.PSAP
 
             if target != '':
-                Copy_management(ESB20, target)
+                if not Exists(target):
+                    Copy_management(ESB20, target)
 
     #set up the conversion
     conversionDict = {}
