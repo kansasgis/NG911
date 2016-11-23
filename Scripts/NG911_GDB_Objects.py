@@ -469,7 +469,7 @@ def getDefaultNG911MunicipalBoundaryObject():
 
 def getDefault20NG911MunicipalBoundaryObject():
 
-    NG911_MunicipalBoundary_Default = NG911_MunicipalBoundary_Object("STEWARD", "L_UPDATE", "EFF_DATE", "EXP_DATE", "NGMUNID", "STATE", "COUNTY", "MUNI",
+    NG911_MunicipalBoundary_Default = NG911_MunicipalBoundary_Object("STEWARD", "L_UPDATE", "EFF_DATE", "EXP_DATE", "NGMUNI_ID", "STATE", "COUNTY", "MUNI",
                         "UPDATEBY", "SUBMIT", "NOTES")
 
     return NG911_MunicipalBoundary_Default
@@ -948,7 +948,7 @@ def getFCObject(fc):
         else:
             obj = getDefaultNG911AuthoritativeBoundaryObject()
     elif word == "MUNICIPALBOUNDARY":
-        if fieldExists(fc, "NGMUNID"):
+        if fieldExists(fc, "NGMUNI_ID"):
             obj = getDefault20NG911MunicipalBoundaryObject()
         else:
             obj = getDefaultNG911MunicipalBoundaryObject()
