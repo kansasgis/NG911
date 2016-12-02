@@ -53,21 +53,21 @@ issues. Not all fields will be filled out for all issues.
 -   **FeatureID**: the unique feature ID of the issue. The matching
     unique ID field depends on the layer name.
 
-    -   AddressPoints: ADDID
+    -   AddressPoints: ADDID/NGADDID
 
-    -   AuthoritativeBoundary: ABID
+    -   AuthoritativeBoundary: ABID/NGABID
 
-    -   CountyBoundary: COUNTYID
+    -   CountyBoundary: COUNTYID/NGCOUNTYID
 
-    -   ESB (includes EMS, FIRE, LAW, PSAP): ESBID
+    -   ESB (includes EMS, FIRE, LAW, PSAP): ESBID/NGESBID
 
-    -   ESZ: ESZID
+    -   ESZ: ESZID/NGESZID
 
-    -   MunicipalBoundary: MUNI\_ID
+    -   MunicipalBoundary: MUNI\_ID/NGMUNI\_ID
 
-    -   RoadAlias: ALIASID
+    -   RoadAlias: ALIASID/NGALIASID
 
-    -   RoadCenterline: SEGID
+    -   RoadCenterline: SEGID/NGSEGID
 
 A quick way to visualize issues inside ArcMap is to create a join
 between a feature class’s unique ID field and FeatureID in
@@ -111,11 +111,11 @@ Errors
 |Error Message|Meaning|Fix Tips|
 |--------------------|-----------------------------------------------------------------|--------------------|
 |*FEATUREID has duplicate field information*|Found by: 2 Check Address Points &gt; Check Address Point Frequency and 3 Check Roads &gt; Check Road Frequency<br><br>This check only runs on address points and road centerlines. For address points, only PRIMARY addresses are checked where the HNO is not 0; for road centerlines, only roads with at least one valid address range is checked (L or R).<br><br>For Address Points, the following fields are checked for duplication:<br>MUNI;HNO;HNS;PRD;STP;RD;STS;POD;POM;<br>ZIP;BLD;FLR;UNIT;ROOM;SEAT;LOC;LOCTYPE;MSAGCO<br><br>For Road Centerlines, the following fields are checked for duplication: <br>STATE\_L;STATE\_R;COUNTY\_L;COUNTY\_R;MUNI\_L; MUNI\_R;L\_F\_ADD;<br>L\_T\_ADD;R\_F\_ADD;R\_T\_ADD; PARITY\_L;PARITY\_R;POSTCO\_L;POSTCO\_R;<br>ZIP\_L; ZIP\_R;ESN\_L;ESN\_R;MSAGCO\_L;MSAGCO\_R;PRD; STP;RD;STS;POD;POM;SPDLIMIT;ONEWAY;RDCLASS;LABEL;<br>ELEV\_F;ELEV\_T;ESN\_C;SURFACE;STATUS; TRAVEL; LRSKEY|Take a look at the ADDIDs or SEGIDs with duplicate information and either make necessary edits to differentiate records or delete duplicate records.|              
-|*FEATUREID is a duplicate ID*|Found by: 2 Check Address Points/3 Check Roads/ 4 Check Emergency Services Boundaries/5 Check Administrative Boundaries &gt; Check Unique IDs<br><br>A unique ID value is duplicated inside a feature class. See above under “Results Information” for unique ID field names for each layer type.|Make sure every unique ID is actually unique inside each feature class. For separate ESBs (EMS, FIRE & LAW), the IDs must be unique across all layers. If ESB IDs are duplicated, run Adjustment Tools &gt; Fix Duplicate ESB IDs for a quick fix.|
-|*Feature not inside authoritative boundary*|Found by: 3 Check Roads/ 4 Check Emergency Services Boundaries/5 Check Administrative Boundaries &gt; Check Feature Locations<br><br>Some part of this feature’s geometry falls outside of the authoritative boundary. This is only an error for features NOT in AddressPoints.|Take a look at the identified features in comparison to the Authoritative Boundary. Either the features need to be moved inside the Authoritative Boundary or the Authoritative Boundary should be expanded to include the features.|
+|*FEATUREID is a duplicate ID*|Found by: 2 Check Address Points/3 Check Roads/ 4 Check Boundaries/5 Check Other Layers &gt; Check Unique IDs<br><br>A unique ID value is duplicated inside a feature class. See above under “Results Information” for unique ID field names for each layer type.|Make sure every unique ID is actually unique inside each feature class. For separate ESBs (EMS, FIRE & LAW), the IDs must be unique across all layers. If ESB IDs are duplicated, run Adjustment Tools &gt; Fix Duplicate ESB IDs for a quick fix.|
+|*Feature not inside authoritative boundary*|Found by: 3 Check Roads/ 4 Check Boundaries/5 Check Other Layers &gt; Check Feature Locations<br><br>Some part of this feature’s geometry falls outside of the authoritative boundary. This is only an error for features NOT in AddressPoints.|Take a look at the identified features in comparison to the Authoritative Boundary. Either the features need to be moved inside the Authoritative Boundary or the Authoritative Boundary should be expanded to include the features.|
 |*FIELDNAME is null for FeatureID FEATUREID*|Found by: 1 Check Template &gt; Check Required Field Values<br><br>A required field contains a null value. To narrow down the issue, look at the Layer, Field and FeatureID columns of FieldValuesCheckResults for the exact location of the null value.|Look at the specified field value for the identified feature and edit the value. If the field has a domain, make sure the new value is approved for the domain.|
 |*Invalid geometry*|Found by: 1 Check Template &gt; Find Invalid Geometry<br><br>This check makes sure all features have an appropriate number of coordinate pairs stored for their feature class’s geometry. The check makes sure a record did not get added to the attribute table without corresponding geometry. Points must have at least 1 coordinate pair, lines must have at least 2 coordinate pairs and polygons must have at least 3 coordinate pairs.|Try running a “zoom to” on the identified feature. If necessary, use the “Replace Geometry” tool to create a valid feature or delete the record from the attribute table.|
-|*Value ATTRIBUTEVALUE not in approved domain for field FIELDNAME*|Found by: 2 Check Address Points/3 Check Roads/ 4 Check Emergency Services Boundaries/5 Check Administrative Boundaries &gt; Check Values Against Domains<br><br>A field with a domain contains a value that is not in the approved domain. In many cases, this situation is caused by field case (mixed case versus upper case).|Look at the specified field value for the identified feature and edit the value to one approved for the domain.<br><br>If the issue is a case issue, run Adjustment Tools &gt; Fix Domain Case for a quick and easy fix.|
+|*Value ATTRIBUTEVALUE not in approved domain for field FIELDNAME*|Found by: 2 Check Address Points/3 Check Roads/ 4 Check Boundaries/5 Check Other Layers &gt; Check Values Against Domains<br><br>A field with a domain contains a value that is not in the approved domain. In many cases, this situation is caused by field case (mixed case versus upper case).|Look at the specified field value for the identified feature and edit the value to one approved for the domain.<br><br>If the issue is a case issue, run Adjustment Tools &gt; Fix Domain Case for a quick and easy fix.|
 
 ###### Address Points
 |Error Message|Meaning|Fix Tips|
@@ -147,7 +147,9 @@ Notices:
 ###### Road Centerlines
 |Notice Message|Meaning|Fix Tips (if applicable)|
 |--------------------|-----------------------------------------------------------------|--------------------|
-|*Road centerline highway segment does not have a corresponding road alias record*|Found by: 3 Check Roads &gt; Check Road Alias<br><br>A road centerline segment with HIGHWAY, HWY or INTERSTATE in the road name does not have a match in the road alias table. The road segment’s SEGID value is matched to the road alias SEGID field.|Highway records should have a corresponding record in the road alias table. If a record doesn’t exist in the road alias table, create one and add all necessary information according to the [NG911 Data Model](http://www.kansasgis.org/initiatives/NG911/KSNG911GISDataModel/v1.1/Kansas_NG911_GIS_Data_Model_v1_1.pdf). If a road alias record exists, make sure the SEGID value matches the SEGID of the correct road centerline segment.|
+|*FEATUREID has duplicate address range information*|Found by: 3 Check Roads &gt; Check Address Ranges<br><br>Two road segments (probably side by dual dual carriageways) have duplicate address ranges. In these cases, each segment should have 0-0 address ranges on the interior.|Edit dual carriageways so each road piece is only addressed on the exterior range. The interior range should be 0-0.|
+|*Road centerline highway segment does not have a corresponding road alias record*|Found by: 3 Check Roads &gt; Check Road Alias<br><br>A road centerline segment with HIGHWAY, HWY or INTERSTATE in the road name does not have a match in the road alias table. The road segment’s SEGID value is matched to the road alias SEGID field.|Highway records should have a corresponding record in the road alias table. If a record doesn’t exist in the road alias table, create one and add all necessary information according to the [NG911 Data Model](http://www.kansasgis.org/initiatives/NG911/KSNG911GISDataModel/v2.0/Kansas_NG911_GIS_Data_Model_v2_0_Final.pdf). If a road alias record exists, make sure the SEGID value matches the SEGID of the correct road centerline segment.|
+|*Road segment contains addresses for area outside PSAP boundary*|Found by: 3 Check Roads &gt; Check Address Ranges<br><br>A road centerline segment has different values for COUNTY_L and COUNTY_R and contains non-zero values for all four fields L_F_ADD, L_R_ADD, R_F_ADD and R_T_ADD. According to the NG911 data model, addresses outside the PSAP should be addressed as 0-0.|Edit address ranges outside of your PSAP as 0-0. For example, for a road segment, if COUNTY_L is not your county, the corresponding values for L_F_ADD and L_R_ADD should be 0 and 0.|
 |*Segment’s address range is from high to low instead of low to high*|Found by: 3 Check Roads &gt; Check Directionality<br><br>For the records indicated, either L\_T\_ADD is smaller than L\_F\_ADD or R\_T\_ADD is smaller than R\_F\_ADD. When a “to” portion of an address range is smaller than the “from” portion, geocoders have a harder time placing addresses correctly.|Look at the road segments identified to see if the road direction can be switched without negatively impacting the data.|
 |*This segment might contain a geometry cutback*|Found by: 3 Check Roads &gt; Check for cutbacks<br><br>A segment’s geometry follows an unpredictable pattern like a Z inside the feature or a tail on one end. In some cases of tight angles, a cutback is flagged by the geometry check but the geometry is actually ok.|Inside an edit session, take a look at the individual vertices of the indicated road segments. If Z’s or tails exist, remove them.|
 
