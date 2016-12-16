@@ -33,6 +33,10 @@ included data validation tools check for the following errors:
 
 -   Checks road alias highway names
 
+-   Checks if road segments have duplicate address ranges on dual carriageways
+
+-   Checks if road segments are addressed outside of the PSAP (typically across a county boundary)
+
 -   Geocodes addresses against the road centerline data
 
 -   Finds duplicate features in road centerlines and addresses
