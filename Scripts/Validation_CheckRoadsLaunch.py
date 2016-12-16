@@ -21,9 +21,11 @@ def main():
     checkCutbacks = GetParameterAsText(5)
     checkDirectionality = GetParameterAsText(6)
     checkRoadAliases = GetParameterAsText(7)
+    checkAddressRanges = GetParameterAsText(8)
 
     #create check list
-    checkList = [checkValuesAgainstDomain,checkFeatureLocations,checkRoadFrequency,checkUniqueIDs,checkCutbacks,checkDirectionality, checkRoadAliases]
+    checkList = [checkValuesAgainstDomain,checkFeatureLocations,checkRoadFrequency,checkUniqueIDs,checkCutbacks,checkDirectionality, checkRoadAliases,
+                    checkAddressRanges]
 
     session_object = NG911_Session(gdb)
     gdbObject = session_object.gdbObject

@@ -106,8 +106,9 @@ def createLocators(gdb_object):
                     'Primary Table:Display X' <None> VISIBLE NONE;'Primary Table:Display Y' <None> VISIBLE NONE;
                     'Primary Table:Min X value for extent' <None> VISIBLE NONE;'Primary Table:Max X value for extent' <None> VISIBLE NONE;
                     'Primary Table:Min Y value for extent' <None> VISIBLE NONE;'Primary Table:Max Y value for extent' <None> VISIBLE NONE;
+                    'Primary Table:Left parity' <None> VISIBLE NONE;'Primary Table:Right parity' <None> VISIBLE NONE;
                     'Primary Table:Left Additional Field' <None> VISIBLE NONE;'Primary Table:Right Additional Field' <None> VISIBLE NONE;
-                    'Primary Table:Altname JoinID' RoadCenterline:""" + rc_obj.UNIQUEID + """ VISIBLE NONE;'*Alternate Name Table:JoinID' RoadAlias:""" + ra_obj.SEGID + """ VISIBLE NONE;
+                    '*Primary Table:Altname JoinID' RoadCenterline:""" + rc_obj.UNIQUEID + """ VISIBLE NONE;'*Alternate Name Table:JoinID' RoadAlias:""" + ra_obj.SEGID + """ VISIBLE NONE;
                     'Alternate Name Table:Prefix Direction' RoadAlias:A_PRD VISIBLE NONE;'Alternate Name Table:Prefix Type' RoadAlias:A_STP VISIBLE NONE;
                     'Alternate Name Table:Street Name' RoadAlias:A_RD VISIBLE NONE;'Alternate Name Table:Suffix Type' RoadAlias:A_STS VISIBLE NONE;
                     'Alternate Name Table:Suffix Direction' RoadAlias:A_POD VISIBLE NONE"""
@@ -145,12 +146,18 @@ def createLocators(gdb_object):
         if not Exists(AL3):
             if Exists(AL1) and Exists(AL2):
                 userMessage("Creating composite address locator...")
+                #address point locator first
+##                compositeFieldMap = "Street \"Street or Intersection\" true true true 100 Text 0 0 ,First,#," + AL1 + ",Street,0,0," + AL2 + ",Street,0,0;City \"City or Placename\" true true false 40 Text 0 0 ,First,#,"  + \
+##                    AL1 + ",City,0,0," + AL2 + ",City,0,0;State \"State\" true true false 20 Text 0 0 ,First,#," + AL1 + ",State,0,0," + AL2 + ",State,0,0;ZIP \"ZIP Code\" true true false 10 Text 0 0 ,First,#," + \
+##                    AL1 + ",ZIP,0,0," + AL2 + ",ZIP,0,0"
+##
+##                CreateCompositeAddressLocator_geocoding(AL1 + " AddyPt;" + AL2 + " Roads", compositeFieldMap, "AddyPt #;Roads #", AL3)
+                #road locator first
                 compositeFieldMap = "Street \"Street or Intersection\" true true true 100 Text 0 0 ,First,#," + AL1 + ",Street,0,0," + AL2 + ",Street,0,0;City \"City or Placename\" true true false 40 Text 0 0 ,First,#,"  + \
                     AL1 + ",City,0,0," + AL2 + ",City,0,0;State \"State\" true true false 20 Text 0 0 ,First,#," + AL1 + ",State,0,0," + AL2 + ",State,0,0;ZIP \"ZIP Code\" true true false 10 Text 0 0 ,First,#," + \
                     AL1 + ",ZIP,0,0," + AL2 + ",ZIP,0,0"
 
-                CreateCompositeAddressLocator_geocoding(AL1 + " AddyPt;" + AL2 + " Roads", compositeFieldMap, "AddyPt #;Roads #", AL3)
-
+                CreateCompositeAddressLocator_geocoding(AL2 + " Roads;" + AL1 + " AddyPt", compositeFieldMap, "Roads #;AddyPt #", AL3)
 
 def prepXLS(tnxls, gdb):
     import xlrd
@@ -179,9 +186,9 @@ def prepXLS(tnxls, gdb):
     CreateTable_management(tn_gdb, tname)
 
     #add fields
-    fields = (a_obj.HNO, a_obj.HNS, a_obj.PRD, a_obj.RD, a_obj.MUNI, a_obj.STATE,"NPA","NXX","PHONELINE")
+    fields = (a_obj.HNO, a_obj.HNS, a_obj.PRD, a_obj.RD, a_obj.MUNI, a_obj.STATE,"NPA","NXX","PHONELINE","SERVICECLASS")
 
-    colIDlist = (17,18,20,21,22,24,2,3,4)
+    colIDlist = (17,18,20,21,22,24,2,3,4,7)
 
     #add fields
     for field in fields:
@@ -213,18 +220,21 @@ def prepXLS(tnxls, gdb):
             cellval = xl_sheet.cell(rowIdx,colID).value
             rowToInsertList.append(cellval)
 
-        #convert list of info to a tuple
-        rowToInsert = tuple(rowToInsertList)
+        #see if the service class is 8 or V. if it is, skip adding that row
+        if rowToInsertList[-1] not in ["8", "V"]:
 
-        #create insert cursor
-        i = InsertCursor(outTable,fields)
-        #insert the row of info
-        i.insertRow(rowToInsert)
-        #clean up
-        del i, rowToInsert, rowToInsertList
+            #convert list of info to a tuple
+            rowToInsert = tuple(rowToInsertList)
+
+            #create insert cursor
+            i = InsertCursor(outTable,fields)
+            #insert the row of info
+            i.insertRow(rowToInsert)
+            #clean up
+            del i, rowToInsert, rowToInsertList
         rowIdx = rowIdx + 1
 
-    userMessage("Conversion to geodatabase table successful. " + str(endRow-1) + " rows converted.")
+    userMessage("Conversion to geodatabase table successful. " + str(endRow-1) + " rows converted. VOIP and test rows were not converted.")
 
     userMessage("Creating single line input for geocoding...")
     #create SingleLineInput field
@@ -240,6 +250,7 @@ def prepXLS(tnxls, gdb):
     CalculateField_management(outTable, sli, '!' + sli + '!.replace("  ", " ")', "PYTHON")
     userMessage("Single line input succesfully created.")
 
+
 def AddUniqueIDField(outTable, uniqueIDField):
     if not fieldExists(outTable, uniqueIDField):
         AddField_management(outTable, uniqueIDField, "TEXT", "", "", 50) #KK EDIT: changed from 38 to 50
@@ -254,7 +265,6 @@ def geocodeTable(gdb, field):
     tn_object = getTNObject(gdb)
     AL3 = tn_object.CompositeLocator
     tname = tn_object.TN_List
-##    tname = r"E:\Kristen\Data\NG911\Template20\KSNG911N_20_DK_TN\TN_Working.gdb\TN_List_20161026_1"
     GC_output = tn_object.ResultsFC
     uniqueFieldID = tn_object.UNIQUEID
     tn_gdb = tn_object.tn_gdb

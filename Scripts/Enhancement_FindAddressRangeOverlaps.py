@@ -23,8 +23,8 @@
 
 # Import modules
 from arcpy import (env, GetParameterAsText, ListFields, MakeTableView_management,
-        MakeFeatureLayer_management, SelectLayerByAttribute_management,
-        CopyFeatures_management, Exists, Append_management, AddWarning)
+        MakeFeatureLayer_management, SelectLayerByAttribute_management, Delete_management,
+        CopyFeatures_management, Exists, Append_management, AddWarning, Dissolve_management)
 from arcpy.da import SearchCursor
 from NG911_DataCheck import userMessage
 from os.path import join
@@ -39,7 +39,8 @@ gdb_object = getGDBObject(working_gdb)
 
 env.workspace = working_gdb
 input_fc = gdb_object.RoadCenterline         # Our street centerline feature class
-output_fc = join(gdb_object.gdbPath, "AddressRange_Overlap")
+output_fc = join(gdb_object.gdbPath, "AddressRange_Overlap_All")
+final_fc = join(gdb_object.gdbPath, "AddressRange_Overlap")
 rd_object = getFCObject(input_fc)
 name_field = rd_object.LABEL   # Should be concatenated with pre/post directionals and type
 left_from = rd_object.L_F_ADD         # The left from address field
@@ -52,10 +53,10 @@ try:
     # Allow arcpy to overwrite something if it's already there
     env.overwriteOutput = True
 
-    parityList = ["('E','B')", "('O','B')"]
+    parityList = ["('E','B')", "('O','B')","('E','O')","('O','E')"]
 
     for parity in parityList:
-
+        userMessage("Iteration " + str(parityList.index(parity) + 1))
         # --- Parity check ---
     ##    parity_sql = left_from + " <> " + left_to + " or " + right_from +" <> " + right_to
         parity_sql = rd_object.PARITY_L + " in " + parity + " AND " + rd_object.PARITY_R + " in " + parity
@@ -182,8 +183,8 @@ try:
             overlap_sql = OID_field + " in (" + overlap_string + ")" # constructing the complete SQL statement
 
             # print overlap_sql
-            AddWarning("The final count of errors processed is "+str(overlap_error_total))
-            userMessage("Adding the remaining features to a feature layer")
+            AddWarning("Found overlapping addresses")
+##            userMessage("Adding the remaining features to a feature layer")
 
             SelectLayerByAttribute_management(lyr, "ADD_TO_SELECTION", overlap_sql)
 
@@ -192,10 +193,15 @@ try:
                 CopyFeatures_management(lyr, str(output_fc))
             else:
                 Append_management(lyr, output_fc, "NO_TEST")
-            AddWarning("Overlapping address ranges in: " + output_fc)
 
-        else:
-            userMessage("No overlaps found. Good job!")
-
+##        else:
+##            userMessage("No overlaps found comparing")
+    if Exists(output_fc):
+        #dissovle any duplicate features
+        userMessage("Removing any duplicates...")
+        dissolve_field = "STEWARD;L_UPDATE;EFF_DATE;EXP_DATE;" + rd_object.UNIQUEID + ";STATE_L;STATE_R;COUNTY_L;COUNTY_R;MUNI_L;MUNI_R;L_F_ADD;L_T_ADD;R_F_ADD;R_T_ADD;PARITY_L;PARITY_R;POSTCO_L;POSTCO_R;ZIP_L;ZIP_R;ESN_L;ESN_R;MSAGCO_L;MSAGCO_R;PRD;STP;RD;STS;POD;POM;SPDLIMIT;ONEWAY;RDCLASS;UPDATEBY;LABEL;ELEV_F;ELEV_T;SURFACE;STATUS;TRAVEL;LRSKEY;EXCEPTION;SUBMIT;NOTES;Shape_Length"
+        Dissolve_management(output_fc, final_fc, dissolve_field, "", "SINGLE_PART", "DISSOLVE_LINES")
+        AddWarning("Overlapping address ranges in: " + final_fc)
+        Delete_management(output_fc)
 except:
     userMessage("Error processing the data.")

@@ -21,23 +21,29 @@ def forceCommonFields(fc11, fc20):
     fields11 = ListFields(fc11)
     fields20 = ListFields(fc20)
 
+##    fieldTypeList = ["TEXT","FLOAT","DOUBLE","SHORT","LONG","DATE","BLOB","RASTER","GUID"]
+
     #if the proprietary field doesn't exist, add it
     for field20 in fields20:
         if not fieldExists(fc11, field20.name):
             if "SHAPE" not in field20.name.upper():
-                try:
-                    AddField_management(fc11, field20.name, field20.type, "", "", field20.length)
-                except Exception as e:
-                    userMessage(str(e))
+##                if field20.type.upper() in fieldTypeList:
+                if "OBJECTID" not in field20.name.upper():
+                    try:
+                        AddField_management(fc11, field20.name, field20.type, "", "", field20.length)
+                    except Exception as e:
+                        userMessage(str(e) + ": Attempting to add column " + field20.name + " to the 1.1 goedatabase.")
 
     #if the proprietary field doesn't exist, add it
     for field11 in fields11:
         if not fieldExists(fc20, field11.name):
             if "SHAPE" not in field11.name.upper():
-                try:
-                    AddField_management(fc20, field11.name, field11.type, "", "", field11.length)
-                except Exception as e:
-                    userMessage(str(e))
+##                if field11.type.upper() in fieldTypeList:
+                if "OBJECTID" not in field11.name.upper():
+                    try:
+                        AddField_management(fc20, field11.name, field11.type, "", "", field11.length)
+                    except Exception as e:
+                        userMessage(str(e) + ": Attempting to add column " + field11.name + " to the 2.0 goedatabase.")
 
 
 def main():

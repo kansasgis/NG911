@@ -527,7 +527,7 @@ def checkUniqueIDFrequency(currentPathSettings):
     #if it exists, clean up table
     deleteExisting(table)
 
-def checkFrequency(fc, freq, fields, gdb):
+def checkFrequency(fc, freq, fields, gdb, fullFreq):
 
     obj = NG911_GDB_Objects.getFCObject(fc)
 
@@ -617,7 +617,10 @@ def checkFrequency(fc, freq, fields, gdb):
                                         fID = sRow[0]
 
                                         #add information to FieldValuesCheckResults for all duplicates
-                                        report = "Error: " + str(fID) + " has duplicate field information"
+                                        if fullFreq == "true":
+                                            report = "Error: " + str(fID) + " has duplicate field information"
+                                        else:
+                                            report = "Notice: " + str(fID) + " has duplicate address range information"
                                         val = (today, report, filename, "", fID)
                                         values.append(val)
 
@@ -995,25 +998,28 @@ def checkRequiredFieldValues(pathsInfoObject):
                             if id1 not in matchingFields:
                                 matchingFields.append(id1)
 
-                            #run a search cursor to get any/all records where a required field value is null
-                            with SearchCursor(lyr, (matchingFields), wc) as rows:
-                                for row in rows:
-                                    k = 0
-                                    #get object ID of the field
-                                    oid = str(row[matchingFields.index(id1)])
+                            try:
+                                #run a search cursor to get any/all records where a required field value is null
+                                with SearchCursor(lyr, (matchingFields), wc) as rows:
+                                    for row in rows:
+                                        k = 0
+                                        #get object ID of the field
+                                        oid = str(row[matchingFields.index(id1)])
 
-                                    #loop through row
-                                    while k < len(matchingFields):
-                                        #see if the value is nothing
-                                        if row[k] is None:
-                                            #report the value if it is indeed null
-                                            report = "Error: " + matchingFields[k] + " is null for Feature ID " + oid
-                                            userMessage(report)
-                                            val = (today, report, basename(filename), matchingFields[k], oid)
-                                            values.append(val)
+                                        #loop through row
+                                        while k < len(matchingFields):
+                                            #see if the value is nothing
+                                            if row[k] is None:
+                                                #report the value if it is indeed null
+                                                report = "Error: " + matchingFields[k] + " is null for Feature ID " + oid
+                                                userMessage(report)
+                                                val = (today, report, basename(filename), matchingFields[k], oid)
+                                                values.append(val)
 
-                                        #iterate!
-                                        k = k + 1
+                                            #iterate!
+                                            k = k + 1
+                            except:
+                                userMessage("Could not check all fields in " + layer + ". Looking for " + ", ".join(matchingFields))
                         else:
                             userMessage( "All required values present for " + layer)
 
@@ -1070,6 +1076,51 @@ def checkRequiredFields(pathsInfoObject):
         RecordResults("template", values, gdb)
 
     userMessage("Completed check for required fields: " + str(len(values)) + " issues found")
+
+def checkCountyRanges(pathsInfoObject):
+    gdb = pathsInfoObject.gdbPath
+
+    #set variables
+    gdb_object = pathsInfoObject.gdbObject
+    roads = gdb_object.RoadCenterline
+    a = pathsInfoObject.rc_obj
+
+    #userMessage
+    userMessage("Checking roads on county boundaries...")
+
+    #limit records to those with elevation flags
+    qry = a.COUNTY_L + " <> " + a.COUNTY_R
+
+    #set up search cursor
+    fields = (a.L_F_ADD, a.L_T_ADD, a.R_F_ADD, a.R_T_ADD, a.UNIQUEID)
+    attn_segs = []
+
+    with SearchCursor(roads, fields, qry) as rows:
+        for row in rows:
+            set_l = [row[0], row[1]]
+            set_r = [row[2], row[3]]
+            unique_id = row[4]
+
+            if [0,0] not in [set_l, set_r]:
+                attn_segs.append(unique_id)
+
+    #record issues if any exist
+    values = []
+    resultType = "fieldValues"
+    today = strftime("%m/%d/%y")
+    fc = "RoadCenterline"
+    report = "Notice: Road segment contains addresses for area outside PSAP boundary"
+
+    if len(attn_segs) > 0:
+        for attn_seg in attn_segs:
+            val = (today, report, fc, "Address Ranges", attn_seg)
+            values.append(val)
+
+    if values != []:
+        RecordResults(resultType, values, gdb)
+        userMessage("Check complete. " + str(len(attn_segs)) + " issues found. See table FieldValuesCheckResults for results.")
+    else:
+        userMessage("Check complete. All addressed roads are for your PSAP.")
 
 
 def checkSubmissionNumbers(pathsInfoObject):
@@ -1143,6 +1194,7 @@ def checkFeatureLocations(pathsInfoObject):
     #get authoritative boundary
     authBound = gdbObject.AuthoritativeBoundary
     countyBound = gdbObject.CountyBoundary
+    parcels = gdbObject.PARCELS
     ab = "ab"
 
     #see if authoritative boundary has more than 1 feature
@@ -1153,10 +1205,13 @@ def checkFeatureLocations(pathsInfoObject):
     else:
         authBound = countyBound
 
+    #remove some layers from being checked
     if authBound in fcList:
         fcList.remove(authBound)
     if countyBound in fcList:
         fcList.remove(countyBound)
+    if parcels in fcList:
+        fcList.remove(parcels)
 
     MakeFeatureLayer_management(authBound, ab)
 
@@ -1238,43 +1293,40 @@ def findInvalidGeometry(pathsInfoObject):
     for fullPath in fcList:
 
         if Exists(fullPath):
-            #get the unique ID column
-##            layer = basename(fullPath)
-##
-##            if layer.upper() != "ROADALIAS":
-##                if layer in esb:
-##                    layerName = "ESB"
-##                else:
-##                    layerName = layer
 
             id_column = getUniqueIDField(fullPath)
 
-            #set up fields for cursor
-            fields = ("SHAPE@", id_column)
+            if fieldExists(fullPath, id_column):
 
-            with SearchCursor(fullPath, fields) as rows:
-                for row in rows:
-                    geom = row[0]
-                    fid = row[1]
+                #set up fields for cursor
+                fields = ("SHAPE@", id_column)
 
-                    try:
-                        #get geometry type
-                        geomType = geom.type
+                with SearchCursor(fullPath, fields) as rows:
+                    for row in rows:
+                        geom = row[0]
+                        fid = row[1]
 
-                        #find the minimum number of required points
-                        minNum = invalidDict[geomType]
+                        try:
+                            #get geometry type
+                            geomType = geom.type
 
-                        #get the count of points in the geometry
-                        count = geom.pointCount
+                            #find the minimum number of required points
+                            minNum = invalidDict[geomType]
 
-                        #if the count is smaller than the minimum number, there's a problem
-                        if count < minNum:
+                            #get the count of points in the geometry
+                            count = geom.pointCount
+
+                            #if the count is smaller than the minimum number, there's a problem
+                            if count < minNum:
+                                val = (today, report, layer, " ", fid)
+                                values.append(val)
+                        except:
+                            #if this errors, there's an error accessing the geometry, hence problems
                             val = (today, report, layer, " ", fid)
                             values.append(val)
-                    except:
-                        #if this errors, there's an error accessing the geometry, hence problems
-                        val = (today, report, layer, " ", fid)
-                        values.append(val)
+
+            else:
+                userMessage("ID column " + id_column + " does not exist in " + fullPath)
 
         else:
             AddWarning(fullPath + " does not exist")
@@ -1609,7 +1661,7 @@ def sanityCheck(currentPathSettings):
     addressPoints = gdbObject.AddressPoints
     AP_freq = gdbObject.AddressPointFrequency
     AP_fields = currentPathSettings.a_obj.FREQUENCY_FIELDS_STRING
-    checkFrequency(addressPoints, AP_freq, AP_fields, currentPathSettings.gdbPath)
+    checkFrequency(addressPoints, AP_freq, AP_fields, currentPathSettings.gdbPath, "true")
     if Exists(gdbObject.ESZ):
         checkESNandMuniAttribute(currentPathSettings)
     else:
@@ -1620,10 +1672,17 @@ def sanityCheck(currentPathSettings):
     roads = gdbObject.RoadCenterline
     road_freq = gdbObject.RoadCenterlineFrequency
     road_fields = currentPathSettings.rc_obj.FREQUENCY_FIELDS_STRING
-    checkFrequency(roads, road_freq, road_fields, currentPathSettings.gdbPath)
+    checkFrequency(roads, road_freq, road_fields, currentPathSettings.gdbPath, "true")
     checkCutbacks(currentPathSettings)
     checkDirectionality(roads, currentPathSettings.gdbPath)
     checkRoadAliases(currentPathSettings)
+    #check address ranges along county boundary
+    checkCountyRanges(currentPathSettings)
+    #complete check for duplicate address ranges on dual carriageways
+    fields = currentPathSettings.rc_obj.FREQUENCY_FIELDS
+    fields.remove("ONEWAY")
+    fields_string = ";".join(fields)
+    checkFrequency(roads, road_freq, fields_string, currentPathSettings.gdbPath, "false")
 
     #verify that the check resulted in 0 issues
     sanity = 0 #flag to return at end
@@ -1701,7 +1760,7 @@ def main_check(checkType, currentPathSettings):
             addressPoints = gdbObject.AddressPoints
             AP_freq = gdbObject.AddressPointFrequency
             AP_fields = currentPathSettings.a_obj.FREQUENCY_FIELDS_STRING
-            checkFrequency(addressPoints, AP_freq, AP_fields, currentPathSettings.gdbPath)
+            checkFrequency(addressPoints, AP_freq, AP_fields, currentPathSettings.gdbPath, "true")
 
         if checkList[3] == "true":
             checkUniqueIDFrequency(currentPathSettings)
@@ -1724,7 +1783,7 @@ def main_check(checkType, currentPathSettings):
         if checkList[2] == "true":
             road_freq = gdbObject.RoadCenterlineFrequency
             road_fields = currentPathSettings.rc_obj.FREQUENCY_FIELDS_STRING
-            checkFrequency(roads, road_freq, road_fields, currentPathSettings.gdbPath)
+            checkFrequency(roads, road_freq, road_fields, currentPathSettings.gdbPath, "true")
 
         if checkList[3] == "true":
             checkUniqueIDFrequency(currentPathSettings)
@@ -1737,6 +1796,17 @@ def main_check(checkType, currentPathSettings):
 
         if checkList[6] == "true":
             checkRoadAliases(currentPathSettings)
+
+        if checkList[7] == "true":
+            #check address ranges along county boundary
+            checkCountyRanges(currentPathSettings)
+
+            #complete check for duplicate address ranges on dual carriageways
+            road_freq = gdbObject.RoadCenterlineFrequency
+            fields = currentPathSettings.rc_obj.FREQUENCY_FIELDS
+            fields.remove("ONEWAY")
+            fields_string = ";".join(fields)
+            checkFrequency(roads, road_freq, fields_string, currentPathSettings.gdbPath, "false")
 
     #run standard checks
     elif checkType == "standard":

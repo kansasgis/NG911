@@ -220,6 +220,7 @@ class NG911_Adddress_Object(object):
         self.FREQUENCY_FIELDS = [self.MUNI,self.HNO,self.HNS,self.PRD,self.STP,self.RD,self.STS,self.POD,self.POM,self.ZIP,self.BLD,self.FLR,self.UNIT,self.ROOM,
                                     self.SEAT,self.LOC,self.LOCTYPE,self.MSAGCO]
         self.FREQUENCY_FIELDS_STRING = ";".join(self.FREQUENCY_FIELDS)
+        self.GEOCODE_LABEL_FIELDS = [self.HNO, self.PRD, self.STP, self.RD, self.STS, self.POD, self.POM]
 
 def getDefaultNG911AddressObject():
 
