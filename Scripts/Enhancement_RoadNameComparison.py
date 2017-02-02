@@ -114,7 +114,7 @@ def main():
         with SearchCursor(rnt, ("RD_UNIQUE.ROAD_LABEL"), wc) as r_rows:
             for r in r_rows:
                 report = "Notice: " + r[0] + " is a road name and not an address point road name."
-                val = (today, report, filename, "", "")
+                val = (today, report, filename, "", "", "Compare Road Names")
                 values.append(val)
 
     #remove join
@@ -136,7 +136,7 @@ def main():
         with SearchCursor(apnt, ("AP_UNIQUE.ROAD_LABEL"), wc1) as a_rows:
             for a_row in a_rows:
                 report = "Notice: " + a_row[0] + " is an address point road name and not a road name."
-                val = (today, report, filename, "", "")
+                val = (today, report, filename, "", "", "Compare Road Names")
                 values.append(val)
 
     #remove join

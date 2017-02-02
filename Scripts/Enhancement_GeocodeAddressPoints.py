@@ -255,13 +255,13 @@ def geocodeAddressPoints(gdb):
                                             rCount = rCount - 1
                                         else:
                                             report = "Notice: " + report
-                                        val = (today, report, filename, "", fID)
+                                        val = (today, report, filename, "", fID, "Geocode Address Points")
                                         values.append(val)
                                     Delete_management(tblGE)
 
                                 else:
                                     report = "Notice: " + str(fID) + " did not geocode against centerline"
-                                    val = (today, report, filename, "", fID)
+                                    val = (today, report, filename, "", fID, "Geocode Address Points")
                                     values.append(val)
 
                     except Exception as e:

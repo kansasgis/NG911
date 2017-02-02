@@ -10,7 +10,7 @@ from arcpy import (GetParameterAsText, MakeTableView_management, Frequency_analy
     AddField_management, GetCount_management, ListFields)
 from arcpy.da import SearchCursor, InsertCursor
 from os.path import join, dirname, basename
-from NG911_DataCheck import getFieldDomain, userMessage, RecordResults
+from NG911_DataCheck import getFieldDomain, userMessage
 from time import strftime
 from NG911_GDB_Objects import getGDBObject, getFCObject
 from NG911_arcpy_shortcuts import fieldExists

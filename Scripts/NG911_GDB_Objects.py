@@ -264,33 +264,35 @@ def getDefaul20NG911GeocodeExceptionsObject():
 
 class NG911_FieldValuesCheckResults_Object(object):
 
-    def __init__(self, u_DATEFLAGGED, u_DESCRIPTION, u_LAYER, u_FIELD, u_FEATUREID):
+    def __init__(self, u_DATEFLAGGED, u_DESCRIPTION, u_LAYER, u_FIELD, u_FEATUREID, u_CHECK):
 
         self.DATEFLAGGED = u_DATEFLAGGED
         self.DESCRIPTION = u_DESCRIPTION
         self.LAYER = u_LAYER
         self.FIELD = u_FIELD
         self.FEATUREID = u_FEATUREID
+        self.CHECK = u_CHECK
 
 
 def getDefaultNG911FieldValuesCheckResultsObject():
 
-    NG911_FieldValuesCheckResults_Default = NG911_FieldValuesCheckResults_Object("DATEFLAGGED", "DESCRIPTION", "LAYER", "FIELD", "FEATUREID")
+    NG911_FieldValuesCheckResults_Default = NG911_FieldValuesCheckResults_Object("DATEFLAGGED", "DESCRIPTION", "LAYER", "FIELD", "FEATUREID", "CHECK")
 
     return NG911_FieldValuesCheckResults_Default
 
 class NG911_TemplateCheckResults_Object(object):
 
-    def __init__(self, u_DATEFLAGGED, u_DESCRIPTION, u_CATEGORY):
+    def __init__(self, u_DATEFLAGGED, u_DESCRIPTION, u_CATEGORY, u_CHECK):
 
         self.DATEFLAGGED = u_DATEFLAGGED
         self.DESCRIPTION = u_DESCRIPTION
         self.CATEGORY = u_CATEGORY
+        self.CHECK = u_CHECK
 
 
 def getDefaultNG911TemplateCheckResultsObject():
 
-    NG911_TemplateCheckResults_Default = NG911_TemplateCheckResults_Object("DATEFLAGGED", "DESCRIPTION", "CATEGORY")
+    NG911_TemplateCheckResults_Default = NG911_TemplateCheckResults_Object("DATEFLAGGED", "DESCRIPTION", "CATEGORY", "CHECK")
 
     return NG911_TemplateCheckResults_Default
 
@@ -782,18 +784,47 @@ def get11GDBObject(gdb):
     env.workspace = fds
     fcs = ListFeatureClasses()
     ems, law, fire, psap, esb = "", "", "", "", ""
+    emsList = []
+    lawList = []
+    fireList = []
+
     for f in fcs:
         f = f.upper()
         if "EMS" in f:
-            ems = join(fds, f)
-        if "LAW" in f:
-            law = join(fds, f)
+            emsList.append(join(fds, f))
+        if "LAW" in f or "LE" in f:
+            lawList.append(join(fds, f))
         if "FIRE" in f:
-            fire = join(fds, f)
+            fireList.append(join(fds, f))
         if "PSAP" in f:
             psap = join(fds, f)
-        if "ESB" in f and "EMS" not in f and "LAW" not in f and "FIRE" not in f:
+        if "ESB" in f and "EMS" not in f and "LAW" not in f and "FIRE" not in f and "LE" not in f:
             esb = join(fds, f)
+
+    #see how many layers are EMS layers
+    if len(emsList) > 1:
+        for e in emsList:
+            #pick which one has "primary" in the name
+            if "PRIMARY" in e:
+                ems = e
+    elif len(emsList) == 1:
+        ems = emsList[0]
+
+    #see how many layers are law layers
+    if len(lawList) > 1:
+        for l in lawList:
+            if "PRIMARY" in l:
+                law = l
+    elif len(lawList) == 1:
+        law = lawList[0]
+
+    #see how many layers are fire layers
+    if len(fireList) > 1:
+        for fr in fireList:
+            if "PRIMARY" in fr:
+                fire = fr
+    elif len(fireList) == 1:
+        fire = fireList[0]
 
     esbList = []
     for e in [ems, law, fire, psap, esb]:

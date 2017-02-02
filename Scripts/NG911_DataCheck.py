@@ -19,7 +19,8 @@ from arcpy import (AddField_management, AddMessage, CalculateField_management, C
                    CreateTable_management, Delete_management, Exists, GetCount_management, FieldInfo,
                    ListFields, MakeFeatureLayer_management, MakeTableView_management, SelectLayerByAttribute_management,
                    SelectLayerByLocation_management, DeleteRows_management, GetInstallInfo, env, ListDatasets,
-                   AddJoin_management, RemoveJoin_management, AddWarning)
+                   AddJoin_management, RemoveJoin_management, AddWarning, CopyFeatures_management, Append_management,
+                   Dissolve_management)
 from arcpy.da import Walk, InsertCursor, ListDomains, SearchCursor
 from os import path
 from os.path import basename, dirname, join, exists
@@ -173,10 +174,12 @@ def getAddFieldInfo(table):
     lyr = basename(table)
     #field info
     if lyr == "TemplateCheckResults":
-        fieldInfo = [(table, obj.DATEFLAGGED, "DATE", "", "", ""),(table, obj.DESCRIPTION, "TEXT", "", "", 250),(table, obj.CATEGORY, "TEXT", "", "", 25)]
+        fieldInfo = [(table, obj.DATEFLAGGED, "DATE", "", "", ""),(table, obj.DESCRIPTION, "TEXT", "", "", 250),(table, obj.CATEGORY, "TEXT", "", "", 25),
+        (table, obj.CHECK, "TEXT", "", "", 40)]
     elif lyr == "FieldValuesCheckResults":
         fieldInfo = [(table, obj.DATEFLAGGED, "DATE", "", "", ""),(table, obj.DESCRIPTION, "TEXT", "", "", 250),
-            (table, obj.LAYER, "TEXT", "", "", 25),(table, obj.FIELD, "TEXT", "", "", 25),(table, obj.FEATUREID, "TEXT", "", "", 38)]
+            (table, obj.LAYER, "TEXT", "", "", 25),(table, obj.FIELD, "TEXT", "", "", 25),(table, obj.FEATUREID, "TEXT", "", "", 38),
+            (table, obj.CHECK, "TEXT", "", "", 40)]
     elif lyr == "DASC_Communication":
         fieldInfo = [(table, "NoteDate", "DATE", "", "", ""),(table, "Description", "TEXT", "", "", 250)]
 
@@ -240,16 +243,15 @@ def RecordResults(resultType, values, gdb): # Guessed on whitespace formatting h
 
     if not Exists(table):
         CreateTable_management(gdb, tbl)
-        fieldInfo = getAddFieldInfo(table)
 
-        for fi in fieldInfo:
-            #add field with desired parameters
+    fieldInfo = getAddFieldInfo(table)
+
+    for fi in fieldInfo:
+        if not fieldExists(table, fi[1]):
+        #add field with desired parameters if it doesn't already exist
             AddField_management(fi[0],fi[1],fi[2],fi[3],fi[4],fi[5])
-            #populate field list
-            fieldList.append(fi[1])
 
-    if fieldList == []:
-        fieldList = getResultsFieldList(table)
+    fieldList = getResultsFieldList(table)
 
     cursor = InsertCursor(table, fieldList)
     for row in values:
@@ -317,7 +319,7 @@ def checkDirectionality(fc,gdb):
                             issue = "yes"
 
                     if issue == "yes":
-                        val = (today, report, filename, "", segid)
+                        val = (today, report, filename, "", segid, "Check Directionality")
                         values.append(val)
 
         Delete_management(lyr400)
@@ -395,7 +397,7 @@ def checkESNandMuniAttribute(currentPathSettings):
                                     else:
                                         userMessage("Issue comparing value for " + feature + " with OBJECTID: " + str(objectID))
                                         report = "Notice: Address point " + feature + " does not match " + feature + " in " + basename(layer) + " layer. FeatureID is ObjectID"
-                                        val = (today, report, filename, feature, str(objectID))
+                                        val = (today, report, filename, feature, str(objectID), "Check ESN MUNI Attributes")
                                         values.append(val)
 
                             Delete_management(lyr1)
@@ -412,7 +414,7 @@ def checkESNandMuniAttribute(currentPathSettings):
 
     except Exception as e:
         report = "Notice: ESN/Municipality check did not run. " + str(e)
-        val = (today, report, filename, "", "")
+        val = (today, report, filename, "", "", "Check ESN MUNI Attributes")
         values.append(val)
 
     #report records
@@ -512,7 +514,7 @@ def checkUniqueIDFrequency(currentPathSettings):
                     report = "Error: " + str(row2[0]) + " is a duplicate ID"
                     if stringESBReport != "":
                         report = report + " in " + stringESBReport
-                    val = (today, report, reportLayer, uniqueID, row2[0])
+                    val = (today, report, reportLayer, uniqueID, row2[0], "Check Unique IDs")
                     values.append(val)
 
         cleanUp([freq_table, fl])
@@ -621,7 +623,7 @@ def checkFrequency(fc, freq, fields, gdb, fullFreq):
                                             report = "Error: " + str(fID) + " has duplicate field information"
                                         else:
                                             report = "Notice: " + str(fID) + " has duplicate address range information"
-                                        val = (today, report, filename, "", fID)
+                                        val = (today, report, filename, "", fID, "Check " + filename + " Frequency")
                                         values.append(val)
 
                     else:
@@ -630,7 +632,7 @@ def checkFrequency(fc, freq, fields, gdb, fullFreq):
                 except Exception as e:
                     userMessage(str(e))
                     report = "Error: Could not complete duplicate record check. " + str(e)
-                    val = (today, report, filename, "", "")
+                    val = (today, report, filename, "", "", "Check " + filename + " Frequency")
                     values.append(val)
 
                 #report duplicate records
@@ -675,7 +677,7 @@ def checkLayerList(pathsInfoObject):
         if not Exists(l):
             report = "Error: Required layer " + l + " is not in geodatabase."
             userMessage(report)
-            val = (today, report, "Layer")
+            val = (today, report, "Layer", "Check Layer List")
             values.append(val)
 
     #record issues if any exist
@@ -736,9 +738,10 @@ def getRequiredFields(folder):
 
 def getFieldDomain(field, folder):
 ##    userMessage(field)
-    if "_" in field:
-        f = field.split("_")
-        field = f[0]
+    if field != "GATE_TYPE":
+        if "_" in field:
+            f = field.split("_")
+            field = f[0]
 
     docPath = path.join(folder, field + "_Domains.txt")
     ## print docPath
@@ -767,6 +770,195 @@ def getFieldDomain(field, folder):
         userMessage("The file " + docPath + " is required to run a domain check.")
 
     return domainDict
+
+def FindOverlaps(working_gdb):
+    #get gdb object
+    gdb_object = NG911_GDB_Objects.getGDBObject(working_gdb)
+
+    env.workspace = working_gdb
+    input_fc = gdb_object.RoadCenterline         # Our street centerline feature class
+    output_fc = join(gdb_object.gdbPath, "AddressRange_Overlap_All")
+    final_fc = join(gdb_object.gdbPath, "AddressRange_Overlap")
+    rd_object = NG911_GDB_Objects.getFCObject(input_fc)
+    name_field = rd_object.LABEL   # Should be concatenated with pre/post directionals and type
+    left_from = rd_object.L_F_ADD         # The left from address field
+    left_to = rd_object.L_T_ADD            # The left to address field
+    right_from = rd_object.R_F_ADD        # The right from address field
+    right_to = rd_object.R_T_ADD            # The right to address field
+    OID_field = "OBJECTID"
+
+    try:
+        # Allow arcpy to overwrite something if it's already there
+        env.overwriteOutput = True
+
+        parityList = ["('E','B')", "('O','B')","('E','O')","('O','E')"]
+
+        for parity in parityList:
+            userMessage("Iteration " + str(parityList.index(parity) + 1))
+            # --- Parity check ---
+        ##    parity_sql = left_from + " <> " + left_to + " or " + right_from +" <> " + right_to
+            parity_sql = rd_object.PARITY_L + " in " + parity + " AND " + rd_object.PARITY_R + " in " + parity
+
+            # Create search cursor to loop through unique road names
+            overlap_list = []   # List to store the OIDs of overlapping segments
+            overlap_error_count = 0
+            overlap_error_total = 0
+            overlap_string = ""
+            o_string = ""
+            overlap_sql = ""
+            dictionary = {}     # Place to store data before heavy lifting
+
+            #set up data for search cursor
+            fields = (name_field, OID_field, left_from, left_to, right_from, right_to, rd_object.MUNI_L, rd_object.MUNI_R)
+            userMessage("Loading data into a dictionary")
+
+            with SearchCursor(input_fc, fields, parity_sql) as segments:
+                for segment in segments:
+
+                    # get the highest and lowest values from the four address values
+                    addresses = [segment[2],segment[3],segment[4],segment[5]]
+
+                    cur_road_HIGH = 0
+                    # print "Summary for segment: "str(segment.GetValue(name_field)), str(addresses)
+                    for a in range(4):
+                        curaddr = addresses[a]
+                        if (curaddr > cur_road_HIGH) and (curaddr != 0):
+                            cur_road_HIGH = curaddr
+                        lowval = cur_road_HIGH
+                    for a in range(4):
+                        curaddr = addresses[a]
+                        if (curaddr < lowval) and (curaddr != 0):
+                            lowval = curaddr
+                            cur_road_LOW = lowval
+                    cur_road_name = segment[0] + segment[6] + segment[7]
+                    cur_road_OID = segment[1]
+                    # print cur_road_name, cur_road_LOW, cur_road_HIGH
+                    if cur_road_HIGH > 0:   # drop dumb record that fouls up things anyways :)
+                        append_list = []    # clear out the list
+                        # check if dictionary key exists
+                        if cur_road_name not in dictionary:
+                            # add the dictionary key and populate it with values
+                            cur_road_list = [cur_road_OID, cur_road_LOW, cur_road_HIGH]
+                            dictionary[cur_road_name] = cur_road_list
+                        else:   # append the values to the list
+                            cur_road_list = dictionary[cur_road_name]
+                            cur_road_list.append(cur_road_OID)
+                            cur_road_list.append(cur_road_LOW)
+                            cur_road_list.append(cur_road_HIGH)
+                            dictionary[cur_road_name] = cur_road_list
+
+            userMessage("Sorting address ranges")
+            lyr = "lyr"
+            MakeFeatureLayer_management(input_fc, lyr, parity_sql)
+            for key in dictionary:
+                value = dictionary[key]
+                # dictionary {} is structured thusly:
+                # ... {STOVER CREEK: [241, 3700, 3713, 214, 3800, 3809] ... }
+                # therefore, the logic is to step through each dictionary entry (STOVER CREEK) and
+                # 1) sort the list
+                # 2) compare high and low items
+                list_length = len(value)
+                if list_length > 3: # disregarding single-segment roads
+                    loop = list_length/3
+                    #
+                    # Sort!
+                    # This is Matt's braindead sort routine.
+                    # If value[1] < value[4] (Low of record 1 is greater than the low of record 2)
+                    #    then pop it out of the list, and append it to the end of the stack.
+                    # Keep popping and the lowest record gravitates to the front.
+                    # Skip and pop until the highest record gravitates to the end.
+                    # This is NOT an efficient routine, but since I'm sorting on
+                    # average something like six records, it can't get much faster
+                    #
+                    # For reference:
+                    # {key: [OID_element1, low_element1, high_element1, OID_element2, low_element2, high_element2, ... ]
+                    # OID_element1 = ((i+1)*3-3)
+                    # low_element1 = ((i+1)*3-2)
+                    # high_element1 = ((i+1)*3-1)
+                    # OID_element2 = ((i+1)*3)
+                    # low_element2 = ((i+1)*3+1)
+                    # high_element2 = ((i+1)*3+2)
+                    #
+                    i = 0
+                    while i < loop - 1:
+                        if value[((i+1)*3-2)] > value[((i+1)*3+1)]:
+                            value.append(value.pop(((i+1)*3-3))) # first item in sequence is (objectID)--stick it at the end
+                            value.append(value.pop(((i+1)*3-3))) # first item in sequence is now (LOW)--stick it at the end
+                            value.append(value.pop(((i+1)*3-3))) # first item in sequence is now (HIGH)--stick it at the end
+                            i = 0 # since we had to re-order, redo the whole comparison from the beginning.
+                        else: i = i + 1
+                    # loop through the records searching for discrepancies
+                    intLoop = int(loop)
+                    for k in range(intLoop - 1):
+                        if value[((k+1)*3+1)] < value[((k+1)*3-1)]:
+                            # print k, key, value[((k+1)*3-1)], "should be smaller than ", value[((k+1)*3+1)]
+                            overlap_list.append(value[((k+1)*3-3)])
+                            overlap_list.append(value[((k+1)*3)])
+                            overlap_error_count = overlap_error_count + 1
+                            overlap_error_total = overlap_error_total + 1
+                        # PLACEHOLDER should you want to search for gaps, here's where you would put the loop
+                    if overlap_error_count > 500: # a tad arbitrary here
+                        # My first idea was to create a Select * from Roads where ObjectID in (...) query.  Unfortunately,
+                        # it could be quite long, and needs to be broken into a more manageable size.
+                        for x in overlap_list:
+                            o_string = o_string + str(x) +", "              # constructing a comma-seperated list of OIDs
+                        overlap_string = o_string[0:-2]
+                        overlap_sql = OID_field +" in (" + overlap_string + ")" # constructing the complete SQL statement
+
+                        overlap_error_total = overlap_error_total + overlap_error_count
+                        userMessage("The number of errors exceeds " +str(overlap_error_total))
+                        userMessage("Adding these features to a feature layer")
+
+                        SelectLayerByAttribute_management(lyr, "ADD_TO_SELECTION", str(overlap_sql))
+                        overlap_error_count = 0
+                        overlap_list = []
+            # above logic breaks the sql into smaller chunks
+            # deal with the remainders outside the while loop here
+            if len(overlap_list) > 0:
+                for x in overlap_list:
+                    o_string = o_string + str(x) +", "       # constructing a comma-seperated list of OIDs
+                overlap_string = o_string[0:-2]     # the last character added is a problematic trailling comma
+                overlap_sql = OID_field + " in (" + overlap_string + ")" # constructing the complete SQL statement
+
+                # print overlap_sql
+                AddWarning("Found overlapping addresses")
+    ##            userMessage("Adding the remaining features to a feature layer")
+
+                SelectLayerByAttribute_management(lyr, "ADD_TO_SELECTION", overlap_sql)
+
+                userMessage("Exporting data into a new feature class")
+                if not Exists(output_fc):
+                    CopyFeatures_management(lyr, str(output_fc))
+                else:
+                    Append_management(lyr, output_fc, "NO_TEST")
+
+    ##        else:
+    ##            userMessage("No overlaps found comparing")
+        if Exists(output_fc):
+            #dissovle any duplicate features
+            userMessage("Removing any duplicates...")
+            dissolve_field = "STEWARD;L_UPDATE;EFF_DATE;EXP_DATE;" + rd_object.UNIQUEID + ";STATE_L;STATE_R;COUNTY_L;COUNTY_R;MUNI_L;MUNI_R;L_F_ADD;L_T_ADD;R_F_ADD;R_T_ADD;PARITY_L;PARITY_R;POSTCO_L;POSTCO_R;ZIP_L;ZIP_R;ESN_L;ESN_R;MSAGCO_L;MSAGCO_R;PRD;STP;RD;STS;POD;POM;SPDLIMIT;ONEWAY;RDCLASS;UPDATEBY;LABEL;ELEV_F;ELEV_T;SURFACE;STATUS;TRAVEL;LRSKEY;EXCEPTION;SUBMIT;NOTES;Shape_Length"
+            Dissolve_management(output_fc, final_fc, dissolve_field, "", "SINGLE_PART", "DISSOLVE_LINES")
+            AddWarning("Overlapping address ranges in: " + final_fc)
+            Delete_management(output_fc)
+
+            #record overlaps in field values check results
+            values = []
+            filename = "RoadCenterline"
+            today = strftime("%m/%d/%Y")
+            recordType = "fieldValues"
+
+            with SearchCursor(final_fc, (rd_object.UNIQUEID)) as rows:
+                for row in rows:
+                    report = "Notice: " + row[0] + "'s address range overlaps with another address range."
+                    val = (today, report, filename, "", row[0], "Check Address Ranges")
+                    values.append(val)
+
+            if values != []:
+                RecordResults(recordType, values, working_gdb)
+
+    except:
+        userMessage("Error processing the data.")
 
 
 def checkValuesAgainstDomain(pathsInfoObject):
@@ -834,8 +1026,13 @@ def checkValuesAgainstDomain(pathsInfoObject):
                             if fieldN[0:2] == "A_":
                                 domain = fieldN[2:]
 
-                            elif fieldN in ['GATE_TYPE','SIREN','RF_OP','KNOXBOX','KEYPAD','MAN_OPEN','GATEOPEN']:
+                            elif fieldN in ['SIREN','RF_OP','KNOXBOX','KEYPAD','MAN_OPEN','GATEOPEN']:
                                 domain = "YNU"
+                            elif fieldN == "STATUS":
+                                if layer == "HYDRANTS":
+                                    domain = "HYDSTATUS"
+                                else:
+                                    domain = fieldN
                             else:
                                 domain = fieldN
 
@@ -910,7 +1107,7 @@ def checkValuesAgainstDomain(pathsInfoObject):
                                                     else:
                                                         fieldVal = row[1]
                                                     report = "Error: Value " + str(row[1]) + " not in approved domain for field " + fieldN
-                                                    val = (today, report, fc, fieldN, fID)
+                                                    val = (today, report, fc, fieldN, fID, "Check Values Against Domains")
                                                     values.append(val)
                                             del rows, row
 
@@ -1013,7 +1210,7 @@ def checkRequiredFieldValues(pathsInfoObject):
                                                 #report the value if it is indeed null
                                                 report = "Error: " + matchingFields[k] + " is null for Feature ID " + oid
                                                 userMessage(report)
-                                                val = (today, report, basename(filename), matchingFields[k], oid)
+                                                val = (today, report, basename(filename), matchingFields[k], oid, "Check Required Field Values")
                                                 values.append(val)
 
                                             #iterate!
@@ -1066,7 +1263,7 @@ def checkRequiredFields(pathsInfoObject):
                     report = "Error: " + filename + " does not have required field " + comparisonField
                     userMessage(report)
                     #add issue to list of values
-                    val = (today, report, "Field")
+                    val = (today, report, "Field", "Check Required Fields")
                     values.append(val)
         else:
             AddWarning(fullPath + " does not exist")
@@ -1113,7 +1310,7 @@ def checkCountyRanges(pathsInfoObject):
 
     if len(attn_segs) > 0:
         for attn_seg in attn_segs:
-            val = (today, report, fc, "Address Ranges", attn_seg)
+            val = (today, report, fc, "Address Ranges", attn_seg, "Check Address Ranges")
             values.append(val)
 
     if values != []:
@@ -1158,7 +1355,7 @@ def checkSubmissionNumbers(pathsInfoObject):
                 if "MunicipalBoundary" in fc:
                     report = report.replace("Error", "Notice")
                 #add issue to list of values
-                val = (today, report, "Submission")
+                val = (today, report, "Submission", "Check Submission Counts")
                 values.append(val)
 
             Delete_management(lyr2)
@@ -1249,7 +1446,7 @@ def checkFeatureLocations(pathsInfoObject):
                                     if row[1] != 'PRIMARY':
                                         report = report.replace("Error:", "Notice:")
 
-                                val = (today, report, layer, " ", fID)
+                                val = (today, report, layer, " ", fID, "Check Feature Locations")
                                 values.append(val)
 
                         userMessage(basename(fullPath) + ": issues with some feature locations")
@@ -1318,11 +1515,11 @@ def findInvalidGeometry(pathsInfoObject):
 
                             #if the count is smaller than the minimum number, there's a problem
                             if count < minNum:
-                                val = (today, report, layer, " ", fid)
+                                val = (today, report, layer, " ", fid, "Find Invalid Geometry")
                                 values.append(val)
                         except:
                             #if this errors, there's an error accessing the geometry, hence problems
-                            val = (today, report, layer, " ", fid)
+                            val = (today, report, layer, " ", fid, "Find Invalid Geometry")
                             values.append(val)
 
             else:
@@ -1398,7 +1595,7 @@ def checkCutbacks(pathsInfoObject):
                                     if 0 < angle < 55:
                                         if segid not in cutbacks:
                                             report = "Notice: This segment might contain a geometry cutback"
-                                            val = (today, report, layer, " ", segid)
+                                            val = (today, report, layer, " ", segid, "Check for Cutbacks")
                                             values.append(val)
                                             cutbacks.append(segid)
                                     i += 1
@@ -1511,11 +1708,11 @@ def VerifyRoadAlias(gdb, domainFolder):
                                         if fID not in errorList:
                                             errorList.append(fID)
                                             report = "Notice: " + road + " is not in the approved highway name list"
-                                            val = (today, report, filename, field, fID)
+                                            val = (today, report, filename, field, fID, "Check Road Alias")
                                             values.append(val)
                 except Exception as e:
                     report = "Error: Issue with road alias record"
-                    val = (today, report, filename, field, fID)
+                    val = (today, report, filename, field, fID, "Check Road Alias")
                     values.append(val)
 
     else:
@@ -1561,7 +1758,7 @@ def checkJoin(gdb, inputTable, joinTable, where_clause, errorMessage, field):
                     if " TO " in row[1] or "RAMP" in row[1] or "OLD" in row[1]:
                         print("this is probably an exception")
                     else:
-                        val = (today, errorMessage, layer, "", row[0])
+                        val = (today, errorMessage, layer, "", row[0], "Check Road Alias")
                         values.append(val)
 
     #clean up
@@ -1683,6 +1880,8 @@ def sanityCheck(currentPathSettings):
     fields.remove("ONEWAY")
     fields_string = ";".join(fields)
     checkFrequency(roads, road_freq, fields_string, currentPathSettings.gdbPath, "false")
+    #check for overlapping address ranges
+    FindOverlaps(currentPathSettings.gdbPath)
 
     #verify that the check resulted in 0 issues
     sanity = 0 #flag to return at end
@@ -1807,6 +2006,9 @@ def main_check(checkType, currentPathSettings):
             fields.remove("ONEWAY")
             fields_string = ";".join(fields)
             checkFrequency(roads, road_freq, fields_string, currentPathSettings.gdbPath, "false")
+
+            #check for address range overlaps
+            FindOverlaps(currentPathSettings.gdbPath)
 
     #run standard checks
     elif checkType == "standard":

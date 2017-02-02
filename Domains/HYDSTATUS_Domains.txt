@@ -1,0 +1,4 @@
+Values|Definition
+IN SERVICE|In service
+UNKNOWN|Unknown
+OUT OF SER|Out of Service
