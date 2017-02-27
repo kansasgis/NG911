@@ -954,53 +954,53 @@ def getFCObject(fc):
 
     obj = object
 
-    if word == "ROADCENTERLINE":
+    if "ROADCENTERLINE" in word:
         if fieldExists(fc, "NGSEGID"):
             #2.0 geodatabase
             obj = getDefault20NG911RoadCenterlineObject()
         else:
             obj = getDefaultNG911RoadCenterlineObject()
 
-    elif word == "ADDRESSPOINTS":
+    elif "ADDRESSPOINTS" in word:
         if fieldExists(fc, "NGADDID"):
             #2.0 geodatabase
             obj = getDefault20NG911AddressObject()
         else:
             obj = getDefaultNG911AddressObject()
-    elif word == "ROADALIAS":
+    elif "ROADALIAS" in word:
         if fieldExists(fc, "NGALIASID"):
             #2.0 geodatabase
             obj = getDefault20NG911RoadAliasObject()
         else:
             obj = getDefaultNG911RoadAliasObject()
-    elif word == "AUTHORITATIVEBOUNDARY":
+    elif "AUTHORITATIVEBOUNDARY" in word:
         if fieldExists(fc, "NGABID"):
             #2.0 geodatabase
             obj = getDefault20NG911AuthoritativeBoundaryObject()
         else:
             obj = getDefaultNG911AuthoritativeBoundaryObject()
-    elif word == "MUNICIPALBOUNDARY":
+    elif "MUNICIPALBOUNDARY" in word:
         if fieldExists(fc, "NGMUNI_ID"):
             obj = getDefault20NG911MunicipalBoundaryObject()
         else:
             obj = getDefaultNG911MunicipalBoundaryObject()
-    elif word == "COUNTYBOUNDARY":
+    elif "COUNTYBOUNDARY" in word:
         if fieldExists(fc, "NGCOUNTYID"):
             obj = getDefault20NG911CountyBoundaryObject()
         else:
             obj = getDefaultNG911CountyBoundaryObject()
-    elif word == "ESZ":
+    elif "ESZ" in word:
         if fieldExists(fc, "NGESZID"):
             obj = getDefault20NG911ESZObject()
         else:
             obj = getDefaultNG911ESZObject()
-    elif word == "PARCELS":
+    elif "PARCELS" in word:
         obj = getDefault20NG911ParcelObject()
-    elif word == "GATES":
+    elif "GATES" in word:
         obj = getDefault20NG911GateObject()
-    elif word == "HYDRANTS":
+    elif "HYDRANTS" in word:
         obj = getDefault20NG911HydrantObject()
-    elif word == "CELL_SECTOR":
+    elif "CELL_SECTOR" in word:
         obj = getDefault20NG911CellSectorObject()
     elif word == "FIELDVALUESCHECKRESULTS":
         obj = getDefaultNG911FieldValuesCheckResultsObject()
