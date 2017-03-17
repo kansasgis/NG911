@@ -545,8 +545,24 @@ def checkFrequency(fc, freq, fields, gdb, fullFreq):
             userMessage("Please manually delete " + freq + " and then run the frequency check again")
 
         if not Exists(freq):
+            filename = basename(fc)
+            #set up parameters to report duplicate records
+            values = []
+            recordType = "fieldValues"
+            today = strftime("%m/%d/%y")
+            hno_yes = 1
+
+            #test to see if the HNO field is a number or text
+            if basename(freq) == "AP_Freq":
+                ap_fields = ListFields(fc)
+
+                for ap_field in ap_fields:
+                    if ap_field.name == "HNO" and ap_field.type != "Integer":
+                        hno_yes = 0
+
+            if hno_yes == 1:
                 #see if we're working with address points or roads, create a where clause
-                filename = basename(fc)
+
 
                 if basename(freq) == "AP_Freq":
                     wc1 = obj.HNO + " <> 0 and " + obj.LOCTYPE + " = 'PRIMARY'"
@@ -569,11 +585,6 @@ def checkFrequency(fc, freq, fields, gdb, fullFreq):
                 for f in fieldsList:
                     f = f.strip()
                     fl_fields.append(f)
-
-                #set up parameters to report duplicate records
-                values = []
-                recordType = "fieldValues"
-                today = strftime("%m/%d/%y")
 
                 #run frequency analysis
                 try:
@@ -645,7 +656,11 @@ def checkFrequency(fc, freq, fields, gdb, fullFreq):
                     cleanUp([fl, fl1, freq])
                 except:
                     userMessage("Issue deleting a feature layer or frequency table.")
-
+            else:
+                AddWarning("HNO field of Address Points is not an integer field.")
+                val1 = (today, "Error: HNO field of Address Points is not an integer field", filename, "", "", "Check " + filename + " Frequency")
+                values1 = [val1]
+                RecordResults(recordType, values1, gdb)
     else:
         AddWarning(fc + " does not exist")
 
@@ -1267,6 +1282,18 @@ def checkRequiredFields(pathsInfoObject):
                     values.append(val)
         else:
             AddWarning(fullPath + " does not exist")
+
+    userMessage("Checking that the HNO field is an integer...")
+
+    #test to see if the HNO field is a number or text
+    fc = pathsInfoObject.gdbObject.AddressPoints
+    ap_fields = ListFields(fc)
+    for ap_field in ap_fields:
+        if ap_field.name == "HNO" and ap_field.type != "Integer":
+            report = "Error: HNO field of Address Points is not an integer"
+            userMessage(report)
+            val = (today, report, "Field", "Check Required Fields")
+            values.append(val)
 
     #record issues if any exist
     if values != []:
