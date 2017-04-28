@@ -21,7 +21,7 @@ from time import strftime
 
 def CompareThatData(fc1, fc2, resultsTable, data_obj):
 
-    try:
+##    try:
         compare = "compare"
         ng911id = "ng911id"
 
@@ -79,7 +79,7 @@ def CompareThatData(fc1, fc2, resultsTable, data_obj):
         if count > 0:
             with SearchCursor(lyr_compare, (basename(fc1) + "." + uniqueID)) as rows:
                 for row in rows:
-                    unID = row[0]
+                    unID = str(row[0])
                     attributeEdits.append(unID)
                 del row, rows
 
@@ -92,7 +92,7 @@ def CompareThatData(fc1, fc2, resultsTable, data_obj):
         if dataType != "Table":
             with SearchCursor(fc1, (uniqueID, "SHAPE@TRUECENTROID")) as sRows:
                 for sRow in sRows:
-                    uniqueID_val = sRow[0]
+                    uniqueID_val = str(sRow[0])
                     geom1 = sRow[1]
                     where_clause = uniqueID + " = '" + uniqueID_val + "'"
                     with SearchCursor(fc2, ("SHAPE@TRUECENTROID"), where_clause) as moreRows:
@@ -111,7 +111,7 @@ def CompareThatData(fc1, fc2, resultsTable, data_obj):
         if count > 0:
             with SearchCursor(mismatch1, (basename(fc1) + "." + uniqueID)) as rows:
                 for row in rows:
-                    uniqueID_val = row[0]
+                    uniqueID_val = str(row[0])
                     in1not2Records.append(uniqueID_val)
                 del row, rows
 
@@ -131,7 +131,7 @@ def CompareThatData(fc1, fc2, resultsTable, data_obj):
         if count > 0:
             with SearchCursor(mismatch2, (basename(fc2) + "." + uniqueID)) as rows:
                 for row in rows:
-                    uniqueID_val = row[0]
+                    uniqueID_val = str(row[0])
                     in2not1Records.append(uniqueID_val)
                 del row, rows
 
@@ -160,13 +160,13 @@ def CompareThatData(fc1, fc2, resultsTable, data_obj):
             if not fieldExists(resultsTable, "DateChecked"):
                 AddField_management(resultsTable, "DateChecked", "DATE")
             if not fieldExists(resultsTable, "FC1"):
-                AddField_management(resultsTable, "FC1", "TEXT", "", "", 150)
+                AddField_management(resultsTable, "FC1", "TEXT", "", "", 255)
             if not fieldExists(resultsTable, "FC2"):
-                AddField_management(resultsTable, "FC2", "TEXT", "", "", 150)
+                AddField_management(resultsTable, "FC2", "TEXT", "", "", 255)
             if not fieldExists(resultsTable, "EditResult"):
-                AddField_management(resultsTable, "EditResult", "TEXT", "", "", 250)
+                AddField_management(resultsTable, "EditResult", "TEXT", "", "", 300)
             if not fieldExists(resultsTable, "FeatureID"):
-                AddField_management(resultsTable, "FeatureID", "TEXT", "", "", 30)
+                AddField_management(resultsTable, "FeatureID", "TEXT", "", "", 38)
 
             #create result records
             insertFields = ("DateChecked", "FC1", "FC2", "EditResult", "FeatureID")
@@ -178,6 +178,10 @@ def CompareThatData(fc1, fc2, resultsTable, data_obj):
                 IDlist = issueDict[message]
                 if IDlist != []:
                     for id_num in IDlist:
+                        userMessage(fc1)
+                        userMessage(fc2)
+                        userMessage(message)
+                        userMessage(id_num)
                         cursor.insertRow((today, fc1, fc2, message, id_num))
         else:
             userMessage("No changes were found.")
@@ -185,13 +189,13 @@ def CompareThatData(fc1, fc2, resultsTable, data_obj):
         Delete_management(lyr1)
         Delete_management(lyr2)
 
-    except Exception as e:
-        userMessage(str(e))
-    finally:
+##    except Exception as e:
+##        userMessage(str(e))
+##    finally:
         cleanUp([lyr1, lyr2, lyr_compare])
 
 def LaunchDataCompare(fc1, fc2, resultsTable):
-    try:
+##    try:
         userMessage(fc1)
         userMessage(fc2)
 
@@ -226,9 +230,9 @@ def LaunchDataCompare(fc1, fc2, resultsTable):
             userMessage("Layers do not have the same unique ID and cannot be compared.")
         elif GoAheadAndTest == 0:
             userMessage("Layers are not the same NG911 type and cannot be comapared.")
-    except Exception as e:
-        userMessage("Cannot compare " + basename(fc1) + " and " + basename(fc2) + ".")
-        userMessage(str(e))
+##    except Exception as e:
+##        userMessage("Cannot compare " + basename(fc1) + " and " + basename(fc2) + ".")
+##        userMessage(str(e))
 
 def CompareAllData(gdb1, gdb2, resultsTable):
     from arcpy import ListFeatureClasses, env

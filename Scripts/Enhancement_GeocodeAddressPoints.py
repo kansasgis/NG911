@@ -177,8 +177,37 @@ def geocodeAddressPoints(gdb):
                             'Alternate Name Table:Suffix Direction' RoadAlias:A_POD VISIBLE NONE"""
                             CreateAddressLocator_geocoding("US Address - Dual Ranges", streetPath + " 'Primary Table';" + roadAliasPath + " 'Alternate Name Table'", fieldMap, Locator, "", "DISABLED")
                         except Exception as E:
-                            userMessage(Locator)
-                            userMessage("Cannot create address locator. Please email kristen@kgs.ku.edu this error message: " + str(E))
+                            try:
+                                # 10.5 field map
+                                fieldMap = """'Primary Table:Feature ID' RoadCenterline:""" + rc_obj.UNIQUEID + """ VISIBLE NONE;'*Primary Table:From Left' RoadCenterline:L_F_ADD VISIBLE NONE;
+                                '*Primary Table:To Left' RoadCenterline:L_T_ADD VISIBLE NONE;'*Primary Table:From Right' RoadCenterline:R_F_ADD VISIBLE NONE;
+                                '*Primary Table:To Right' RoadCenterline:R_T_ADD VISIBLE NONE;'Primary Table:Left Parity' RoadCenterline:PARITY_L VISIBLE NONE;
+                                'Primary Table:Right Parity' RoadCenterline:PARITY_R VISIBLE NONE;'Primary Table:Full Street Name' RoadCenterline:LABEL VISIBLE NONE;
+                                'Primary Table:Prefix Direction' RoadCenterline:PRD VISIBLE NONE;'Primary Table:Prefix Type' RoadCenterline:STP VISIBLE NONE;
+                                '*Primary Table:Street Name' RoadCenterline:RD VISIBLE NONE;'Primary Table:Suffix Type' RoadCenterline:STS VISIBLE NONE;
+                                'Primary Table:Suffix Direction' RoadCenterline:POD VISIBLE NONE;'Primary Table:Left City or Place' RoadCenterline:MUNI_L VISIBLE NONE;
+                                'Primary Table:Right City or Place' RoadCenterline:MUNI_R VISIBLE NONE;'Primary Table:Left County' RoadCenterline:COUNTY_L VISIBLE NONE;
+                                'Primary Table:Right County' RoadCenterline:COUNTY_R VISIBLE NONE;'Primary Table:Left State' RoadCenterline:STATE_L VISIBLE NONE;
+                                'Primary Table:Right State' RoadCenterline:STATE_R VISIBLE NONE;'Primary Table:Left State Abbreviation' RoadCenterline:STATE_L VISIBLE NONE;
+                                'Primary Table:Right State Abbreviation' RoadCenterline:STATE_R VISIBLE NONE;'Primary Table:Left ZIP Code' RoadCenterline:ZIP_L VISIBLE NONE;
+                                'Primary Table:Right ZIP Code' RoadCenterline:ZIP_R VISIBLE NONE;'Primary Table:Country Code' <None> VISIBLE NONE;
+                                'Primary Table:3-Digit Language Code' <None> VISIBLE NONE;'Primary Table:2-Digit Language Code' <None> VISIBLE NONE;
+                                'Primary Table:Admin Language Code' <None> VISIBLE NONE;'Primary Table:Left Block ID' <None> VISIBLE NONE;
+                                'Primary Table:Right Block ID' <None> VISIBLE NONE;'Primary Table:Left Street ID' <None> VISIBLE NONE;
+                                'Primary Table:Right Street ID' <None> VISIBLE NONE;'Primary Table:Street Rank' <None> VISIBLE NONE;
+                                'Primary Table:Min X value for extent' <None> VISIBLE NONE;'Primary Table:Max X value for extent' <None> VISIBLE NONE;
+                                'Primary Table:Min Y value for extent' <None> VISIBLE NONE;'Primary Table:Max Y value for extent' <None> VISIBLE NONE;
+                                'Primary Table:Left Additional Field' <None> VISIBLE NONE;'Primary Table:Right Additional Field' <None> VISIBLE NONE;
+                                '*Primary Table:Altname JoinID' RoadCenterline:""" + rc_obj.UNIQUEID + """ VISIBLE NONE;'Primary Table:City Altname JoinID' <None> VISIBLE NONE;
+                                '*Alternate Name Table:JoinID' RoadAlias:""" + ra_obj.SEGID + """ VISIBLE NONE;'Alternate Name Table:Full Street Name' RoadAlias:LABEL VISIBLE NONE;
+                                'Alternate Name Table:Prefix Direction' RoadAlias:A_PRD VISIBLE NONE;'Alternate Name Table:Prefix Type' RoadAlias:A_STP VISIBLE NONE;
+                                'Alternate Name Table:Street Name' RoadAlias:A_RD VISIBLE NONE;'Alternate Name Table:Suffix Type' RoadAlias:A_STS VISIBLE NONE;
+                                'Alternate Name Table:Suffix Direction' RoadAlias:A_POD VISIBLE NONE"""
+                                CreateAddressLocator_geocoding("US Address - Dual Ranges", streetPath + " 'Primary Table';" + roadAliasPath + " 'Alternate Name Table'", fieldMap, Locator, "", "DISABLED")
+                            except:
+
+                                userMessage(Locator)
+                                userMessage("Cannot create address locator. Please email kristen@kgs.ku.edu this error message: " + str(E))
 
 
         if Exists(Locator):

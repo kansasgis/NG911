@@ -975,7 +975,6 @@ def FindOverlaps(working_gdb):
     except:
         userMessage("Error processing the data.")
 
-
 def checkValuesAgainstDomain(pathsInfoObject):
     gdb = pathsInfoObject.gdbPath
     folder = pathsInfoObject.domainsFolderPath
@@ -1515,6 +1514,7 @@ def findInvalidGeometry(pathsInfoObject):
 
     #loop through feature classes
     for fullPath in fcList:
+        layer = basename(fullPath)
 
         if Exists(fullPath):
 
