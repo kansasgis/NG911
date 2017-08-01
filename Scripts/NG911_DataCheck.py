@@ -20,14 +20,15 @@ from arcpy import (AddField_management, AddMessage, CalculateField_management, C
                    ListFields, MakeFeatureLayer_management, MakeTableView_management, SelectLayerByAttribute_management,
                    SelectLayerByLocation_management, DeleteRows_management, GetInstallInfo, env, ListDatasets,
                    AddJoin_management, RemoveJoin_management, AddWarning, CopyFeatures_management, Append_management,
-                   Dissolve_management)
-from arcpy.da import Walk, InsertCursor, ListDomains, SearchCursor
+                   Dissolve_management, DeleteField_management)
+from arcpy.da import Walk, InsertCursor, ListDomains, SearchCursor, UpdateCursor, Editor
 from os import path
 from os.path import basename, dirname, join, exists
 from time import strftime
 from Validation_ClearOldResults import ClearOldResults
 import NG911_GDB_Objects
 from NG911_arcpy_shortcuts import deleteExisting, getFastCount, cleanUp, ListFieldNames, fieldExists
+from MSAG_DBComparison import prep_roads_for_comparison
 
 def checkToolboxVersion():
     import json, urllib, sys
@@ -786,194 +787,205 @@ def getFieldDomain(field, folder):
 
     return domainDict
 
+
+def getRange(low, high, what):
+    whatRange = []
+
+    if what in ["E", "O"]:
+        increment = 2
+    else:
+        increment = 1
+
+    if low == high:
+        whatRange.append(low)
+    else:
+        while low <= high:
+            whatRange.append(low)
+            low += increment
+
+    return whatRange
+
+
+def launchRangeFinder(f_add, t_add, parity):
+    thisRange = []
+    if [f_add, t_add] != [0,0]:
+        if parity != 'Z':
+            # get the high and low
+            if f_add < t_add:
+                low = f_add
+                high = t_add
+            else:
+                low = t_add
+                high = f_add
+
+            # get the range of possible addresses
+            thisRange = getRange(low, high, parity)
+    return thisRange
+
+
+def checkMsagLabelCombo(msag, label, overlaps, rd_fc, fields, msagList, name_field):
+    address_list = []
+    checked_segids = []
+    dict_ranges = {}
+    for msagfield in msagList:
+
+        wc = msagfield + " = '" + msag + "' AND " + name_field + " = '" + label + "'"
+
+        with SearchCursor(rd_fc, fields, wc) as rows:
+            for row in rows:
+                l_f_add, l_t_add, r_f_add, r_t_add, parity_l, parity_r, segid, msagco_l, msagco_r = row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8]
+                if segid + "|2" not in checked_segids:
+                    # deal with the left side first
+                    for side_of_road in [[l_f_add, l_t_add, parity_l, msagco_l, "L"],[r_f_add, r_t_add, parity_r, msagco_r, "R"]]:
+
+                        if [side_of_road[0], side_of_road[1]] != [0,0]:
+                            if side_of_road[3] == msag:
+                                thisRange = launchRangeFinder(side_of_road[0], side_of_road[1], side_of_road[2])
+                                if thisRange != []:
+                                    dict_ranges[segid + "|" + side_of_road[4]] = thisRange
+                                    for lR in thisRange:
+                                        if lR not in address_list:
+                                            address_list.append(lR)
+                                        else:
+                                            # find out where the overlap is
+                                            # lR is the value that exists somewhere else
+                                            for key in dict_ranges:
+                                                values = dict_ranges[key]
+                                                if lR in values:
+                                                    k_segid = key.split("|")[0]
+                                                    if k_segid not in overlaps:
+                                                        overlaps.append(k_segid)
+                                                    # this means there's an overlap & we found the partner
+                                                    if segid not in overlaps:
+                                                        overlaps.append(segid)
+
+                    if msagco_l == msagco_r:
+                        checked_segids.append(segid + "|2")
+                    else:
+                        if segid + "|1" in checked_segids:
+                            checked_segids.remove(segid + "|1")
+                            checked_segids.append(segid + "|2")
+                        else:
+                            checked_segids.append(segid + "|1")
+
+    del checked_segids, address_list, dict_ranges, row, rows
+    return overlaps
+
+
 def FindOverlaps(working_gdb):
+    userMessage("Checking overlapping address ranges...")
     #get gdb object
     gdb_object = NG911_GDB_Objects.getGDBObject(working_gdb)
 
     env.workspace = working_gdb
-    input_fc = gdb_object.RoadCenterline         # Our street centerline feature class
-    output_fc = join(gdb_object.gdbPath, "AddressRange_Overlap_All")
+    env.overwriteOutput = True
+    rd_fc = gdb_object.RoadCenterline         # Our street centerline feature class
     final_fc = join(gdb_object.gdbPath, "AddressRange_Overlap")
-    rd_object = NG911_GDB_Objects.getFCObject(input_fc)
-    name_field = rd_object.LABEL   # Should be concatenated with pre/post directionals and type
+    rd_object = NG911_GDB_Objects.getFCObject(rd_fc)
+    pre_dir = rd_object.PRD
+    name_field = "NAME_OVERLAP"
+    parity_l = rd_object.PARITY_L
+    parity_r = rd_object.PARITY_R
     left_from = rd_object.L_F_ADD         # The left from address field
     left_to = rd_object.L_T_ADD            # The left to address field
     right_from = rd_object.R_F_ADD        # The right from address field
     right_to = rd_object.R_T_ADD            # The right to address field
-    OID_field = "OBJECTID"
+    msagco_l = rd_object.MSAGCO_L
+    msagco_r = rd_object.MSAGCO_R
+    segid = rd_object.UNIQUEID
+    fields = (left_from,left_to,right_from,right_to,parity_l,parity_r,segid,msagco_l,msagco_r)
+    msagList = [msagco_l, msagco_r]
+
+    # clean up if final overlap output already exists
+    if Exists(final_fc):
+        Delete_management(final_fc)
+
+
+##    # prep road label name
+##    prep_roads_for_comparison(rd_fc, name_field)
+
+    # add the NAME_OVERLAP field
+    if not fieldExists(rd_fc, name_field):
+        AddField_management(rd_fc, name_field, "TEXT", "", "", 50)
+
+    # calculate values for NAME_OVLERAP field
+    field_list = rd_object.LABEL_FIELDS
+    field_list[0] = name_field
+    fields1 = tuple(field_list)
+
+    # start edit session
+    edit = Editor(working_gdb)
+    edit.startEditing(False, False)
+
+    # run update cursor
+    with UpdateCursor(rd_fc, fields1) as rows:
+        for row in rows:
+            field_count = len(fields1)
+            start_int = 1
+            label = ""
+
+            # loop through the fields to see what's null & skip it
+            while start_int < field_count:
+                if row[start_int] is not None:
+                    if row[start_int] not in ("", " "):
+                        label = label + " " + str(row[start_int])
+                start_int = start_int + 1
+
+            row[0] = label
+            rows.updateRow(row)
+
+    edit.stopEditing(True)
+
+    # clean up all labels
+    trim_expression = '" ".join(!' + name_field + '!.split())'
+    CalculateField_management(rd_fc, name_field, trim_expression, "PYTHON_9.3")
 
     try:
-        # Allow arcpy to overwrite something if it's already there
-        env.overwriteOutput = True
+##    if 1 == 1:
+        already_checked = []
+        rd_fields = (msagco_l, msagco_r, name_field)
+        overlaps = []
 
-        parityList = ["('E','B')", "('O','B')","('E','O')","('O','E')"]
+        with SearchCursor(rd_fc, rd_fields) as all_rows:
+            for all_row in all_rows:
 
-        for parity in parityList:
-            userMessage("Iteration " + str(parityList.index(parity) + 1))
-            # --- Parity check ---
-        ##    parity_sql = left_from + " <> " + left_to + " or " + right_from +" <> " + right_to
-            parity_sql = rd_object.PARITY_L + " in " + parity + " AND " + rd_object.PARITY_R + " in " + parity
+                if all_row[0] + "|" + all_row[2] not in already_checked:
+                    # check the left side MSAGCO & LABEL combo
+                    overlaps = checkMsagLabelCombo(all_row[0], all_row[2], overlaps, rd_fc, fields, msagList, name_field)
+                    already_checked.append(all_row[0] + "|" + all_row[2])
 
-            # Create search cursor to loop through unique road names
-            overlap_list = []   # List to store the OIDs of overlapping segments
-            overlap_error_count = 0
-            overlap_error_total = 0
-            overlap_string = ""
-            o_string = ""
-            overlap_sql = ""
-            dictionary = {}     # Place to store data before heavy lifting
+                # if the r & l msagco are different, run the right side
+                if all_row[0] != all_row[1]:
+                    if all_row[1] + "|" + all_row[2] not in already_checked:
+                        overlaps = checkMsagLabelCombo(all_row[1], all_row[2], overlaps, rd_fc, fields, msagList, name_field)
+                        already_checked.append(all_row[1] + "|" + all_row[2])
 
-            #set up data for search cursor
-            fields = (name_field, OID_field, left_from, left_to, right_from, right_to, rd_object.MUNI_L, rd_object.MUNI_R)
-            userMessage("Loading data into a dictionary")
 
-            with SearchCursor(input_fc, fields, parity_sql) as segments:
-                for segment in segments:
+        if overlaps != []:
+            userMessage(str(len(overlaps)) + " overlapping address range segments found. Please see " + final_fc + " for overlap results.")
+            # add code here for exporting the overlaps to a feature class
+            wc = segid + " in ('" +"','".join(overlaps) + "')"
+            overlaps_lyr = "overlaps_lyr"
+            MakeFeatureLayer_management(rd_fc, overlaps_lyr, wc)
 
-                    # get the highest and lowest values from the four address values
-                    addresses = [segment[2],segment[3],segment[4],segment[5]]
+            # get the count of persisting overlaps
+            count = getFastCount(overlaps_lyr)
 
-                    cur_road_HIGH = 0
-                    # print "Summary for segment: "str(segment.GetValue(name_field)), str(addresses)
-                    for a in range(4):
-                        curaddr = addresses[a]
-                        if (curaddr > cur_road_HIGH) and (curaddr != 0):
-                            cur_road_HIGH = curaddr
-                        lowval = cur_road_HIGH
-                    for a in range(4):
-                        curaddr = addresses[a]
-                        if (curaddr < lowval) and (curaddr != 0):
-                            lowval = curaddr
-                            cur_road_LOW = lowval
-                    cur_road_name = segment[0] + segment[6] + segment[7]
-                    cur_road_OID = segment[1]
-                    # print cur_road_name, cur_road_LOW, cur_road_HIGH
-                    if cur_road_HIGH > 0:   # drop dumb record that fouls up things anyways :)
-                        append_list = []    # clear out the list
-                        # check if dictionary key exists
-                        if cur_road_name not in dictionary:
-                            # add the dictionary key and populate it with values
-                            cur_road_list = [cur_road_OID, cur_road_LOW, cur_road_HIGH]
-                            dictionary[cur_road_name] = cur_road_list
-                        else:   # append the values to the list
-                            cur_road_list = dictionary[cur_road_name]
-                            cur_road_list.append(cur_road_OID)
-                            cur_road_list.append(cur_road_LOW)
-                            cur_road_list.append(cur_road_HIGH)
-                            dictionary[cur_road_name] = cur_road_list
+            # if there are more than 1, copy the layer
+            if count > 0:
+                CopyFeatures_management(overlaps_lyr, final_fc)
 
-            userMessage("Sorting address ranges")
-            lyr = "lyr"
-            MakeFeatureLayer_management(input_fc, lyr, parity_sql)
-            for key in dictionary:
-                value = dictionary[key]
-                # dictionary {} is structured thusly:
-                # ... {STOVER CREEK: [241, 3700, 3713, 214, 3800, 3809] ... }
-                # therefore, the logic is to step through each dictionary entry (STOVER CREEK) and
-                # 1) sort the list
-                # 2) compare high and low items
-                list_length = len(value)
-                if list_length > 3: # disregarding single-segment roads
-                    loop = list_length/3
-                    #
-                    # Sort!
-                    # This is Matt's braindead sort routine.
-                    # If value[1] < value[4] (Low of record 1 is greater than the low of record 2)
-                    #    then pop it out of the list, and append it to the end of the stack.
-                    # Keep popping and the lowest record gravitates to the front.
-                    # Skip and pop until the highest record gravitates to the end.
-                    # This is NOT an efficient routine, but since I'm sorting on
-                    # average something like six records, it can't get much faster
-                    #
-                    # For reference:
-                    # {key: [OID_element1, low_element1, high_element1, OID_element2, low_element2, high_element2, ... ]
-                    # OID_element1 = ((i+1)*3-3)
-                    # low_element1 = ((i+1)*3-2)
-                    # high_element1 = ((i+1)*3-1)
-                    # OID_element2 = ((i+1)*3)
-                    # low_element2 = ((i+1)*3+1)
-                    # high_element2 = ((i+1)*3+2)
-                    #
-                    i = 0
-                    while i < loop - 1:
-                        if value[((i+1)*3-2)] > value[((i+1)*3+1)]:
-                            value.append(value.pop(((i+1)*3-3))) # first item in sequence is (objectID)--stick it at the end
-                            value.append(value.pop(((i+1)*3-3))) # first item in sequence is now (LOW)--stick it at the end
-                            value.append(value.pop(((i+1)*3-3))) # first item in sequence is now (HIGH)--stick it at the end
-                            i = 0 # since we had to re-order, redo the whole comparison from the beginning.
-                        else: i = i + 1
-                    # loop through the records searching for discrepancies
-                    intLoop = int(loop)
-                    for k in range(intLoop - 1):
-                        if value[((k+1)*3+1)] < value[((k+1)*3-1)]:
-                            # print k, key, value[((k+1)*3-1)], "should be smaller than ", value[((k+1)*3+1)]
-                            overlap_list.append(value[((k+1)*3-3)])
-                            overlap_list.append(value[((k+1)*3)])
-                            overlap_error_count = overlap_error_count + 1
-                            overlap_error_total = overlap_error_total + 1
-                        # PLACEHOLDER should you want to search for gaps, here's where you would put the loop
-                    if overlap_error_count > 500: # a tad arbitrary here
-                        # My first idea was to create a Select * from Roads where ObjectID in (...) query.  Unfortunately,
-                        # it could be quite long, and needs to be broken into a more manageable size.
-                        for x in overlap_list:
-                            o_string = o_string + str(x) +", "              # constructing a comma-seperated list of OIDs
-                        overlap_string = o_string[0:-2]
-                        overlap_sql = OID_field +" in (" + overlap_string + ")" # constructing the complete SQL statement
-
-                        overlap_error_total = overlap_error_total + overlap_error_count
-                        userMessage("The number of errors exceeds " +str(overlap_error_total))
-                        userMessage("Adding these features to a feature layer")
-
-                        SelectLayerByAttribute_management(lyr, "ADD_TO_SELECTION", str(overlap_sql))
-                        overlap_error_count = 0
-                        overlap_list = []
-            # above logic breaks the sql into smaller chunks
-            # deal with the remainders outside the while loop here
-            if len(overlap_list) > 0:
-                for x in overlap_list:
-                    o_string = o_string + str(x) +", "       # constructing a comma-seperated list of OIDs
-                overlap_string = o_string[0:-2]     # the last character added is a problematic trailling comma
-                overlap_sql = OID_field + " in (" + overlap_string + ")" # constructing the complete SQL statement
-
-                # print overlap_sql
-                AddWarning("Found overlapping addresses")
-    ##            userMessage("Adding the remaining features to a feature layer")
-
-                SelectLayerByAttribute_management(lyr, "ADD_TO_SELECTION", overlap_sql)
-
-                userMessage("Exporting data into a new feature class")
-                if not Exists(output_fc):
-                    CopyFeatures_management(lyr, str(output_fc))
-                else:
-                    Append_management(lyr, output_fc, "NO_TEST")
-
-    ##        else:
-    ##            userMessage("No overlaps found comparing")
-        if Exists(output_fc):
-            #dissovle any duplicate features
-            userMessage("Removing any duplicates...")
-            dissolve_field = "STEWARD;L_UPDATE;EFF_DATE;EXP_DATE;" + rd_object.UNIQUEID + ";STATE_L;STATE_R;COUNTY_L;COUNTY_R;MUNI_L;MUNI_R;L_F_ADD;L_T_ADD;R_F_ADD;R_T_ADD;PARITY_L;PARITY_R;POSTCO_L;POSTCO_R;ZIP_L;ZIP_R;ESN_L;ESN_R;MSAGCO_L;MSAGCO_R;PRD;STP;RD;STS;POD;POM;SPDLIMIT;ONEWAY;RDCLASS;UPDATEBY;LABEL;ELEV_F;ELEV_T;SURFACE;STATUS;TRAVEL;LRSKEY;EXCEPTION;SUBMIT;NOTES;Shape_Length"
-            Dissolve_management(output_fc, final_fc, dissolve_field, "", "SINGLE_PART", "DISSOLVE_LINES")
-            AddWarning("Overlapping address ranges in: " + final_fc)
-            Delete_management(output_fc)
-
-            #record overlaps in field values check results
-            values = []
-            filename = "RoadCenterline"
-            today = strftime("%m/%d/%Y")
-            recordType = "fieldValues"
-
-            with SearchCursor(final_fc, (rd_object.UNIQUEID)) as rows:
-                for row in rows:
-                    report = "Notice: " + row[0] + "'s address range overlaps with another address range."
-                    val = (today, report, filename, "", row[0], "Check Address Ranges")
-                    values.append(val)
-
-            if values != []:
-                RecordResults(recordType, values, working_gdb)
+            Delete_management(overlaps_lyr)
+        else:
+            userMessage("No overlaping address ranges found.")
 
     except:
         userMessage("Error processing the data.")
+
+    # delete field if need be
+    if fieldExists(rd_fc, name_field):
+        DeleteField_management(rd_fc, name_field)
+
 
 def checkValuesAgainstDomain(pathsInfoObject):
     gdb = pathsInfoObject.gdbPath

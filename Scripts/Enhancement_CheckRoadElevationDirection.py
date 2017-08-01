@@ -21,17 +21,17 @@ def main():
     #set variables
     gdb_object = getGDBObject(gdb)
     roads = gdb_object.RoadCenterline
-    a = getFCObject(roads)
+    a_obj = getFCObject(roads)
 
     #userMessage
     userMessage("Comparing elevation indicators...")
 
     #limit records to those with elevation flags
-    qry = a.ELEV_F + " = 1 or " + a.ELEV_T + " = 1"
+    qry = a_obj.ELEV_F + " = 1 or " + a_obj.ELEV_T + " = 1"
 
     #set up search cursor
     roadFullDict = {}
-    fields = (a.UNIQUEID, a.LABEL, a.ELEV_F, a.ELEV_T, a.L_F_ADD)
+    fields = (a_obj.UNIQUEID, a_obj.LABEL, a_obj.ELEV_F, a_obj.ELEV_T, a_obj.L_F_ADD)
 
     with SearchCursor(roads, fields, qry) as rows:
         for row in rows:
@@ -120,11 +120,11 @@ def main():
     resultType = "fieldValues"
     today = strftime("%m/%d/%y")
     fc = "RoadCenterline"
-    report = a.ELEV_F + " and:or " + a.ELEV_T + " are not consistent with neighboring road segments"
+    report = a_obj.ELEV_F + " and:or " + a_obj.ELEV_T + " are not consistent with neighboring road segments"
 
     if len(badSegs) > 0:
         for badSeg in badSegs:
-            val = (today, report, fc, a.ELEV_F + " " + a.ELEV_T, badSeg, "Check Road Elevation Direction")
+            val = (today, report, fc, a_obj.ELEV_F + " " + a_obj.ELEV_T, badSeg, "Check Road Elevation Direction")
             values.append(val)
 
     if values != []:

@@ -27,14 +27,14 @@ def ClearOldResults(gdb, templateTableClear, fieldValuesTableClear):
         if Exists(templateTable):
             DeleteRows_management(templateTable)
             AddMessage(basename(templateTable) + " cleared")
-            print(basename(templateTable) + " cleared")
+            print((basename(templateTable) + " cleared"))
 
     if fieldValuesTableClear == "true":
         fieldValuesTable = gdbObject.FieldValuesCheckResults
         if Exists(fieldValuesTable):
             DeleteRows_management(fieldValuesTable)
             AddMessage(basename(fieldValuesTable) + " cleared")
-            print(basename(fieldValuesTable) + " cleared")
+            print((basename(fieldValuesTable) + " cleared"))
 
 if __name__ == '__main__':
     main()

@@ -42,13 +42,10 @@ def main():
     if '.gdb' in path:
         place = path.find('.gdb') + 4
     else:
-        if '.mdb' in path:
-            place = path.find('.mdb') + 4
+        if '.sde' in path:
+            place = path.find('.sde') + 4
         else:
-            if '.sde' in path:
-                place = path.find('.sde') + 4
-            else:
-                place = len(path) - 1
+            place = len(path) - 1
 
     workspace = path[:place]
 

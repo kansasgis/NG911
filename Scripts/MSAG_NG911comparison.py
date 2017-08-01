@@ -94,8 +94,8 @@ def getRanges(data):
     from operator import itemgetter
     listOfLists = []
     #create lists of consecutive numbers
-    for k, g in groupby(enumerate(data), lambda (i, x): i-x):
-        floob = map(itemgetter(1), g)
+    for k, g in groupby(enumerate(data), lambda i_x: i_x[0]-i_x[1]):
+        floob = list(map(itemgetter(1), g))
         #add the low & high of the range to the list o/ lists
         listOfLists.append([floob[0], floob[len(floob)-1]])
 
@@ -397,13 +397,13 @@ def compareMSAGranges(msag_object):
             roadnumbers = []
             with SearchCursor(rc_merged_msag, ("LOW", "HIGH"), wc) as r_rows:
                 for r_row in r_rows:
-                    road_range = range(int(r_row[0]), int(r_row[1]) + 1)
+                    road_range = list(range(int(r_row[0]), int(r_row[1]) + 1))
                     for rr in road_range:
                         roadnumbers.append(rr)
             msagNumbers = []
             with SearchCursor(msag_merged_msag, ("LOW", "HIGH"), wc) as m_rows:
                 for m_row in m_rows:
-                    msag_range = range(int(m_row[0]), int(m_row[1]) + 1)
+                    msag_range = list(range(int(m_row[0]), int(m_row[1]) + 1))
                     for mm in msag_range:
                         msagNumbers.append(mm)
 
@@ -504,9 +504,14 @@ def main():
     CalculateField_management(wr, "RoadCenterline.REPORT_L", "!MSAG_reporting.REPORT!", "PYTHON")
     RemoveJoin_management(wr)
 
-    SelectLayerByAttribute_management(wr, "NEW_SELECTION", "REPORT_R is null")
+    # refresh the layer
+    Delete_management(wr)
+    wr = "wr"
+    MakeFeatureLayer_management(workingRoads, wr)
+
+    SelectLayerByAttribute_management(wr, "NEW_SELECTION", "REPORT_R IS NULL")
     CalculateField_management(wr, "REPORT_R", "'Issue with corresponding MSAG range'", "PYTHON")
-    SelectLayerByAttribute_management(wr, "NEW_SELECTION", "REPORT_L is null")
+    SelectLayerByAttribute_management(wr, "NEW_SELECTION", "REPORT_L IS NULL")
     CalculateField_management(wr, "REPORT_L", "'Issue with corresponding MSAG range'", "PYTHON")
 
     #run a join on the MSAG
@@ -515,7 +520,7 @@ def main():
     CalculateField_management(mr, "MSAG_" + today + ".REPORT", "!MSAG_reporting.REPORT!", "PYTHON")
     RemoveJoin_management(mr)
 
-    SelectLayerByAttribute_management(mr, "NEW_SELECTION", "REPORT is null")
+    SelectLayerByAttribute_management(mr, "NEW_SELECTION", "REPORT IS NULL")
     CalculateField_management(mr, "REPORT", "'Issue with corresponding road centerline range'", "PYTHON")
 
     #notes- basically the MSAG needs to be fully represented in road centerline

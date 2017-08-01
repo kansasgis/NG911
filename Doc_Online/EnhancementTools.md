@@ -30,9 +30,8 @@ road segments matching a user-provided road name.
 overlaps. Overlapping address ranges can negatively affect geocoding
 accuracy.
 
-[*Geocode Address Points*](#geocode): geocodes the address points against the road
-centerline data. This test respects exceptions created in the
-GeocodeExceptions table.
+[*Geocompare Address Points*](#geocode): compares the address points against the road
+centerline data. 
 
 [*Split Single ESB Layer*](#splitESB): splits out a single ESB layer into three separate ESB layers for EMS, FIRE and LAW
 
@@ -174,9 +173,9 @@ Running *Find Address Range Overlaps*:
     called “AddressRange\_Overlap”.
 
 <a name="geocode"></a>
-Running *Geocode Address Points*:
+Running *Geocompare Address Points*:
 
-1.	Open ArcCatalog and navigate to the toolbox called “Kansas NG911 GIS Tools” > “Enhancement Tools” > “Geocode Address Points”.
+1.	Open ArcCatalog and navigate to the toolbox called “Kansas NG911 GIS Tools” > “Enhancement Tools” > “Geocompare Address Points”.
 
 2.  In the “NG911 Geodatabase” box, select the appropriate
     NG911 geodatabase.

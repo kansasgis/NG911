@@ -6,222 +6,21 @@
 #
 # Created:     03/09/2015
 #-------------------------------------------------------------------------------
-from arcpy import (CreateAddressLocator_geocoding, GeocodeAddresses_geocoding,
-            CopyRows_management, Delete_management, AddField_management,
+from arcpy import (CopyRows_management, Delete_management, AddField_management,
             CalculateField_management, GetParameterAsText, Exists, env,
-            CreateTable_management, CreateCompositeAddressLocator_geocoding,
-            MakeFeatureLayer_management, AddMessage, CreateFileGDB_management)
-from arcpy.da import InsertCursor, SearchCursor
-from NG911_DataCheck import userMessage
-from os.path import join, dirname, basename, exists
+            CreateTable_management,
+            MakeFeatureLayer_management, AddMessage, CreateFileGDB_management,
+            MakeTableView_management)
+from arcpy.da import InsertCursor, SearchCursor, UpdateCursor
+from NG911_DataCheck import userMessage, getFieldDomain
+from os.path import join, dirname, basename, exists, realpath
 from os import mkdir
 from NG911_GDB_Objects import getFCObject, getTNObject, getGDBObject
 from NG911_arcpy_shortcuts import getFastCount, fieldExists
 from time import strftime
 from sys import exit
+from MSAG_DBComparison import launch_compare
 
-
-def createLocators(gdb_object):
-    addressPointPath = gdb_object.AddressPoints
-    streetPath = gdb_object.RoadCenterline
-    roadAliasPath = gdb_object.RoadAlias
-
-    rc_obj = getFCObject(streetPath)
-    ra_obj = getFCObject(roadAliasPath)
-
-    tn_object = getTNObject(gdb_object.gdbPath)
-    tn_gdb = tn_object.tn_gdb
-
-    LocatorFolder = tn_object.LocatorFolder
-
-    if not exists(LocatorFolder):
-        mkdir(LocatorFolder)
-
-    if not Exists(tn_gdb):
-        CreateFileGDB_management(dirname(tn_gdb), basename(tn_gdb))
-
-    AL1 = tn_object.AddressLocator
-    AL2 = tn_object.RoadLocator
-    AL3 = tn_object.CompositeLocator
-
-    if not Exists(AL1):
-        #Create address locator from NG911 Address points AL1, 10.3 - 10.4.1
-        addyFieldMap = """'Feature ID' OBJECTID VISIBLE NONE;'*House Number' HNO VISIBLE NONE;Side <None> VISIBLE NONE;'Prefix Direction' PRD VISIBLE NONE;
-            'Prefix Type' STP VISIBLE NONE;'*Street Name' RD VISIBLE NONE;'Suffix Type' STS VISIBLE NONE;'Suffix Direction' POD VISIBLE NONE;
-            'City or Place' MSAGCO VISIBLE NONE;'ZIP Code' ZIP VISIBLE NONE;State STATE VISIBLE NONE;'Street ID' <None> VISIBLE NONE;'Display X' <None> VISIBLE NONE;
-            'Display Y' <None> VISIBLE NONE;'Min X value for extent' <None> VISIBLE NONE;'Max X value for extent' <None> VISIBLE NONE;'Min Y value for extent' <None> VISIBLE NONE;
-            'Max Y value for extent' <None> VISIBLE NONE;'Additional Field' <None> VISIBLE NONE;'Altname JoinID' <None> VISIBLE NONE"""
-
-        # detect ArcGIS Version?
-        # 10.5 addy field map
-        addyFieldMap105 = """'Point Address ID' OBJECTID VISIBLE NONE;'Street ID' <None> VISIBLE NONE;'*House Number' HNO VISIBLE NONE;Side <None> VISIBLE NONE;
-        'Full Street Name' LABEL VISIBLE NONE;'Prefix Direction' PRD VISIBLE NONE;'Prefix Type' STP VISIBLE NONE;'*Street Name' RD VISIBLE NONE;
-        'Suffix Type' STS VISIBLE NONE;'Suffix Direction' POD VISIBLE NONE;'City or Place' MSAGCO VISIBLE NONE;County COUNTY VISIBLE NONE;State STATE VISIBLE NONE;
-        'State Abbreviation' STATE VISIBLE NONE;'ZIP Code' ZIP VISIBLE NONE;'Country Code' <None> VISIBLE NONE;'3-Digit Language Code' <None> VISIBLE NONE;
-        '2-Digit Language Code' <None> VISIBLE NONE;'Admin Language Code' <None> VISIBLE NONE;'Block ID' <None> VISIBLE NONE;'Street Rank' <None> VISIBLE NONE;
-        'Display X' <None> VISIBLE NONE;'Display Y' <None> VISIBLE NONE;'Min X value for extent' <None> VISIBLE NONE;'Max X value for extent' <None> VISIBLE NONE;
-        'Min Y value for extent' <None> VISIBLE NONE;'Max Y value for extent' <None> VISIBLE NONE;'Additional Field' <None> VISIBLE NONE;'Altname JoinID' <None> VISIBLE NONE;
-        'City Altname JoinID' <None> VISIBLE NONE"""
-
-
-        userMessage("Creating locator from address points...")
-
-        try:
-            CreateAddressLocator_geocoding("US Address - Single House", addressPointPath + " 'Primary Table'", addyFieldMap, AL1, "", "DISABLED")
-        except:
-            try:
-                # use the 10.5 field map syntax
-                CreateAddressLocator_geocoding("US Address - Single House", addressPointPath + " 'Primary Table'", addyFieldMap105, AL1, "", "DISABLED")
-            except:
-                try:
-                    CreateAddressLocator_geocoding("US Address - Single House", addressPointPath + " 'Primary Table'", addyFieldMap, AL1, "")
-                except:
-                    userMessage("Could not create locator from address points.")
-
-        #report on locator status and edit minimum match score down to 75
-        if Exists(AL1):
-            userMessage("Created locator from address points.")
-
-        if not Exists(AL2):
-            #Create address locator from NG911 Road centerline AL2
-             #generate locator
-            fieldMap = """'Primary Table:Feature ID' RoadCenterline:""" + rc_obj.UNIQUEID + """ VISIBLE NONE;'*Primary Table:From Left' RoadCenterline:L_F_ADD VISIBLE NONE;
-            '*Primary Table:To Left' RoadCenterline:L_T_ADD VISIBLE NONE;'*Primary Table:From Right' RoadCenterline:R_F_ADD VISIBLE NONE;
-            '*Primary Table:To Right' RoadCenterline:R_T_ADD VISIBLE NONE;'Primary Table:Prefix Direction' RoadCenterline:PRD VISIBLE NONE;
-            'Primary Table:Prefix Type' RoadCenterline:STP VISIBLE NONE;'*Primary Table:Street Name' RoadCenterline:RD VISIBLE NONE;
-            'Primary Table:Suffix Type' RoadCenterline:STS VISIBLE NONE;'Primary Table:Suffix Direction' RoadCenterline:POD VISIBLE NONE;
-            'Primary Table:Left City or Place' RoadCenterline:MSAGCO_L VISIBLE NONE;
-            'Primary Table:Right City or Place' RoadCenterline:MSAGCO_R VISIBLE NONE;
-            'Primary Table:Left ZIP Code' RoadCenterline:ZIP_L VISIBLE NONE;'Primary Table:Right ZIP Code' RoadCenterline:ZIP_R VISIBLE NONE;
-            'Primary Table:Left State' RoadCenterline:STATE_L VISIBLE NONE;'Primary Table:Right State' RoadCenterline:STATE_R VISIBLE NONE;
-            'Primary Table:Left Street ID' <None> VISIBLE NONE;'Primary Table:Right Street ID' <None> VISIBLE NONE;
-            'Primary Table:Display X' <None> VISIBLE NONE;'Primary Table:Display Y' <None> VISIBLE NONE;
-            'Primary Table:Min X value for extent' <None> VISIBLE NONE;'Primary Table:Max X value for extent' <None> VISIBLE NONE;
-            'Primary Table:Min Y value for extent' <None> VISIBLE NONE;'Primary Table:Max Y value for extent' <None> VISIBLE NONE;
-            'Primary Table:Left parity' <None> VISIBLE NONE;'Primary Table:Right parity' <None> VISIBLE NONE;
-            'Primary Table:Left Additional Field' <None> VISIBLE NONE;'Primary Table:Right Additional Field' <None> VISIBLE NONE;
-            '*Primary Table:Altname JoinID' RoadCenterline:""" + rc_obj.UNIQUEID + """ VISIBLE NONE;'*Alternate Name Table:JoinID' RoadAlias:""" + ra_obj.SEGID + """ VISIBLE NONE;
-            'Alternate Name Table:Prefix Direction' RoadAlias:A_PRD VISIBLE NONE;'Alternate Name Table:Prefix Type' RoadAlias:A_STP VISIBLE NONE;
-            'Alternate Name Table:Street Name' RoadAlias:A_RD VISIBLE NONE;'Alternate Name Table:Suffix Type' RoadAlias:A_STS VISIBLE NONE;
-            'Alternate Name Table:Suffix Direction' RoadAlias:A_POD VISIBLE NONE"""
-
-            userMessage("Creating locator from road centerlines...")
-
-            try:
-                CreateAddressLocator_geocoding("US Address - Dual Ranges", streetPath + " 'Primary Table';" + roadAliasPath + " 'Alternate Name Table'", fieldMap, AL2, "", "DISABLED")
-            except:
-                try:
-                    fieldMap = """'Primary Table:Feature ID' RoadCenterline:""" + rc_obj.UNIQUEID + """ VISIBLE NONE;'*Primary Table:From Left' RoadCenterline:L_F_ADD VISIBLE NONE;
-                        '*Primary Table:To Left' RoadCenterline:L_T_ADD VISIBLE NONE;'*Primary Table:From Right' RoadCenterline:R_F_ADD VISIBLE NONE;
-                        '*Primary Table:To Right' RoadCenterline:R_T_ADD VISIBLE NONE;'Primary Table:Prefix Direction' RoadCenterline:PRD VISIBLE NONE;
-                        'Primary Table:Prefix Type' RoadCenterline:STP VISIBLE NONE;'*Primary Table:Street Name' RoadCenterline:RD VISIBLE NONE;
-                        'Primary Table:Suffix Type' RoadCenterline:STS VISIBLE NONE;'Primary Table:Suffix Direction' RoadCenterline:POD VISIBLE NONE;
-                        'Primary Table:Left City or Place' RoadCenterline:MSAGCO_L VISIBLE NONE;
-                        'Primary Table:Right City or Place' RoadCenterline:MSAGCO_R VISIBLE NONE;
-                        'Primary Table:Left ZIP Code' RoadCenterline:ZIP_L VISIBLE NONE;'Primary Table:Right ZIP Code' RoadCenterline:ZIP_R VISIBLE NONE;
-                        'Primary Table:Left State' RoadCenterline:STATE_L VISIBLE NONE;'Primary Table:Right State' RoadCenterline:STATE_R VISIBLE NONE;
-                        'Primary Table:Left Street ID' <None> VISIBLE NONE;'Primary Table:Right Street ID' <None> VISIBLE NONE;
-                        'Primary Table:Display X' <None> VISIBLE NONE;'Primary Table:Display Y' <None> VISIBLE NONE;
-                        'Primary Table:Min X value for extent' <None> VISIBLE NONE;'Primary Table:Max X value for extent' <None> VISIBLE NONE;
-                        'Primary Table:Min Y value for extent' <None> VISIBLE NONE;'Primary Table:Max Y value for extent' <None> VISIBLE NONE;
-                        'Primary Table:Left Additional Field' <None> VISIBLE NONE;'Primary Table:Right Additional Field' <None> VISIBLE NONE;
-                        '*Primary Table:Altname JoinID' RoadCenterline:""" + rc_obj.UNIQUEID + """ VISIBLE NONE;'*Alternate Name Table:JoinID' RoadAlias:""" + ra_obj.SEGID + """ VISIBLE NONE;
-                        'Alternate Name Table:Prefix Direction' RoadAlias:A_PRD VISIBLE NONE;'Alternate Name Table:Prefix Type' <None> VISIBLE NONE;
-                        'Alternate Name Table:Street Name' RoadAlias:A_RD VISIBLE NONE;'Alternate Name Table:Suffix Type' RoadAlias:A_STS VISIBLE NONE;
-                        'Alternate Name Table:Suffix Direction' RoadAlias:A_POD VISIBLE NONE"""
-                    CreateAddressLocator_geocoding("US Address - Dual Ranges", streetPath + " 'Primary Table';" + roadAliasPath + " 'Alternate Name Table'", fieldMap, AL2, "", "DISABLED")
-                except:
-                    try:
-                        fieldMap = """'Primary Table:Feature ID' RoadCenterline:""" + rc_obj.UNIQUEID + """ VISIBLE NONE;'*Primary Table:From Left' RoadCenterline:L_F_ADD VISIBLE NONE;
-                            '*Primary Table:To Left' RoadCenterline:L_T_ADD VISIBLE NONE;'*Primary Table:From Right' RoadCenterline:R_F_ADD VISIBLE NONE;
-                            '*Primary Table:To Right' RoadCenterline:R_T_ADD VISIBLE NONE;'Primary Table:Prefix Direction' RoadCenterline:PRD VISIBLE NONE;
-                            'Primary Table:Prefix Type' RoadCenterline:STP VISIBLE NONE;'*Primary Table:Street Name' RoadCenterline:RD VISIBLE NONE;
-                            'Primary Table:Suffix Type' RoadCenterline:STS VISIBLE NONE;'Primary Table:Suffix Direction' RoadCenterline:POD VISIBLE NONE;
-                            'Primary Table:Left City or Place' RoadCenterline:MSAGCO_L VISIBLE NONE;
-                            'Primary Table:Right City or Place' RoadCenterline:MSAGCO_R VISIBLE NONE;
-                            'Primary Table:Left ZIP Code' RoadCenterline:ZIP_L VISIBLE NONE;'Primary Table:Right ZIP Code' RoadCenterline:ZIP_R VISIBLE NONE;
-                            'Primary Table:Left State' RoadCenterline:STATE_L VISIBLE NONE;'Primary Table:Right State' RoadCenterline:STATE_R VISIBLE NONE;
-                            'Primary Table:Left Street ID' <None> VISIBLE NONE;'Primary Table:Right Street ID' <None> VISIBLE NONE;
-                            'Primary Table:Min X value for extent' <None> VISIBLE NONE;'Primary Table:Max X value for extent' <None> VISIBLE NONE;
-                            'Primary Table:Min Y value for extent' <None> VISIBLE NONE;'Primary Table:Max Y value for extent' <None> VISIBLE NONE;
-                            'Primary Table:Left Additional Field' <None> VISIBLE NONE;'Primary Table:Right Additional Field' <None> VISIBLE NONE;
-                            'Primary Table:Altname JoinID' RoadCenterline:""" + rc_obj.UNIQUEID + """ VISIBLE NONE;'*Alternate Name Table:JoinID' RoadAlias:""" + ra_obj.SEGID + """ VISIBLE NONE;
-                            'Alternate Name Table:Prefix Direction' RoadAlias:A_PRD VISIBLE NONE;'Alternate Name Table:Prefix Type' <None> VISIBLE NONE;
-                            'Alternate Name Table:Street Name' RoadAlias:A_RD VISIBLE NONE;'Alternate Name Table:Suffix Type' RoadAlias:A_STS VISIBLE NONE;
-                            'Alternate Name Table:Suffix Direction' RoadAlias:A_POD VISIBLE NONE"""
-                        CreateAddressLocator_geocoding("US Address - Dual Ranges", streetPath + " 'Primary Table';" + roadAliasPath + " 'Alternate Name Table'", fieldMap, AL2, "", "DISABLED")
-                    except Exception as e:
-                        try:
-                            #10.3.x field map
-                            fieldMap = """'Primary Table:Feature ID' RoadCenterline:""" + rc_obj.UNIQUEID + """ VISIBLE NONE;'*Primary Table:From Left' RoadCenterline:L_F_ADD VISIBLE NONE;
-                            '*Primary Table:To Left' RoadCenterline:L_T_ADD VISIBLE NONE;'*Primary Table:From Right' RoadCenterline:R_F_ADD VISIBLE NONE;
-                            '*Primary Table:To Right' RoadCenterline:R_T_ADD VISIBLE NONE;'Primary Table:Prefix Direction' RoadCenterline:PRD VISIBLE NONE;
-                            'Primary Table:Prefix Type' RoadCenterline:STP VISIBLE NONE;'*Primary Table:Street Name' RoadCenterline:RD VISIBLE NONE;
-                            'Primary Table:Suffix Type' RoadCenterline:STS VISIBLE NONE;'Primary Table:Suffix Direction' RoadCenterline:POD VISIBLE NONE;
-                            'Primary Table:Left City or Place' RoadCenterline:MSAGCO_L VISIBLE NONE;
-                            'Primary Table:Right City or Place' RoadCenterline:MSAGCO_R VISIBLE NONE;
-                            'Primary Table:Left ZIP Code' RoadCenterline:ZIP_L VISIBLE NONE;'Primary Table:Right ZIP Code' RoadCenterline:ZIP_R VISIBLE NONE;
-                            'Primary Table:Left State' RoadCenterline:STATE_L VISIBLE NONE;'Primary Table:Right State' RoadCenterline:STATE_R VISIBLE NONE;
-                            'Primary Table:Left Street ID' <None> VISIBLE NONE;'Primary Table:Right Street ID' <None> VISIBLE NONE;
-                            'Primary Table:Display X' <None> VISIBLE NONE;'Primary Table:Display Y' <None> VISIBLE NONE;
-                            'Primary Table:Min X value for extent' <None> VISIBLE NONE;'Primary Table:Max X value for extent' <None> VISIBLE NONE;
-                            'Primary Table:Min Y value for extent' <None> VISIBLE NONE;'Primary Table:Max Y value for extent' <None> VISIBLE NONE;
-                            'Primary Table:Left Additional Field' <None> VISIBLE NONE;'Primary Table:Right Additional Field' <None> VISIBLE NONE;
-                            'Primary Table:Altname JoinID' RoadCenterline:""" + rc_obj.UNIQUEID + """ VISIBLE NONE;'*Alternate Name Table:JoinID' RoadAlias:""" + ra_obj.SEGID + """ VISIBLE NONE;
-                            'Alternate Name Table:Prefix Direction' RoadAlias:A_PRD VISIBLE NONE;'Alternate Name Table:Prefix Type' RoadAlias:A_STP VISIBLE NONE;
-                            'Alternate Name Table:Street Name' RoadAlias:A_RD VISIBLE NONE;'Alternate Name Table:Suffix Type' RoadAlias:A_STS VISIBLE NONE;
-                            'Alternate Name Table:Suffix Direction' RoadAlias:A_POD VISIBLE NONE"""
-                            CreateAddressLocator_geocoding("US Address - Dual Ranges", streetPath + " 'Primary Table';" + roadAliasPath + " 'Alternate Name Table'", fieldMap, AL2, "", "DISABLED")
-                        except:
-                            try:
-                                # 10.5 field map
-                                fieldMap = """'Primary Table:Feature ID' RoadCenterline:""" + rc_obj.UNIQUEID + """ VISIBLE NONE;'*Primary Table:From Left' RoadCenterline:L_F_ADD VISIBLE NONE;
-                                '*Primary Table:To Left' RoadCenterline:L_T_ADD VISIBLE NONE;'*Primary Table:From Right' RoadCenterline:R_F_ADD VISIBLE NONE;
-                                '*Primary Table:To Right' RoadCenterline:R_T_ADD VISIBLE NONE;'Primary Table:Left Parity' RoadCenterline:PARITY_L VISIBLE NONE;
-                                'Primary Table:Right Parity' RoadCenterline:PARITY_R VISIBLE NONE;'Primary Table:Full Street Name' RoadCenterline:LABEL VISIBLE NONE;
-                                'Primary Table:Prefix Direction' RoadCenterline:PRD VISIBLE NONE;'Primary Table:Prefix Type' RoadCenterline:STP VISIBLE NONE;
-                                '*Primary Table:Street Name' RoadCenterline:RD VISIBLE NONE;'Primary Table:Suffix Type' RoadCenterline:STS VISIBLE NONE;
-                                'Primary Table:Suffix Direction' RoadCenterline:POD VISIBLE NONE;'Primary Table:Left City or Place' RoadCenterline:MSAGCO_L VISIBLE NONE;
-                                'Primary Table:Right City or Place' RoadCenterline:MSAGCO_R VISIBLE NONE;'Primary Table:Left County' RoadCenterline:COUNTY_L VISIBLE NONE;
-                                'Primary Table:Right County' RoadCenterline:COUNTY_R VISIBLE NONE;'Primary Table:Left State' RoadCenterline:STATE_L VISIBLE NONE;
-                                'Primary Table:Right State' RoadCenterline:STATE_R VISIBLE NONE;'Primary Table:Left State Abbreviation' RoadCenterline:STATE_L VISIBLE NONE;
-                                'Primary Table:Right State Abbreviation' RoadCenterline:STATE_R VISIBLE NONE;'Primary Table:Left ZIP Code' RoadCenterline:ZIP_L VISIBLE NONE;
-                                'Primary Table:Right ZIP Code' RoadCenterline:ZIP_R VISIBLE NONE;'Primary Table:Country Code' <None> VISIBLE NONE;
-                                'Primary Table:3-Digit Language Code' <None> VISIBLE NONE;'Primary Table:2-Digit Language Code' <None> VISIBLE NONE;
-                                'Primary Table:Admin Language Code' <None> VISIBLE NONE;'Primary Table:Left Block ID' <None> VISIBLE NONE;
-                                'Primary Table:Right Block ID' <None> VISIBLE NONE;'Primary Table:Left Street ID' <None> VISIBLE NONE;
-                                'Primary Table:Right Street ID' <None> VISIBLE NONE;'Primary Table:Street Rank' <None> VISIBLE NONE;
-                                'Primary Table:Min X value for extent' <None> VISIBLE NONE;'Primary Table:Max X value for extent' <None> VISIBLE NONE;
-                                'Primary Table:Min Y value for extent' <None> VISIBLE NONE;'Primary Table:Max Y value for extent' <None> VISIBLE NONE;
-                                'Primary Table:Left Additional Field' <None> VISIBLE NONE;'Primary Table:Right Additional Field' <None> VISIBLE NONE;
-                                '*Primary Table:Altname JoinID' RoadCenterline:""" + rc_obj.UNIQUEID + """ VISIBLE NONE;'Primary Table:City Altname JoinID' <None> VISIBLE NONE;
-                                '*Alternate Name Table:JoinID' RoadAlias:""" + ra_obj.SEGID + """ VISIBLE NONE;'Alternate Name Table:Full Street Name' RoadAlias:LABEL VISIBLE NONE;
-                                'Alternate Name Table:Prefix Direction' RoadAlias:A_PRD VISIBLE NONE;'Alternate Name Table:Prefix Type' RoadAlias:A_STP VISIBLE NONE;
-                                'Alternate Name Table:Street Name' RoadAlias:A_RD VISIBLE NONE;'Alternate Name Table:Suffix Type' RoadAlias:A_STS VISIBLE NONE;
-                                'Alternate Name Table:Suffix Direction' RoadAlias:A_POD VISIBLE NONE"""
-                                CreateAddressLocator_geocoding("US Address - Dual Ranges", streetPath + " 'Primary Table';" + roadAliasPath + " 'Alternate Name Table'", fieldMap, AL2, "", "DISABLED")
-                            except:
-                                userMessage("Could not create locator from road data. " + str(e))
-
-            if Exists(AL2):
-                userMessage("Created road centerline locator")
-
-        #Create composite address locator from addresspoints/road centerline AL3
-        if not Exists(AL3):
-            if Exists(AL1) and Exists(AL2):
-                userMessage("Creating composite address locator...")
-                #address point locator first
-##                compositeFieldMap = "Street \"Street or Intersection\" true true true 100 Text 0 0 ,First,#," + AL1 + ",Street,0,0," + AL2 + ",Street,0,0;City \"City or Placename\" true true false 40 Text 0 0 ,First,#,"  + \
-##                    AL1 + ",City,0,0," + AL2 + ",City,0,0;State \"State\" true true false 20 Text 0 0 ,First,#," + AL1 + ",State,0,0," + AL2 + ",State,0,0;ZIP \"ZIP Code\" true true false 10 Text 0 0 ,First,#," + \
-##                    AL1 + ",ZIP,0,0," + AL2 + ",ZIP,0,0"
-##
-##                CreateCompositeAddressLocator_geocoding(AL1 + " AddyPt;" + AL2 + " Roads", compositeFieldMap, "AddyPt #;Roads #", AL3)
-                #road locator first
-                compositeFieldMap = "Street \"Street or Intersection\" true true true 100 Text 0 0 ,First,#," + AL1 + ",Street,0,0," + AL2 + ",Street,0,0;City \"City or Placename\" true true false 40 Text 0 0 ,First,#,"  + \
-                    AL1 + ",City,0,0," + AL2 + ",City,0,0;State \"State\" true true false 20 Text 0 0 ,First,#," + AL1 + ",State,0,0," + AL2 + ",State,0,0;ZIP \"ZIP Code\" true true false 10 Text 0 0 ,First,#," + \
-                    AL1 + ",ZIP,0,0," + AL2 + ",ZIP,0,0"
-
-                CreateCompositeAddressLocator_geocoding(AL2 + " Roads;" + AL1 + " AddyPt", compositeFieldMap, "Roads #;AddyPt #", AL3)
 
 def prepXLS(tnxls, gdb):
     import xlrd
@@ -298,100 +97,82 @@ def prepXLS(tnxls, gdb):
             del i, rowToInsert, rowToInsertList
         rowIdx = rowIdx + 1
 
+    # split out RD into RD, STS, & POD
+    postRoadFields = [a_obj.STS, a_obj.POD]
+
+    for prf in postRoadFields:
+        AddField_management(outTable, prf, "TEXT", "", "", 4)
+
+    postRoadFields.append("RD")
+
+    folder = join(dirname(dirname(realpath(__file__))), "Domains")
+
+    streetSuffixDict = getFieldDomain("STS", folder).keys()
+    postDirectionalDict = getFieldDomain("POD", folder).keys()
+
+    with UpdateCursor(outTable, postRoadFields) as rows:
+        for row in rows:
+            fullNameList = row[2].split()
+            i = 1
+            rd =[fullNameList[0]]
+            while i < len(fullNameList):
+                if fullNameList[i] not in streetSuffixDict and fullNameList[i] not in postDirectionalDict:
+                    rd.append(fullNameList[i])
+                elif fullNameList[i] in streetSuffixDict:
+                    row[0] = fullNameList[i]
+                elif fullNameList[i] in postDirectionalDict:
+                    if fullNameList[0] not in ("AVENUE", "ROAD", "HIGHWAY", "HWY"):
+                        row[1] = fullNameList[i]
+                    else:
+                        rd.append(fullNameList[i])
+                i += 1
+
+            row[2] = " ".join(rd)
+            rows.updateRow(row)
+
     userMessage("Conversion to geodatabase table successful. " + str(endRow-1) + " rows converted. VOIP and test rows were not converted.")
-
-    userMessage("Creating single line input for geocoding...")
-    #create SingleLineInput field
-    sli = tn_object.DefaultFullAddress
-    AddField_management(outTable, sli, "TEXT", "", "", 100)
-
-    #concatenate field
-    fldList = [a_obj.HNO,a_obj.HNS,a_obj.PRD,a_obj.RD,a_obj.MUNI,a_obj.STATE]
-    CalculateField_management(outTable, sli, '!' +  ('! + " " + !').join(fldList) + '!', "PYTHON")
-    #replace three spaces in a row with one
-    CalculateField_management(outTable, sli, '!' + sli + '!.replace("   ", " ")', "PYTHON")
-    #replace two spaces in a row with one
-    CalculateField_management(outTable, sli, '!' + sli + '!.replace("  ", " ")', "PYTHON")
-    userMessage("Single line input succesfully created.")
 
 
 def AddUniqueIDField(outTable, uniqueIDField):
     if not fieldExists(outTable, uniqueIDField):
         AddField_management(outTable, uniqueIDField, "TEXT", "", "", 50) #KK EDIT: changed from 38 to 50
 
-    if not fieldExists(outTable, "NXX"):
-        CalculateField_management(outTable, uniqueIDField, "uniqueID() + str(!OBJECTID!)", "PYTHON", "def uniqueID():\\n  x = '%d' % time.time()\\n  str(x)\\n  return x")
-    else:
-        CalculateField_management(outTable, uniqueIDField, "!NPA! + !NXX! + !PHONELINE!", "PYTHON")
+    wc = uniqueIDField + " is null or " + uniqueIDField + " in ('', ' ')"
+    tbl = "tbl"
+    MakeTableView_management(outTable, tbl, wc)
 
-def geocodeTable(gdb, field):
+    if fieldExists(outTable, "NXX"):
+        CalculateField_management(tbl, uniqueIDField, "!NPA! + !NXX! + !PHONELINE!", "PYTHON")
+    else:
+        CalculateField_management(tbl, uniqueIDField, "uniqueID() + str(!OBJECTID!)", "PYTHON", "def uniqueID():\\n  x = '%d' % time.time()\\n  str(x)\\n  return x")
+
+
+def geocodeTable(gdb):
     #geocode addresses
     tn_object = getTNObject(gdb)
-    AL3 = tn_object.CompositeLocator
     tname = tn_object.TN_List
-    GC_output = tn_object.ResultsFC
     uniqueFieldID = tn_object.UNIQUEID
     tn_gdb = tn_object.tn_gdb
 
     #add unique ID to TN List table
     AddUniqueIDField(tname, uniqueFieldID)
 
-    #delete geocoding output if it exists already
-    if Exists(GC_output):
-        Delete_management(GC_output)
-
-    #try composite first
-    AddMessage("Geocoding TN addresses...")
-    try:
-        in_address_fields = "SingleLine " + field + " VISIBLE NONE"
-        GeocodeAddresses_geocoding(tname, AL3, in_address_fields, GC_output, "STATIC")
-    except Exception as e:
-        userMessage("Cannot geocode addresses. " + str(e))
-        exit()
+    addy_field_list = ["NAME_COMPARE", "PRD", "RD", "STS", "POD"]
+    launch_compare(gdb, tname, "HNO", "MUNI", addy_field_list)
 
     #see if any records did not match
-    wc = "Status <> 'M'"
+    wc = "MATCH <> 'M'"
     lyr = "lyr"
-    MakeFeatureLayer_management(GC_output, lyr, wc)
+    MakeTableView_management(tname, lyr, wc)
 
     rCount = getFastCount(lyr)
     if rCount > 0:
         userMessage("Geocoding complete. " + str(rCount) + " records did not geocode. Processing results...")
-        if fieldExists(GC_output, uniqueFieldID):
-            idName = uniqueFieldID
-        else:
-            idName = "USER_" + uniqueFieldID
-
-        fieldList = ("Status", idName)
-
-        #create report table
-        reportTable = tn_object.ResultsTable
-        reportTableName = basename(reportTable)
-
-        if Exists(reportTable):
-            Delete_management(reportTable)
-        CreateTable_management(tn_gdb, reportTableName)
-
-        #add reporting fields
-        AddField_management(reportTable, idName, "TEXT", "", "", 38)
-        AddField_management(reportTable, "STATUS", "TEXT", "", "", 1)
-        AddField_management(reportTable, "DESCRIPTION", "TEXT", "", "", 100)
-
-        with SearchCursor(lyr, fieldList) as rows:
-            for row in rows:
-                cursor = InsertCursor(reportTable, [idName, "STATUS", "DESCRIPTION"])
-                message = "Record did not geocode against the data."
-                if row[0] == "T":
-                    message = "Record was a geocoding tie."
-                try:
-                    cursor.insertRow([row[1], row[0], message])
-                except Exception as e:
-                    userMessage(str(e))
-
-                del cursor
-        userMessage("Results processed. Please see results in " + reportTable)
+        userMessage("Results processed. Please see results in " + tname)
     else:
         userMessage("Geocoding complete. All records geocoded successfully.")
+
+    Delete_management(lyr)
 
 def main():
 
@@ -401,14 +182,8 @@ def main():
     #prep TN list
     prepXLS(tnxls, gdb)
 
-    #get gdb object
-    gdb_object = getGDBObject(gdb)
-
-    #create locators
-    createLocators(gdb_object)
-
     #geocode addresses
-    geocodeTable(gdb, "SingleLineInput")
+    geocodeTable(gdb)
 
 
 if __name__ == '__main__':
