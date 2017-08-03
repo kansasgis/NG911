@@ -308,10 +308,15 @@ def launch_compare(gdb, output_table, HNO, addy_city_field, addy_field_list):
 ##    print("Elapsed time was %g seconds" % (end_time - start_time))
 
     # clean up
-    Delete_management(tempTable)
+    try:
+        Delete_management(tempTable)
+    except:
+        pass
 
-    DeleteField_management(output_table, "NAME_COMPARE;CODE_COMPARE")
-    DeleteField_management(rd_fc, "NAME_COMPARE;CODE_COMPARE_L;CODE_COMPARE_R")
+    for field in ["NAME_COMPARE", "CODE_COMPARE", "CODE_COMPARE_L", "CODE_COMPARE_R"]:
+        for data in [output_table, rd_fc]:
+            if fieldExists(data, field):
+                DeleteField_management(data, field)
 
 if __name__ == '__main__':
     main()

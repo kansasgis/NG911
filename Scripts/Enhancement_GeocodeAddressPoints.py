@@ -9,7 +9,7 @@
 #-------------------------------------------------------------------------------
 from arcpy import (GetParameterAsText, Exists, Copy_management, DisableEditorTracking_management,
             EnableEditorTracking_management)
-from MSAG_DBComparison import launch_compare, prep_roads_for_comparison
+from MSAG_DBComparison import launch_compare
 from NG911_GDB_Objects import getDefault20NG911AddressObject, getDefault20NG911RoadCenterlineObject
 from os.path import join
 
