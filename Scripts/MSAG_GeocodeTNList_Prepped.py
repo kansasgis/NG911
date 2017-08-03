@@ -10,7 +10,8 @@ from arcpy import (CopyRows_management, Delete_management, AddField_management,
             CalculateField_management, GetParameterAsText, Exists, env,
             CreateTable_management,
             MakeFeatureLayer_management, AddMessage, CreateFileGDB_management,
-            MakeTableView_management)
+            MakeTableView_management, DisableEditorTracking_management,
+            EnableEditorTracking_management)
 from arcpy.da import InsertCursor, UpdateCursor
 from NG911_DataCheck import userMessage, getFieldDomain
 from os.path import join, dirname, basename, exists, realpath
@@ -148,12 +149,23 @@ def main():
     tn = GetParameterAsText(9)
     gdb_object = getGDBObject(gdb)
 
+    addy_fc = join(gdb, "NG911", "AddressPoints")
+    rd_fc = join(gdb, "NG911", "RoadCenterline")
+
+    # turn off editor tracking
+    DisableEditorTracking_management(addy_fc, "DISABLE_CREATOR", "DISABLE_CREATION_DATE", "DISABLE_LAST_EDITOR", "DISABLE_LAST_EDIT_DATE")
+    DisableEditorTracking_management(rd_fc, "DISABLE_CREATOR", "DISABLE_CREATION_DATE", "DISABLE_LAST_EDITOR", "DISABLE_LAST_EDIT_DATE")
+
     xls_fields = [hno, hns, prd, rd, sts, post, msagco, tn]
 
     prepXLS(xls, gdb, xls_fields)
 
     #geocode addresses
     geocodeTable(gdb)
+
+    # turn editor tracking back on
+    EnableEditorTracking_management(addy_fc, "", "", "UPDATEBY", "L_UPDATE", "NO_ADD_FIELDS", "UTC")
+    EnableEditorTracking_management(rd_fc, "", "", "UPDATEBY", "L_UPDATE", "NO_ADD_FIELDS", "UTC")
 
 if __name__ == '__main__':
     main()

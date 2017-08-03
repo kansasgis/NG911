@@ -20,7 +20,7 @@ from arcpy import (AddField_management, AddMessage, CalculateField_management, C
                    ListFields, MakeFeatureLayer_management, MakeTableView_management, SelectLayerByAttribute_management,
                    SelectLayerByLocation_management, DeleteRows_management, GetInstallInfo, env, ListDatasets,
                    AddJoin_management, RemoveJoin_management, AddWarning, CopyFeatures_management, Append_management,
-                   Dissolve_management, DeleteField_management)
+                   Dissolve_management, DeleteField_management, DisableEditorTracking_management, EnableEditorTracking_management)
 from arcpy.da import Walk, InsertCursor, ListDomains, SearchCursor, UpdateCursor, Editor
 from os import path
 from os.path import basename, dirname, join, exists
@@ -896,10 +896,12 @@ def FindOverlaps(working_gdb):
     fields = (left_from,left_to,right_from,right_to,parity_l,parity_r,segid,msagco_l,msagco_r)
     msagList = [msagco_l, msagco_r]
 
+    # turn off editor tracking
+    DisableEditorTracking_management(rd_fc, "DISABLE_CREATOR", "DISABLE_CREATION_DATE", "DISABLE_LAST_EDITOR", "DISABLE_LAST_EDIT_DATE")
+
     # clean up if final overlap output already exists
     if Exists(final_fc):
         Delete_management(final_fc)
-
 
 ##    # prep road label name
 ##    prep_roads_for_comparison(rd_fc, name_field)
@@ -985,6 +987,9 @@ def FindOverlaps(working_gdb):
     # delete field if need be
     if fieldExists(rd_fc, name_field):
         DeleteField_management(rd_fc, name_field)
+
+    # turn editor tracking back on
+    EnableEditorTracking_management(rd_fc, "", "", "UPDATEBY", "L_UPDATE", "NO_ADD_FIELDS", "UTC")
 
 
 def checkValuesAgainstDomain(pathsInfoObject):
