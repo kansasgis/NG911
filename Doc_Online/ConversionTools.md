@@ -3,6 +3,30 @@
 Description: The conversion tools convert data from one format to
 another or upgrade data template versions.
 
+[*1. Convert 2.0 to 2.1*](#conversion): the first step in upgrading 
+an existing v2.0 NG911 GIS Data Model geodatabase to the NG911 GIS 
+Data Model v2.1 template geodatabase. This step completes the 
+initial data migration between the two geodatabases.
+
+[*2. Populate Road AUTH_X*](#conversion): the second step in the 
+2.0 > 2.1 conversion process auto-populates any “Y” values in the 
+AUTH_L and AUTH_R fields in the road centerline file.
+
+[*3. Populate Road GEOMSAGX*](#conversion): the third step in the 
+2.0 > 2.1 conversion process auto-populates both the “Y” and “N” 
+values in the GEOMSAGL and GEOMSAGR fields in the road centerline file.
+
+[*4. Populate Address RCLMATCH*](#conversion): the fourth step in the 
+2.0 > 2.1 conversion process populates both the RCLMATCH and RCLSIDE 
+fields in the address point file.
+
+[*5. Populate RCLMATCH NO_MATCH*](#conversion): the fifth step in the 
+2.0 > 2.1 conversion process populates any blank or null RCLMATCH 
+features with “NO_MATCH”.
+
+[*6. Populate Address GEOMSAG*](#conversion): the final step in the 
+2.0 > 2.1 conversion process populates the GEOMSAG field of the address point file.
+
 [*Add/Update Parcel Layer*](#parcels): converts a county's parcel layer to NG911
 template standards and loads data into the geodatabase
 
@@ -10,11 +34,14 @@ template standards and loads data into the geodatabase
 of a NG911 geodatabase into shapefiles and converts the road alias table
 to a DBF.
 
-[*Upgrade to GDB1.1 Template*](#upgrade11): upgrades existing v1.0 NG911 GIS Data
-Model geodatabase to the NG911 GIS Data Model v1.1 template geodatabase.
-
 [*Zip NG911 Geodatabase*](#zip): zips an NG911 geodatabase to prepare it for
 submission to DASC
+
+< a name="conversion"></a>
+Running 2.0 to 2.1 Conversion Tools:
+
+For full documentation, please see the official conversion documentation called 
+"ConvertingGDB_2.0_to_2.1".
 
 <a name="parcels"></a>
 Running *Add/Update Parcel Layer*:
@@ -38,27 +65,6 @@ dashes or be straight digits.
 you’d like to import the parcels.
 
 7.	Run the tool.
-
-
-<a name="upgrade11"></a>
-Running *Convert 1.1 to 2.0*:
-
-1.  Open ArcCatalog and navigate to the toolbox called “Kansas NG911 GIS
-    tools”, expand the toolbox, then expand the toolset called
-    “Conversion Tools.”
-
-2.  Double click the script titled “Convert 1.1 to 2.0.”
-
-3.  In the “1.1 Geodatabase” parameter, select your
-    current geodatabase.
-
-4.  In the “2.0 Geodatabase Template” parameter, select the 2.0 template
-    geodatabase you have already downloaded. Be sure to check the
-    projection of the geodatabase. This script will import the data
-    directly into this geodatabase, so be prepared and make a copy if
-    you like.
-
-5.  Run the tool.
 
 <a name="gdb2shp"></a>
 Running *GDB to Shapefile*:
@@ -98,13 +104,7 @@ Running *Zip NG911 Geodatabase*:
 
 The conversion tools require:
 
--	Conversion\_AddParcels.py
-
--   Conversion\_GDB11to20.py
-
--   Conversion\_GDBtoShapefile.py
-
--   Conversion\_ZipNG911Geodatabase.py
+-	The complete NG911 toolbox setup and all scripts it includes.
 
 Support Contact:
 

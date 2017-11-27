@@ -1,0 +1,4 @@
+Values|Definition
+R|RIGHT
+L|LEFT
+N|NO MATCH

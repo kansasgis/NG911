@@ -22,14 +22,6 @@
 #-------------------------------------------------------------------------------
 
 # Import modules
-##from arcpy import (env, GetParameterAsText, ListFields, MakeTableView_management,
-##        MakeFeatureLayer_management, SelectLayerByAttribute_management, Delete_management,
-##        CopyFeatures_management, Exists, Append_management, AddWarning, Dissolve_management)
-##from arcpy.da import SearchCursor
-##from os.path import join
-##from NG911_GDB_Objects import getFCObject, getGDBObject
-##from NG911_arcpy_shortcuts import fieldExists
-##from time import strftime
 from arcpy import GetParameterAsText
 from NG911_DataCheck import FindOverlaps
 

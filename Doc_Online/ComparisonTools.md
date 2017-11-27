@@ -5,7 +5,8 @@ between two different data resources. These tools are intended to be run
 against same-PSAP data as it changes through time to flag edited,
 updated and deleted records.
 
-Note: 1.1 geodatabases can only be compared with other 1.1 geodatabase, and 2.0 geodatabases can only be compared with 2.0 geodatabases.
+Note: 2.0 geodatabases can only be compared with other 2.0 geodatabase, and 
+2.1 geodatabases can only be compared with 2.1 geodatabases.
 
 [*Compare NG911 Data*](#data): compares two NG911 feature classes of similar
 kinds (ex. Address points edited recently against address points from
@@ -18,10 +19,6 @@ Geodatabase edited recently against geodatabase from a year ago). This
 check will flag all attribute edits, spatial edits, new records and
 deleted records between all common layers and tables in the two
 geodatabases.
-
-The comparison tools require:
-
--   One Python script called Comparison\_CompareDataLayers.py
 
 <a name="data"></a>
 Running *Compare NG911 Data*:
@@ -77,6 +74,10 @@ Running *Compare NG911 Geodatabases*:
     unique ID of the features edited. The unique ID shown is NOT the
     object ID, but instead of the unique ID outlined in the Kansas NG911
     Data Model.
+	
+The comparison tools require:
+
+-   The complete NG911 toolbox setup and all scripts it includes.
 
 Support Contact:
 

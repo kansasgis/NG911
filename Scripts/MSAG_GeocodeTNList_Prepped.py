@@ -19,7 +19,6 @@ from os import mkdir
 from NG911_GDB_Objects import getFCObject, getTNObject, getGDBObject
 from NG911_arcpy_shortcuts import getFastCount, fieldExists
 from sys import exit
-from MSAG_DBComparison import launch_compare
 from MSAG_CheckTNList import geocodeTable
 
 def prepXLS(tnxls_sheet, gdb, xls_fields):

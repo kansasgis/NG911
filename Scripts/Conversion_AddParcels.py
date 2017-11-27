@@ -11,7 +11,7 @@ from arcpy import (GetParameterAsText, CalculateField_management, Append_managem
                     AddField_management, DeleteField_management, Dissolve_management,
                     DeleteFeatures_management)
 from arcpy.da import UpdateCursor, SearchCursor
-from NG911_GDB_Objects import getDefault20NG911ParcelObject
+from NG911_GDB_Objects import getFCObject
 from os.path import join, dirname, abspath
 from inspect import getsourcefile
 from NG911_arcpy_shortcuts import fieldExists
@@ -90,7 +90,7 @@ def main():
     DeleteFeatures_management(target)
 
     #get parcel object
-    p_obj = getDefault20NG911ParcelObject()
+    p_obj = getFCObject(target)
 
     #add a field so the 19 digit PID can be calculated
     if not fieldExists(target, "tempPID"):

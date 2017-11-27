@@ -6,24 +6,21 @@
 #
 # Created:     10/05/2017
 #-------------------------------------------------------------------------------
-from NG911_GDB_Objects import (getDefault20NG911AddressObject,
-                        getDefault20NG911RoadCenterlineObject,
-                        getFCObject)
+from NG911_GDB_Objects import getFCObject
 from os.path import join, dirname
 from arcpy.da import SearchCursor, UpdateCursor, Editor
 from arcpy import (Copy_management, AddField_management, AddMessage,
                     MakeFeatureLayer_management, Delete_management,
                     CalculateField_management, Exists, Merge_management,
                     MakeTableView_management, CopyRows_management,
-                    DeleteField_management)
+                    DeleteField_management, SelectLayerByAttribute_management,
+                    ListFields)
 from NG911_arcpy_shortcuts import getFastCount, fieldExists
 import time
 
 def prep_roads_for_comparison(rd_fc, name_field, code_fields, city_fields, field_list):
 
-    working_gdb = dirname(dirname(rd_fc))
-
-    rd_object = getDefault20NG911RoadCenterlineObject()
+    rd_object = getFCObject(rd_fc)
 
     # add the NAME_OVERLAP field
     if not fieldExists(rd_fc, name_field):
@@ -33,6 +30,9 @@ def prep_roads_for_comparison(rd_fc, name_field, code_fields, city_fields, field
     fields1 = tuple(field_list)
 
     # start edit session
+    working_gdb = dirname(rd_fc)
+    if working_gdb[-3:] != "gdb":
+        working_gdb = dirname(dirname(rd_fc))
     edit = Editor(working_gdb)
     edit.startEditing(False, False)
 
@@ -47,7 +47,7 @@ def prep_roads_for_comparison(rd_fc, name_field, code_fields, city_fields, field
             while start_int < field_count:
                 if row[start_int] is not None:
                     if row[start_int] not in ("", " "):
-                        label = label + "|" + str(row[start_int]).strip()
+                        label = label + "|" + str(row[start_int]).strip().upper()
                 start_int = start_int + 1
 
             row[0] = label.replace("||","|")
@@ -69,25 +69,47 @@ def prep_roads_for_comparison(rd_fc, name_field, code_fields, city_fields, field
                    if city is None or city in ('', ' ', '  '):
                        city = "   "
                    for name in rd, city:
+                       name = name.strip().upper()
                        while len(name) < 3:
                            name = name + " "
                        list_len = len(name)
                        k = 0
                        while k < list_len:
                            try:
-                               chars1 = b[name[k]]
+                               chars1 = b[name[k].upper()]
                            except:
                                chars1 = 42
                            if 0 < k + 1 < list_len:
                                try:
-                                   chars1 = chars1 * k * b[name[k+1]]
+                                   chars1 = chars1 * k * b[name[k+1].upper()]
                                except:
-                                   chars1 = chars1 * k * 41
+                                   chars1 = chars1 * k * 42
                            else:
-                               chars1 = chars1 * b[name[list_len - 1]]
+                               try:
+                                   chars1 = chars1 * b[name[list_len - 1]]
+                               except:
+                                   chars1 = chars1 * 42
                            tot += chars1
                            k += 1
-                       tot = tot * b[name[0]] - b[name[1]] + b[name[2]]
+
+                       # make sure all the values actually work
+                       if name[0].upper() not in b:
+                           a0 = 42
+                       else:
+                           a0 = b[name[0].upper()]
+
+                       if name[1].upper() not in b:
+                           a1 = 42
+                       else:
+                           a1 = b[name[1].upper()]
+
+                       if name[2].upper() not in b:
+                           a2 = 42
+                       else:
+                           a2 = b[name[2].upper()]
+
+                       tot = tot * a0 - a1 + a2
+
                    return tot"""
 
     for code_field in code_fields:
@@ -96,44 +118,96 @@ def prep_roads_for_comparison(rd_fc, name_field, code_fields, city_fields, field
         # add the NAME_OVERLAP field
         if not fieldExists(rd_fc, code_field):
             AddField_management(rd_fc, code_field, "LONG")
-        try:
-            CalculateField_management(rd_fc, code_field, "calc_code( !" + name_field + "!.upper(), !" + city_field + "! )", "PYTHON_9.3", code_block)
-        except:
-            CalculateField_management(rd_fc, code_field, 1, "PYTHON_9.3")
+##        try:
+        CalculateField_management(rd_fc, code_field, "calc_code( !" + name_field + "!.upper(), !" + city_field + "! )", "PYTHON_9.3", code_block)
+##        except:
+##            CalculateField_management(rd_fc, code_field, 1, "PYTHON_9.3")
+
+
+def ap_compare(hno, hno_code, ap_fc):
+
+    segid_list = []
+
+    wc = "CODE_COMPARE = " + str(hno_code) + " AND HNO = " + str(hno)
+
+    a = "a"
+    MakeFeatureLayer_management(ap_fc, a, wc)
+    count = getFastCount(a)
+
+    if count > 0:
+        # search cursor to get all ties
+
+        segid_field = "NGADDID"
+        if not fieldExists(ap_fc, segid_field):
+            segid_field = "ADDID"
+
+        rd_fields = (segid_field)
+
+        with SearchCursor(ap_fc, rd_fields, wc) as r_rows:
+            for r_row in r_rows:
+                segid_list.append(r_row[0])
+
+            try:
+                del r_row, r_rows
+            except:
+                pass
+
+        del rd_fields
+
+    if len(segid_list) == 1:
+        segid = segid_list[0]
+    elif len(segid_list) == 0:
+        segid = ""
+    else:
+        segid = "TIES"
+
+    Delete_management(a)
+
+    return segid
+    del segid_list
 
 
 def db_compare(hno, hno_code, tempTable):
 
     # see if the address number is even or odd
-    if int(str(hno)[-1]) & 1: # bitwise operation to test for odd/even (thanks to Sherry M.)
+    if hno & 1: # bitwise operation to test for odd/even (thanks to Sherry M.)
         parity = "('O','B')"
     else:
         parity = "('E','B')"
 
     segid_list = []
 
+    # set up wc to query the road table accordingly
     wc = "CODE_COMPARE = " + str(hno_code) + " AND PARITY in " + parity
 
-    segid_field = "NGSEGID"
-    if not fieldExists(tempTable, segid_field):
-        segid_field = "SEGID"
+    # if the version is 2.1, make sure only the AUTH = Y records are used
+    if fieldExists(tempTable, "AUTH"):
+        wc = wc + " AND AUTH = 'Y'"
 
-    rd_fields = (segid_field, "FROM_", "TO")
+    segid_field = "NGSEGID"
+    side = "N"
+
+    rd_fields = (segid_field, "FROM_", "TO", "RCLSIDE", "PARITY")
     with SearchCursor(tempTable, rd_fields, wc) as r_rows:
         for r_row in r_rows:
-            f_add = r_row[1]
-            t_add = r_row[2]
 
-            # get high and low
-            if f_add < t_add:
-                low = f_add
-                high = t_add
-            else:
-                low = t_add
-                high = f_add
+            # set the counter for the range, it'll usually be 2
+            range_counter = 2
+            if r_row[4] == "B": # if the range is B (both sides), the counter = 1
+                range_counter = 1
 
-            if low <= hno <= high:
+            # get the range by 2s
+            sideRange = list(range(r_row[1], r_row[2] + 2, range_counter))
+
+            # if the range was high to low, flip it
+            if sideRange == []:
+                sideRange = list(range(r_row[2], r_row[1] + 2, range_counter))
+
+            if hno in sideRange:
                 segid_list.append(r_row[0])
+
+                # grab the side, I'll reset later if it should be N
+                side = r_row[3]
 
         try:
             del r_row, r_rows
@@ -146,20 +220,24 @@ def db_compare(hno, hno_code, tempTable):
         segid = segid_list[0]
     elif len(segid_list) == 0:
         segid = ""
+        side = "N"
     else:
         segid = "TIES"
+        side = "N"
 
-    return segid
+    return [segid, side]
     del segid_list
 
 
-def launch_compare(gdb, output_table, HNO, addy_city_field, addy_field_list):
+def launch_compare(gdb, output_table, HNO, addy_city_field, addy_field_list, queryAP):
 ##    start_time = time.time()
     rd_fc = join(gdb, "NG911", "RoadCenterline")
+    ap_fc = join(gdb, "NG911", "AddressPoints")
     name_field = "NAME_COMPARE"
     code_field = "CODE_COMPARE"
     city_field = "MSAGCO"
     rd_object = getFCObject(rd_fc)
+    ap_object = getFCObject(ap_fc)
 
     # prep address points with concatenated label field
     if addy_field_list[0] != name_field:
@@ -169,56 +247,111 @@ def launch_compare(gdb, output_table, HNO, addy_city_field, addy_field_list):
     # prep road centerline with concatenated label field
     road_field_list = rd_object.LABEL_FIELDS
     road_field_list[0] = name_field
-    prep_roads_for_comparison(rd_fc, name_field, [code_field + "_L", code_field +"_R"], [ city_field + "_L", city_field + "_R"], road_field_list)
-
     segid_field = rd_object.UNIQUEID
+    version = rd_object.GDB_VERSION
 
-    l_field_info = """OBJECTID OBJECTID HIDDEN NONE;Shape Shape HIDDEN NONE;STEWARD STEWARD HIDDEN NONE;L_UPDATE L_UPDATE HIDDEN NONE;
-    EFF_DATE EFF_DATE HIDDEN NONE;EXP_DATE EXP_DATE HIDDEN NONE;""" + segid_field + " " + segid_field + """ VISIBLE NONE;STATE_L STATE_L HIDDEN NONE;
-    STATE_R STATE_R HIDDEN NONE;COUNTY_L COUNTY_L HIDDEN NONE;COUNTY_R COUNTY_R HIDDEN NONE;MUNI_L MUNI_L HIDDEN NONE;
-    MUNI_R MUNI_R HIDDEN NONE;L_F_ADD FROM VISIBLE NONE;L_T_ADD TO VISIBLE NONE;R_F_ADD R_F_ADD HIDDEN NONE;
-    R_T_ADD R_T_ADD HIDDEN NONE;PARITY_L PARITY VISIBLE NONE;PARITY_R PARITY_R HIDDEN NONE;POSTCO_L POSTCO_L HIDDEN NONE;
-    POSTCO_R POSTCO_R HIDDEN NONE;ZIP_L ZIP_L HIDDEN NONE;ZIP_R ZIP_R HIDDEN NONE;ESN_L ESN_L HIDDEN NONE;ESN_R ESN_R HIDDEN NONE;
-    MSAGCO_L MSAGCO_L HIDDEN NONE;MSAGCO_R MSAGCO_R HIDDEN NONE;PRD PRD HIDDEN NONE;STP STP HIDDEN NONE;RD RD HIDDEN NONE;
-    STS STS HIDDEN NONE;POD POD HIDDEN NONE;POM POM HIDDEN NONE;SPDLIMIT SPDLIMIT HIDDEN NONE;ONEWAY ONEWAY HIDDEN NONE;
-    RDCLASS RDCLASS HIDDEN NONE;UPDATEBY UPDATEBY HIDDEN NONE;LABEL LABEL HIDDEN NONE;ELEV_F ELEV_F HIDDEN NONE;
-    ELEV_T ELEV_T HIDDEN NONE;SURFACE SURFACE HIDDEN NONE;STATUS STATUS HIDDEN NONE;TRAVEL TRAVEL HIDDEN NONE;
-    LRSKEY LRSKEY HIDDEN NONE;EXCEPTION EXCEPTION HIDDEN NONE;SUBMIT SUBMIT HIDDEN NONE;NOTES NOTES HIDDEN NONE;
-    UNINC_L UNINC_L HIDDEN NONE;UNINC_R UNINC_R HIDDEN NONE;Shape_Length Shape_Length HIDDEN NONE;ESN_C ESN_C HIDDEN NONE;
-    NAME_COMPARE NAME_COMPARE VISIBLE NONE;CODE_COMPARE_L CODE_COMPARE VISIBLE NONE;CODE_COMPARE_R CODE_COMPARE_R HIDDEN NONE"""
+    # copy the roads to a table for comparison
+    rc_table_view = "rc_table_view"
+    rt = join(gdb, "rcTable" + version)
+    if Exists(rt):
+        Delete_management(rt)
+    wc = "SUBMIT = 'Y'"
+    MakeTableView_management(rd_fc, rc_table_view, wc)
+    CopyRows_management(rc_table_view, rt)
+    prep_roads_for_comparison(rt, name_field, [code_field + "_L", code_field +"_R"], [ city_field + "_L", city_field + "_R"], road_field_list)
 
-    r_field_info = """OBJECTID OBJECTID HIDDEN NONE;Shape Shape HIDDEN NONE;STEWARD STEWARD HIDDEN NONE;L_UPDATE L_UPDATE HIDDEN NONE;
-    EFF_DATE EFF_DATE HIDDEN NONE;EXP_DATE EXP_DATE HIDDEN NONE;""" + segid_field + " " + segid_field + """ VISIBLE NONE;STATE_L STATE_L HIDDEN NONE;
-    STATE_R STATE_R HIDDEN NONE;COUNTY_L COUNTY_L HIDDEN NONE;COUNTY_R COUNTY_R HIDDEN NONE;MUNI_L MUNI_L HIDDEN NONE;
-    MUNI_R MUNI_R HIDDEN NONE;L_F_ADD L_F_ADD HIDDEN NONE;L_T_ADD L_T_ADD HIDDEN NONE;R_F_ADD FROM VISIBLE NONE;
-    R_T_ADD TO VISIBLE NONE;PARITY_L PARITY_L HIDDEN NONE;PARITY_R PARITY VISIBLE NONE;POSTCO_L POSTCO_L HIDDEN NONE;
-    POSTCO_R POSTCO_R HIDDEN NONE;ZIP_L ZIP_L HIDDEN NONE;ZIP_R ZIP_R HIDDEN NONE;ESN_L ESN_L HIDDEN NONE;ESN_R ESN_R HIDDEN NONE;
-    MSAGCO_L MSAGCO_L HIDDEN NONE;MSAGCO_R MSAGCO_R HIDDEN NONE;PRD PRD HIDDEN NONE;STP STP HIDDEN NONE;RD RD HIDDEN NONE;
-    STS STS HIDDEN NONE;POD POD HIDDEN NONE;POM POM HIDDEN NONE;SPDLIMIT SPDLIMIT HIDDEN NONE;ONEWAY ONEWAY HIDDEN NONE;
-    RDCLASS RDCLASS HIDDEN NONE;UPDATEBY UPDATEBY HIDDEN NONE;LABEL LABEL HIDDEN NONE;ELEV_F ELEV_F HIDDEN NONE;
-    ELEV_T ELEV_T HIDDEN NONE;SURFACE SURFACE HIDDEN NONE;STATUS STATUS HIDDEN NONE;TRAVEL TRAVEL HIDDEN NONE;
-    LRSKEY LRSKEY HIDDEN NONE;EXCEPTION EXCEPTION HIDDEN NONE;SUBMIT SUBMIT HIDDEN NONE;NOTES NOTES HIDDEN NONE;
-    UNINC_L UNINC_L HIDDEN NONE;UNINC_R UNINC_R HIDDEN NONE;Shape_Length Shape_Length HIDDEN NONE;ESN_C ESN_C HIDDEN NONE;
-    NAME_COMPARE NAME_COMPARE VISIBLE NONE;CODE_COMPARE_L CODE_COMPARE_L HIDDEN NONE;CODE_COMPARE_R CODE_COMPARE VISIBLE NONE"""
+    # prep address points with concatenated label field if necessary
+    if queryAP == True:
+        prep_roads_for_comparison(ap_fc, name_field, [code_field], [city_field], road_field_list)
+
+    if version == "20":
+
+        l_field_info = """OBJECTID OBJECTID HIDDEN NONE;Shape Shape HIDDEN NONE;STEWARD STEWARD HIDDEN NONE;L_UPDATE L_UPDATE HIDDEN NONE;
+        EFF_DATE EFF_DATE HIDDEN NONE;EXP_DATE EXP_DATE HIDDEN NONE;NGSEGID NGSEGID VISIBLE NONE;STATE_L STATE_L HIDDEN NONE;
+        STATE_R STATE_R HIDDEN NONE;COUNTY_L COUNTY_L HIDDEN NONE;COUNTY_R COUNTY_R HIDDEN NONE;MUNI_L MUNI_L HIDDEN NONE;
+        MUNI_R MUNI_R HIDDEN NONE;L_F_ADD FROM VISIBLE NONE;L_T_ADD TO VISIBLE NONE;R_F_ADD R_F_ADD HIDDEN NONE;
+        R_T_ADD R_T_ADD HIDDEN NONE;PARITY_L PARITY VISIBLE NONE;PARITY_R PARITY_R HIDDEN NONE;POSTCO_L POSTCO_L HIDDEN NONE;
+        POSTCO_R POSTCO_R HIDDEN NONE;ZIP_L ZIP_L HIDDEN NONE;ZIP_R ZIP_R HIDDEN NONE;ESN_L ESN_L HIDDEN NONE;ESN_R ESN_R HIDDEN NONE;
+        MSAGCO_L MSAGCO_L HIDDEN NONE;MSAGCO_R MSAGCO_R HIDDEN NONE;PRD PRD HIDDEN NONE;STP STP HIDDEN NONE;RD RD HIDDEN NONE;
+        STS STS HIDDEN NONE;POD POD HIDDEN NONE;POM POM HIDDEN NONE;SPDLIMIT SPDLIMIT HIDDEN NONE;ONEWAY ONEWAY HIDDEN NONE;
+        RDCLASS RDCLASS HIDDEN NONE;UPDATEBY UPDATEBY HIDDEN NONE;LABEL LABEL HIDDEN NONE;ELEV_F ELEV_F HIDDEN NONE;
+        ELEV_T ELEV_T HIDDEN NONE;SURFACE SURFACE HIDDEN NONE;STATUS STATUS HIDDEN NONE;TRAVEL TRAVEL HIDDEN NONE;
+        LRSKEY LRSKEY HIDDEN NONE;EXCEPTION EXCEPTION HIDDEN NONE;SUBMIT SUBMIT HIDDEN NONE;NOTES NOTES HIDDEN NONE;
+        UNINC_L UNINC_L HIDDEN NONE;UNINC_R UNINC_R HIDDEN NONE;Shape_Length Shape_Length HIDDEN NONE;ESN_C ESN_C HIDDEN NONE;
+        NAME_COMPARE NAME_COMPARE VISIBLE NONE;CODE_COMPARE_L CODE_COMPARE VISIBLE NONE;CODE_COMPARE_R CODE_COMPARE_R HIDDEN NONE"""
+
+        r_field_info = """OBJECTID OBJECTID HIDDEN NONE;Shape Shape HIDDEN NONE;STEWARD STEWARD HIDDEN NONE;L_UPDATE L_UPDATE HIDDEN NONE;
+        EFF_DATE EFF_DATE HIDDEN NONE;EXP_DATE EXP_DATE HIDDEN NONE;NGSEGID NGSEGID VISIBLE NONE;STATE_L STATE_L HIDDEN NONE;
+        STATE_R STATE_R HIDDEN NONE;COUNTY_L COUNTY_L HIDDEN NONE;COUNTY_R COUNTY_R HIDDEN NONE;MUNI_L MUNI_L HIDDEN NONE;
+        MUNI_R MUNI_R HIDDEN NONE;L_F_ADD L_F_ADD HIDDEN NONE;L_T_ADD L_T_ADD HIDDEN NONE;R_F_ADD FROM VISIBLE NONE;
+        R_T_ADD TO VISIBLE NONE;PARITY_L PARITY_L HIDDEN NONE;PARITY_R PARITY VISIBLE NONE;POSTCO_L POSTCO_L HIDDEN NONE;
+        POSTCO_R POSTCO_R HIDDEN NONE;ZIP_L ZIP_L HIDDEN NONE;ZIP_R ZIP_R HIDDEN NONE;ESN_L ESN_L HIDDEN NONE;ESN_R ESN_R HIDDEN NONE;
+        MSAGCO_L MSAGCO_L HIDDEN NONE;MSAGCO_R MSAGCO_R HIDDEN NONE;PRD PRD HIDDEN NONE;STP STP HIDDEN NONE;RD RD HIDDEN NONE;
+        STS STS HIDDEN NONE;POD POD HIDDEN NONE;POM POM HIDDEN NONE;SPDLIMIT SPDLIMIT HIDDEN NONE;ONEWAY ONEWAY HIDDEN NONE;
+        RDCLASS RDCLASS HIDDEN NONE;UPDATEBY UPDATEBY HIDDEN NONE;LABEL LABEL HIDDEN NONE;ELEV_F ELEV_F HIDDEN NONE;
+        ELEV_T ELEV_T HIDDEN NONE;SURFACE SURFACE HIDDEN NONE;STATUS STATUS HIDDEN NONE;TRAVEL TRAVEL HIDDEN NONE;
+        LRSKEY LRSKEY HIDDEN NONE;EXCEPTION EXCEPTION HIDDEN NONE;SUBMIT SUBMIT HIDDEN NONE;NOTES NOTES HIDDEN NONE;
+        UNINC_L UNINC_L HIDDEN NONE;UNINC_R UNINC_R HIDDEN NONE;Shape_Length Shape_Length HIDDEN NONE;ESN_C ESN_C HIDDEN NONE;
+        NAME_COMPARE NAME_COMPARE VISIBLE NONE;CODE_COMPARE_L CODE_COMPARE_L HIDDEN NONE;CODE_COMPARE_R CODE_COMPARE VISIBLE NONE"""
+
+    elif version == "21":
+        l_field_info = """OBJECTID OBJECTID HIDDEN NONE;Shape Shape HIDDEN NONE;STEWARD STEWARD HIDDEN NONE;L_UPDATE L_UPDATE HIDDEN NONE;
+        EFF_DATE EFF_DATE HIDDEN NONE;EXP_DATE EXP_DATE HIDDEN NONE;NGSEGID NGSEGID VISIBLE NONE;STATE_L STATE_L HIDDEN NONE;
+        STATE_R STATE_R HIDDEN NONE;COUNTY_L COUNTY_L HIDDEN NONE;COUNTY_R COUNTY_R HIDDEN NONE;MUNI_L MUNI_L HIDDEN NONE;
+        MUNI_R MUNI_R HIDDEN NONE;L_F_ADD FROM VISIBLE NONE;L_T_ADD TO VISIBLE NONE;R_F_ADD R_F_ADD HIDDEN NONE;
+        R_T_ADD R_T_ADD HIDDEN NONE;PARITY_L PARITY VISIBLE NONE;PARITY_R PARITY_R HIDDEN NONE;POSTCO_L POSTCO_L HIDDEN NONE;
+        POSTCO_R POSTCO_R HIDDEN NONE;ZIP_L ZIP_L HIDDEN NONE;ZIP_R ZIP_R HIDDEN NONE;ESN_L ESN_L HIDDEN NONE;ESN_R ESN_R HIDDEN NONE;
+        MSAGCO_L MSAGCO_L HIDDEN NONE;MSAGCO_R MSAGCO_R HIDDEN NONE;PRD PRD HIDDEN NONE;STP STP HIDDEN NONE;RD RD HIDDEN NONE;
+        STS STS HIDDEN NONE;POD POD HIDDEN NONE;POM POM HIDDEN NONE;SPDLIMIT SPDLIMIT HIDDEN NONE;ONEWAY ONEWAY HIDDEN NONE;
+        RDCLASS RDCLASS HIDDEN NONE;UPDATEBY UPDATEBY HIDDEN NONE;LABEL LABEL HIDDEN NONE;ELEV_F ELEV_F HIDDEN NONE;
+        ELEV_T ELEV_T HIDDEN NONE;SURFACE SURFACE HIDDEN NONE;STATUS STATUS HIDDEN NONE;TRAVEL TRAVEL HIDDEN NONE;
+        LRSKEY LRSKEY HIDDEN NONE;EXCEPTION EXCEPTION HIDDEN NONE;SUBMIT SUBMIT HIDDEN NONE;NOTES NOTES HIDDEN NONE;
+        UNINC_L UNINC_L HIDDEN NONE;UNINC_R UNINC_R HIDDEN NONE;Shape_Length Shape_Length HIDDEN NONE;
+        AUTH_L AUTH VISIBLE NONE;AUTH_R AUTH_R HIDDEN NONE;GEOMSAGL GEOMSAGL HIDDEN NONE;GEOMSAGR GEOMSAGR HIDDEN NONE;
+        NAME_COMPARE NAME_COMPARE VISIBLE NONE;CODE_COMPARE_L CODE_COMPARE VISIBLE NONE;CODE_COMPARE_R CODE_COMPARE_R HIDDEN NONE"""
+
+        r_field_info = """OBJECTID OBJECTID HIDDEN NONE;Shape Shape HIDDEN NONE;STEWARD STEWARD HIDDEN NONE;L_UPDATE L_UPDATE HIDDEN NONE;
+        EFF_DATE EFF_DATE HIDDEN NONE;EXP_DATE EXP_DATE HIDDEN NONE;NGSEGID NGSEGID VISIBLE NONE;STATE_L STATE_L HIDDEN NONE;
+        STATE_R STATE_R HIDDEN NONE;COUNTY_L COUNTY_L HIDDEN NONE;COUNTY_R COUNTY_R HIDDEN NONE;MUNI_L MUNI_L HIDDEN NONE;
+        MUNI_R MUNI_R HIDDEN NONE;L_F_ADD L_F_ADD HIDDEN NONE;L_T_ADD L_T_ADD HIDDEN NONE;R_F_ADD FROM VISIBLE NONE;
+        R_T_ADD TO VISIBLE NONE;PARITY_L PARITY_L HIDDEN NONE;PARITY_R PARITY VISIBLE NONE;POSTCO_L POSTCO_L HIDDEN NONE;
+        POSTCO_R POSTCO_R HIDDEN NONE;ZIP_L ZIP_L HIDDEN NONE;ZIP_R ZIP_R HIDDEN NONE;ESN_L ESN_L HIDDEN NONE;ESN_R ESN_R HIDDEN NONE;
+        MSAGCO_L MSAGCO_L HIDDEN NONE;MSAGCO_R MSAGCO_R HIDDEN NONE;PRD PRD HIDDEN NONE;STP STP HIDDEN NONE;RD RD HIDDEN NONE;
+        STS STS HIDDEN NONE;POD POD HIDDEN NONE;POM POM HIDDEN NONE;SPDLIMIT SPDLIMIT HIDDEN NONE;ONEWAY ONEWAY HIDDEN NONE;
+        RDCLASS RDCLASS HIDDEN NONE;UPDATEBY UPDATEBY HIDDEN NONE;LABEL LABEL HIDDEN NONE;ELEV_F ELEV_F HIDDEN NONE;
+        ELEV_T ELEV_T HIDDEN NONE;SURFACE SURFACE HIDDEN NONE;STATUS STATUS HIDDEN NONE;TRAVEL TRAVEL HIDDEN NONE;
+        LRSKEY LRSKEY HIDDEN NONE;EXCEPTION EXCEPTION HIDDEN NONE;SUBMIT SUBMIT HIDDEN NONE;NOTES NOTES HIDDEN NONE;
+        UNINC_L UNINC_L HIDDEN NONE;UNINC_R UNINC_R HIDDEN NONE;Shape_Length Shape_Length HIDDEN NONE;
+        AUTH_L AUTH_L HIDDEN NONE;AUTH_R AUTH VISIBLE NONE;GEOMSAGL GEOMSAGL HIDDEN NONE;GEOMSAGR GEOMSAGR HIDDEN NONE;
+        NAME_COMPARE NAME_COMPARE VISIBLE NONE;CODE_COMPARE_L CODE_COMPARE_L HIDDEN NONE;CODE_COMPARE_R CODE_COMPARE VISIBLE NONE"""
 
     # set up list of lists to look at each side of the road
     side_lists = [[rd_object.PARITY_L, rd_object.L_F_ADD, rd_object.L_T_ADD, rd_object.UNIQUEID,  code_field + "_L", "RoadCenterline_Layer", l_field_info],
                   [rd_object.PARITY_R, rd_object.R_F_ADD, rd_object.R_T_ADD, rd_object.UNIQUEID, code_field + "_R", "RoadCenterline_Layer2", r_field_info]]
 
     wanted_fields = ["PARITY", "FROM_", "TO", "CODE_COMPARE"]
+
+    if version == "21":
+        wanted_fields.append("AUTH")
+
     # create a temp table of road segments
     # do not include 0-0 ranges or records not for submission
     for side in side_lists:
-        wc = "(" + side[1] + " <> 0 or " + side[2] + " <> 0) AND SUBMIT not in ('N')"
+        side_x = side[4][-1]
+        wc = "(" + side[1] + " <> 0 or " + side[2] + " <> 0)"
         lyr = "lyr"
         # include- high, low, code field, parity, and NGSEGID_L or _R
-        MakeTableView_management(rd_fc, lyr, wc, "", side[6])
+        MakeTableView_management(rt, lyr, wc, "", side[6])
         if Exists(join(gdb, side[5])):
             Delete_management(join(gdb, side[5]))
         CopyRows_management(lyr, join(gdb, side[5]))
         Delete_management(lyr)
 
-        fields = [side[0], side[1], side[2], side[4]]
+        # made sure the table has a column for what side of the street it is
+        AddField_management(join(gdb, side[5]), "RCLSIDE", "TEXT", "", "", 1)
+        CalculateField_management(join(gdb, side[5]), "RCLSIDE", '"' + side_x + '"', "PYTHON_9.3", "")
+
+        fields = [side[0], side[1], side[2], side[4], "RCLSIDE"]
 
         # make sure that the side-neutral field names get added for comparison
         for w_f in wanted_fields:
@@ -241,14 +374,17 @@ def launch_compare(gdb, output_table, HNO, addy_city_field, addy_field_list):
 
     Delete_management(rc_1)
     Delete_management(rc_2)
+    Delete_management(rt)
 
-    # make sure the MATCH field exists
-    if not fieldExists(output_table, "MATCH"):
-        AddField_management(output_table, "MATCH", "TEXT", "", "", 1)
-    if not fieldExists(output_table, rd_object.UNIQUEID):
-        AddField_management(output_table, rd_object.UNIQUEID, "TEXT", "", "", 38)
+    # make sure certain fields exist in the address point layer
+    makeSureFieldDict = {"MATCH": 1, rd_object.UNIQUEID: 38, "MATCH_LAYER": 20, "RCLSIDE": 1}
 
-    addy_fields = (HNO, code_field, "MATCH", rd_object.UNIQUEID)
+    for fld in makeSureFieldDict.keys():
+        length = makeSureFieldDict[fld]
+        if not fieldExists(output_table, fld):
+            AddField_management(output_table, fld, "TEXT", "", "", length)
+
+    addy_fields = [HNO, code_field, "MATCH", rd_object.UNIQUEID, "MATCH_LAYER", "RCLSIDE"]
 
     non_match_count = 0
     count = 1
@@ -261,29 +397,58 @@ def launch_compare(gdb, output_table, HNO, addy_city_field, addy_field_list):
     timeDict = {quarter: "1/4", half:"1/2", three_quarters:"3/4"}
 
     # loop through address points to compare each one
-    with UpdateCursor(output_table, addy_fields) as rows:
+    no1_wc = "CODE_COMPARE <> 1"
+    with UpdateCursor(output_table, addy_fields, no1_wc) as rows:
         for row in rows:
 ##            r_start_time = time.time()
+            # set defaults
+            segid = ""
+            side = ""
+
+            # start testing out addresses
             hno, hno_code = row[0], row[1]
             if hno not in (None, "", " "):
-                try:
+##                try:
                     hno = int(hno)
-                    segid = db_compare(hno, hno_code, tempTable)
-                except:
-                    segid = ""
-            else:
-                segid = ""
+                    match_combo = db_compare(hno, hno_code, tempTable)
+                    segid = match_combo[0]
+                    side = match_combo[1]
+##                except:
+##                    pass
 
             match = "M"
+            layer = "RoadCenterline"
             if segid == "TIES":
                 match = "T"
+                side = "N"
                 non_match_count += 1
             elif segid == "":
-                match = "U"
-                non_match_count += 1
+                if queryAP == True and hno not in (None, "", " "):
+                    segid = ap_compare(hno, hno_code, ap_fc)
+                    match = "M"
+                    side = "N"
+                    layer = "AddressPoints"
+                    if segid =="TIES":
+                        match = "T"
+                        side = "N"
+                        non_match_count += 1
+                    elif segid == "":
+                        match = "U"
+                        side = "N"
+                        non_match_count += 1
+                else:
+                    match = "U"
+                    side = "N"
+                    non_match_count += 1
+
+            if match == "U":
+                layer = ""
 
             row[2] = match
             row[3] = segid
+            row[4] = layer
+            if version == "21":
+                row[5] = side
 
             rows.updateRow(row)
 ##            r_end_time = time.time()
@@ -314,9 +479,12 @@ def launch_compare(gdb, output_table, HNO, addy_city_field, addy_field_list):
         pass
 
     for field in ["NAME_COMPARE", "CODE_COMPARE", "CODE_COMPARE_L", "CODE_COMPARE_R"]:
-        for data in [output_table, rd_fc]:
+        for data in [output_table, ap_fc]:
             if fieldExists(data, field):
-                DeleteField_management(data, field)
+                try:
+                    DeleteField_management(data, field)
+                except:
+                    pass
 
 if __name__ == '__main__':
     main()

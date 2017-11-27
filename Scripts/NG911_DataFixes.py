@@ -6,14 +6,15 @@
 #
 # Created:     21/10/2015
 #-------------------------------------------------------------------------------
-from arcpy import (GetParameterAsText, MakeTableView_management, Frequency_analysis, CalculateField_management, Delete_management, env, Exists, CreateTable_management,
-    AddField_management, GetCount_management, ListFields)
+from arcpy import (GetParameterAsText, MakeTableView_management, Frequency_analysis, CalculateField_management, Delete_management,
+        env, Exists, CreateTable_management,
+    AddField_management, GetCount_management, ListFields, ListFeatureClasses)
 from arcpy.da import SearchCursor, InsertCursor
 from os.path import join, dirname, basename
 from NG911_DataCheck import getFieldDomain, userMessage
 from time import strftime
 from NG911_GDB_Objects import getGDBObject, getFCObject
-from NG911_arcpy_shortcuts import fieldExists
+from NG911_arcpy_shortcuts import fieldExists, CalcWithWC
 
 def FixDomainCase(gdb, domainFolder):
     env.workspace = gdb
@@ -158,3 +159,50 @@ def CreateGeocodeExceptions(gdb):
     else:
         userMessage(basename(FVCR) + " must be present for this tool to run.")
 
+
+def FixMSAGCOspaces(gdb):
+
+    gdbObject = getGDBObject(gdb)
+    addressPoints = gdbObject.AddressPoints
+    roadCenterlines = gdbObject.RoadCenterline
+
+    CalculateField_management(addressPoints, "MSAGCO", "!MSAGCO!.strip()", "PYTHON_9.3", "")
+
+    for m in ["MSAGCO_L", "MSAGCO_R"]:
+        CalculateField_management(roadCenterlines, m, "!" + m + "!.strip()", "PYTHON_9.3", "")
+
+    userMessage("Leading and trailing spaces removed from MSAGCO fields.")
+
+
+def fixKSPID(gdb):
+    gdbObject = getGDBObject(gdb)
+    addressPoints = gdbObject.AddressPoints
+
+    CalculateField_management(addressPoints, "KSPID", '!KSPID!.replace("-", "").replace(".", "")', "PYTHON_9.3", "")
+
+    userMessage("Dots and dashes in KSPID replaced.")
+
+
+def fixSubmit(gdb):
+    from arcpy import MakeTableView_management
+
+    fds = join(gdb, "NG911")
+
+    # list all fcs
+    env.workspace = fds
+    fcs = ListFeatureClasses()
+
+    # set up where clause
+    wc = "SUBMIT not in ('N')"
+
+    # loop through feature classes and edit the field
+    for fc in fcs:
+        full_path = join(fds, fc)
+        CalcWithWC(full_path, "SUBMIT", '"Y"', wc)
+
+    # make sure the road alias record gets updated too
+    fl_calc = "fl_calc"
+    ra = join(gdb, "RoadAlias")
+    MakeTableView_management(ra, fl_calc, wc)
+    CalculateField_management(fl_calc, "SUBMIT", '"Y"', "PYTHON_9.3", "")
+    Delete_management(fl_calc)

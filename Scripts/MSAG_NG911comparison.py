@@ -158,7 +158,7 @@ def prepMSAG(msag_object, msag, field):
         AddField_management(msag_table, field, "TEXT", "", "", 250)
 
     #calculate msag field to hold dir, street, community & esn
-    expression = "(!DIR! + !STREET! + '|'+ !COMMUNITY! + '|'+ !ESN!).replace(' ', '').upper()"
+    expression = "(str(!DIR!) + !STREET! + '|'+ !COMMUNITY! + '|'+ str(!ESN!)).replace(' ', '').upper()"
     CalculateField_management(msag_table, field, expression, "PYTHON")
 
     #remove any strange characters

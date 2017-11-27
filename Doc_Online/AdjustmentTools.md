@@ -3,12 +3,6 @@
 Description: The adjustment tools will help prepare data so it passes
 all data checks prior to submission into the NG911 Portal.
 
-[*Create Geocode Exceptions*](#geocodeEx): This tool creates a table in the
-geodatabase called GeocodeExceptions. Based on geocoding errors that
-exist in FieldValuesCheckResults, the tool adds those ADDIDs/NGADDIDs to the
-GeocodeException table. In the future, any ADDIDs/NGADDIDs noted in
-GeocodeExceptions will not be flagged as geocoding errors.
-
 [*Fix Domain Case*](#domainCase): Based on domain issues that exist in
 FieldValuesCheckResults, this tool edits case issues in data. For
 example, if FieldValuesCheckResults has the error “Value Primary not in
@@ -21,40 +15,13 @@ tool creates unique ESBIDs/NGESBIDs by appending “E”, “F”, or “L” to
 ESBIDs/NGESBIDs. Thus, if “1” is the ESBID/NGESBID in EMS, Fire, and Law, after running
 the tool, features will have unique ESBIDs/NGESBIDs like “1E”, “1F”, & “1L”.
 
-The adjustment tools require these Python scripts:
+[*Fix KSPID*](#fixSpaces): If a county’s KSPID includes dashes or dots, this tool with automatically 
+remove those characters so the KSPID is the required 19 digits.
 
--   Adjustment\_CreateGeocodeExceptions.py
+[*Fix MSAGCO Spaces*](#fixSpaces): This tool will remove any leading or trailing spaces in MSAGCO, MSAGCO_L, and 
+MSAGCO_R fields in the Address Point and Road Centerline feature classes.
 
--   Adjustment\_FixDomainCase.py
-
--   Adjustment\_FixDuplicateESBIDs.py
-
--   NG911\_DataCheck.py
-
--   NG911\_DataFixes.py
-
-<a name="geocodeEx"></a>
-Running *Create Geocode Exceptions*:
-
-1.  First, run "Enhancement Tools" &gt; “Geocode Address Points”. 
-	Running this will record any geocoding errors in FieldValuesCheckResults.
-
-2.  Verify that ALL geocoding errors recorded in FieldValuesCheckResults
-    are indeed exceptions.
-
-3.  Open “Adjustment Tools” &gt; “Create Geocode Exceptions” and fill in
-    the parameter for the NG911 Geodatabase.
-
-4.  Run the tool.
-
-5.  The tool will create a table called “GeocodeException” with one
-    field called ADDID/NGADDIDs. This tool copies over all ADDIDs/NGADDIDs flagged as
-    geocoding errors from FieldValuesCheckResults as
-    geocoding exceptions.
-
-6.  If any of the ADDIDs/NGADDIDs copied over are genuine errors and are not
-    exceptions, you can manually delete the ADDID in an edit session
-    in ArcMap.
+[*Fix Submit*](#fixSpaces): This tool auto-fills all blank or null SUBMIT fields in all required feature classes as “Y”.
 
 <a name="domainCase"></a>
 Running *Fix Domain Case*:
@@ -81,6 +48,18 @@ Running *Fix Duplicate ESB IDs*:
 
 3.	Run “Validation Tools” > “9 Optional Check All Required” again. See the difference of results in FieldValuesCheckResults.
 
+< a name="fixSpaces"></a>
+Running *Fix KSPID, Fix MSAGCO Spaces, & Fix Submit*:
+
+1.	Open “Adjustment Tools” and the tool you want to run and identify your NG911 geodatabase.
+
+2.	Run the tool.
+
+3.	Run “Validation Tools” > “9 Optional Check All Required” again. See the difference of results in FieldValuesCheckResults.
+
+The adjustment tools require:
+
+-   The complete NG911 toolbox setup and all scripts it includes.
 
 Support Contact:
 

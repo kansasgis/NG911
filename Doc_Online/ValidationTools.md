@@ -17,6 +17,8 @@ included data validation tools check for the following errors:
 
 -   Checks if required fields have values for all records
 
+-   Checks if MSAGCO fields have leading or trailing spaces
+
 -   Checks number of records for submission
 
 -   Checks for invalid geometry
@@ -37,13 +39,15 @@ included data validation tools check for the following errors:
 
 -   Checks if road segments are addressed outside of the PSAP (typically across a county boundary)
 
--   Geocodes addresses against the road centerline data
+-   Checks for address range overlaps in road centerline
+
+-   Checks road centerline parity against the address range
 
 -   Finds duplicate features in road centerlines and addresses
 
 -   Finds duplicate unique IDs
 
--   Makes sure address point ESN numbers are correctly attributed
+-   Makes sure address point ESN & MUNI are correctly attributed
 
 -   Verifies topology exceptions (optional)
 
@@ -84,6 +88,10 @@ Running *Validation scripts*:
 10. The script called “8 Optional Verify Topology Exceptions” will
     double check that all road centerline topology error are recorded as
     exceptions in the data and the topology.
+	
+The validation tools require:
+
+-	The complete NG911 toolbox setup and all scripts it includes.
 
 Support Contact:
 

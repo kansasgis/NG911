@@ -16,8 +16,8 @@ class NG911_RoadCenterline_Object(object):
     def __init__(self, u_STEWARD, u_L_UPDATE, u_EFF_DATE, u_EXP_DATE, u_SEGID, u_STATE_L, u_STATE_R, u_COUNTY_L, u_COUNTY_R, u_MUNI_L,
                     u_MUNI_R, u_L_F_ADD, u_L_T_ADD, u_R_F_ADD, u_R_T_ADD, u_PARITY_L, u_PARITY_R, u_POSTCO_L, u_POSTCO_R, u_ZIP_L, u_ZIP_R,
                     u_ESN_L, u_ESN_R, u_MSAGCO_L, u_MSAGCO_R, u_PRD, u_STP, u_RD, u_STS, u_POD, u_POM, u_SPDLIMIT, u_ONEWAY, u_RDCLASS,
-                    u_UPDATEBY,  u_LABEL, u_ELEV_F, u_ELEV_T, u_ESN_C, u_SURFACE, u_STATUS, u_TRAVEL, u_LRSKEY, u_EXCEPTION, u_SUBMIT,
-                    u_NOTES, u_UNINC_L, u_UNINC_R, u_KSSEGID):
+                    u_UPDATEBY,  u_LABEL, u_ELEV_F, u_ELEV_T, u_SURFACE, u_STATUS, u_TRAVEL, u_LRSKEY, u_EXCEPTION, u_SUBMIT,
+                    u_NOTES, u_UNINC_L, u_UNINC_R, u_KSSEGID, u_AUTH_L, u_AUTH_R, u_GEOMSAGL, u_GEOMSAGR, u_gdb_version):
 
         self.STEWARD = u_STEWARD
         self.L_UPDATE = u_L_UPDATE
@@ -58,7 +58,6 @@ class NG911_RoadCenterline_Object(object):
         self.LABEL = u_LABEL
         self.ELEV_F = u_ELEV_F
         self.ELEV_T = u_ELEV_T
-        self.ESN_C = u_ESN_C
         self.SURFACE = u_SURFACE
         self.STATUS = u_STATUS
         self.TRAVEL = u_TRAVEL
@@ -69,48 +68,64 @@ class NG911_RoadCenterline_Object(object):
         self.UNINC_L = u_UNINC_L
         self.UNINC_R = u_UNINC_R
         self.KSSEGID = u_KSSEGID
-        self.REQUIRED_FIELDS = [self.STEWARD, self.L_UPDATE, self.EFF_DATE, self.UNIQUEID, self.STATE_L, self.STATE_R, self.COUNTY_L, self.COUNTY_R,
-                                self.MUNI_L, self.MUNI_R, self.L_F_ADD, self.L_T_ADD, self.R_F_ADD, self.R_T_ADD, self.PARITY_L, self.PARITY_R,
-                                self.MSAGCO_L, self.MSAGCO_R, self.RD, self.LABEL, self.UPDATEBY, self.STATUS, self.ELEV_F, self.ELEV_T, self.EXCEPTION]
-        self.FIELD_MAP = [self.STEWARD, self.L_UPDATE, self.EFF_DATE, self.EXP_DATE, self.UNIQUEID, self.STATE_L, self.STATE_R, self.COUNTY_L, self.COUNTY_R, self.MUNI_L,
+        self.AUTH_L = u_AUTH_L
+        self.AUTH_R = u_AUTH_R
+        self.GEOMSAGL = u_GEOMSAGL
+        self.GEOMSAGR = u_GEOMSAGR
+        self.GDB_VERSION = u_gdb_version
+        self.LABEL_FIELDS = [self.LABEL, self.PRD, self.STP, self.RD, self.STS, self.POD, self.POM]
+
+        reqFields = [self.STEWARD, self.L_UPDATE, self.EFF_DATE, self.UNIQUEID, self.STATE_L, self.STATE_R, self.COUNTY_L, self.COUNTY_R,
+                    self.MUNI_L, self.MUNI_R, self.L_F_ADD, self.L_T_ADD, self.R_F_ADD, self.R_T_ADD, self.PARITY_L, self.PARITY_R,
+                    self.MSAGCO_L, self.MSAGCO_R, self.RD, self.LABEL, self.UPDATEBY, self.STATUS, self.ELEV_F, self.ELEV_T, self.EXCEPTION]
+        fieldMap = [self.STEWARD, self.L_UPDATE, self.EFF_DATE, self.EXP_DATE, self.UNIQUEID, self.STATE_L, self.STATE_R, self.COUNTY_L, self.COUNTY_R, self.MUNI_L,
                     self.MUNI_R, self.L_F_ADD, self.L_T_ADD, self.R_F_ADD, self.R_T_ADD, self.PARITY_L, self.PARITY_R, self.POSTCO_L, self.POSTCO_R, self.ZIP_L, self.ZIP_R,
                     self.ESN_L, self.ESN_R, self.MSAGCO_L, self.MSAGCO_R, self.PRD, self.STP, self.RD, self.STS, self.POD, self.POM, self.SPDLIMIT, self.ONEWAY, self.RDCLASS,
-                    self.UPDATEBY,  self.LABEL, self.ELEV_F, self.ELEV_T, self.ESN_C, self.SURFACE, self.STATUS, self.TRAVEL, self.LRSKEY, self.EXCEPTION, self.SUBMIT,
+                    self.UPDATEBY,  self.LABEL, self.ELEV_F, self.ELEV_T, self.SURFACE, self.STATUS, self.TRAVEL, self.LRSKEY, self.EXCEPTION, self.SUBMIT,
                     self.NOTES, self.UNINC_L, self.UNINC_R]
-        self.LABEL_FIELDS = [self.LABEL, self.PRD, self.STP, self.RD, self.STS, self.POD, self.POM]
-        self.FIELDS_WITH_DOMAINS = [self.STEWARD, self.STATE_L, self.STATE_R, self.COUNTY_L, self.COUNTY_R, self.MUNI_L, self.MUNI_R, self.PARITY_L, self.PARITY_R,
-                                self.POSTCO_L, self.POSTCO_R, self.ZIP_L, self.ZIP_R, self.PRD, self.STS, self.POD, self.ONEWAY, self.RDCLASS, self.SURFACE, self.STATUS,
-                                self.EXCEPTION, self.SUBMIT]
-        self.FREQUENCY_FIELDS = [self.STATE_L,self.STATE_R,self.COUNTY_L,self.COUNTY_R,self.MUNI_L,self.MUNI_R,self.L_F_ADD,self.L_T_ADD,self.R_F_ADD,self.R_T_ADD,
-                                self.PARITY_L,self.PARITY_R,self.POSTCO_L,self.POSTCO_R,self.ZIP_L,self.ZIP_R,self.ESN_L,self.ESN_R,self.MSAGCO_L,self.MSAGCO_R,
-                                self.PRD,self.STP,self.RD,self.STS,self.POD,self.POM,self.SPDLIMIT,self.ONEWAY,self.RDCLASS,self.LABEL,self.ELEV_F,self.ELEV_T,
-                                self.ESN_C,self.SURFACE,self.STATUS,self.TRAVEL,self.LRSKEY]
+        fieldsWithDomains = {self.STEWARD: "STEWARD", self.STATE_L: "STATE", self.STATE_R: "STATE", self.COUNTY_L: "COUNTY", self.COUNTY_R: "COUNTY",
+                         self.MUNI_L: "MUNI", self.MUNI_R: "MUNI", self.PARITY_L: "PARITY", self.PARITY_R: "PARITY",
+                            self.POSTCO_L: "POSTCO", self.POSTCO_R: "POSTCO", self.ZIP_L: "ZIP", self.ZIP_R: "ZIP",
+                            self.PRD: "PRD", self.STS: "STS", self.POD: "POD", self.ONEWAY: "ONEWAY", self.RDCLASS: "RDCLASS",
+                            self.SURFACE: "SURFACE", self.STATUS: "STATUS", self.EXCEPTION: "EXCEPTION", self.SUBMIT: "YN"}
+        frequencyFields = [self.STATE_L,self.STATE_R,self.COUNTY_L,self.COUNTY_R,self.MUNI_L,self.MUNI_R,self.L_F_ADD,self.L_T_ADD,self.R_F_ADD,self.R_T_ADD,
+                            self.PARITY_L,self.PARITY_R,self.POSTCO_L,self.POSTCO_R,self.ZIP_L,self.ZIP_R,self.ESN_L,self.ESN_R,self.MSAGCO_L,self.MSAGCO_R,
+                            self.PRD,self.STP,self.RD,self.STS,self.POD,self.POM,self.SPDLIMIT,self.ONEWAY,self.RDCLASS,self.LABEL,self.ELEV_F,self.ELEV_T,
+                            self.SURFACE,self.STATUS,self.TRAVEL,self.LRSKEY]
+
+        setList = [reqFields, fieldMap, fieldsWithDomains, frequencyFields]
+
+        # add additional field values and domains for new 2.1 fields
+        if self.GDB_VERSION == "21":
+            for sL in setList:
+                for rf in [self.AUTH_L, self.AUTH_R, self.GEOMSAGL, self.GEOMSAGR]:
+                    if type(sL) == list:
+                        sL.append(rf)
+                    elif type(sL) == dict:
+                        sL[rf] = "YN"
+
+        self.REQUIRED_FIELDS = reqFields
+        self.FIELD_MAP = fieldMap
+        self.FIELDS_WITH_DOMAINS = fieldsWithDomains
+        self.FREQUENCY_FIELDS = frequencyFields
         self.FREQUENCY_FIELDS_STRING = ";".join(self.FREQUENCY_FIELDS)
 
-def getDefaultNG911RoadCenterlineObject():
 
-    NG911_RoadCenterline_Default = NG911_RoadCenterline_Object("STEWARD", "L_UPDATE", "EFF_DATE", "EXP_DATE", "SEGID", "STATE_L", "STATE_R", "COUNTY_L", "COUNTY_R", "MUNI_L",
-                    "MUNI_R", "L_F_ADD", "L_T_ADD", "R_F_ADD", "R_T_ADD", "PARITY_L", "PARITY_R", "POSTCO_L", "POSTCO_R", "ZIP_L", "ZIP_R",
-                    "ESN_L", "ESN_R", "MSAGCO_L", "MSAGCO_R", "PRD", "STP", "RD", "STS", "POD", "POM", "SPDLIMIT", "ONEWAY", "RDCLASS",
-                    "UPDATEBY", "LABEL", "ELEV_F", "ELEV_T", "ESN_C", "SURFACE", "STATUS", "TRAVEL", "LRSKEY", "EXCEPTION", "SUBMIT",
-                    "NOTES", "UNINC_L", "UNINC_R", "KSSEGID")
-
-    return NG911_RoadCenterline_Default
-
-def getDefault20NG911RoadCenterlineObject():
+def getDefaultNG911RoadCenterlineObject(gdb_version):
 
     NG911_RoadCenterline_Default = NG911_RoadCenterline_Object("STEWARD", "L_UPDATE", "EFF_DATE", "EXP_DATE", "NGSEGID", "STATE_L", "STATE_R", "COUNTY_L", "COUNTY_R", "MUNI_L",
                     "MUNI_R", "L_F_ADD", "L_T_ADD", "R_F_ADD", "R_T_ADD", "PARITY_L", "PARITY_R", "POSTCO_L", "POSTCO_R", "ZIP_L", "ZIP_R",
                     "ESN_L", "ESN_R", "MSAGCO_L", "MSAGCO_R", "PRD", "STP", "RD", "STS", "POD", "POM", "SPDLIMIT", "ONEWAY", "RDCLASS",
-                    "UPDATEBY", "LABEL", "ELEV_F", "ELEV_T", "", "SURFACE", "STATUS", "TRAVEL", "LRSKEY", "EXCEPTION", "SUBMIT",
-                    "NOTES", "UNINC_L", "UNINC_R", "KSSEGID")
+                    "UPDATEBY", "LABEL", "ELEV_F", "ELEV_T", "SURFACE", "STATUS", "TRAVEL", "LRSKEY", "EXCEPTION", "SUBMIT",
+                    "NOTES", "UNINC_L", "UNINC_R", "NGKSSEGID", "AUTH_L", "AUTH_R", "GEOMSAGL", "GEOMSAGR", gdb_version)
 
     return NG911_RoadCenterline_Default
+
 
 class NG911_RoadAlias_Object(object):
 
     def __init__(self, u_STEWARD, u_L_UPDATE, u_EFF_DATE, u_EXP_DATE, u_ALIASID, u_SEGID, u_A_PRD, u_A_STP, u_A_RD, u_A_STS, u_A_POD, u_A_POM, u_A_L_FROM, u_A_L_TO,
-                    u_A_R_FROM, u_A_R_TO, u_LABEL, u_UPDATEBY, u_SUBMIT, u_NOTES, u_KSSEGID):
+                    u_A_R_FROM, u_A_R_TO, u_LABEL, u_UPDATEBY, u_SUBMIT, u_NOTES, u_KSSEGID, u_NGKSALIASID, u_gdb_version):
 
         self.STEWARD = u_STEWARD
         self.L_UPDATE = u_L_UPDATE
@@ -134,33 +149,30 @@ class NG911_RoadAlias_Object(object):
         self.SUBMIT = u_SUBMIT
         self.NOTES = u_NOTES
         self.KSSEGID = u_KSSEGID
+        self.NGKSALIASID = u_NGKSALIASID
+        self.GDB_VERSION = u_gdb_version
         self.REQUIRED_FIELDS = [self.STEWARD, self.L_UPDATE, self.EFF_DATE, self.UNIQUEID, self.SEGID, self.LABEL, self.UPDATEBY]
-        self.FIELDS_WITH_DOMAINS = [self.STEWARD, self.A_PRD, self.A_STS, self.A_POD, self.SUBMIT]
+        self.FIELDS_WITH_DOMAINS = {self.STEWARD: "STEWARD", self.A_PRD: "PRD", self.A_STS: "STS",
+                             self.A_POD: "POD", self.SUBMIT: "YN"}
         self.FIELD_MAP = [self.STEWARD, self.L_UPDATE, self.EFF_DATE, self.EXP_DATE, self.UNIQUEID, self.SEGID, self.A_PRD,
                             self.A_STP, self.A_RD, self.A_STS, self.A_POD, self.A_POM, self.A_L_FROM, self.A_L_TO,
                             self.A_R_FROM, self.A_R_TO, self.LABEL, self.UPDATEBY, self.SUBMIT, self.NOTES]
 
 
-def getDefaultNG911RoadAliasObject():
-
-    NG911_RoadAlias_Default = NG911_RoadAlias_Object("STEWARD", "L_UPDATE", "EFF_DATE", "EXP_DATE", "ALIASID", "SEGID", "A_PRD", "A_STP", "A_RD", "A_STS", "A_POD",
-                    "A_POM", "A_L_FROM", "A_L_TO", "A_R_FROM", "A_R_TO", "LABEL", "UPDATEBY", "SUBMIT", "NOTES", "KSSEGID")
-
-    return NG911_RoadAlias_Default
-
-def getDefault20NG911RoadAliasObject():
+def getDefaultNG911RoadAliasObject(gdb_version):
 
     NG911_RoadAlias_Default = NG911_RoadAlias_Object("STEWARD", "L_UPDATE", "EFF_DATE", "EXP_DATE", "NGALIASID", "NGSEGID", "A_PRD", "A_STP", "A_RD", "A_STS", "A_POD",
-                    "A_POM", "A_L_FROM", "A_L_TO", "A_R_FROM", "A_R_TO", "LABEL", "UPDATEBY", "SUBMIT", "NOTES", "KSSEGID")
+                    "A_POM", "A_L_FROM", "A_L_TO", "A_R_FROM", "A_R_TO", "LABEL", "UPDATEBY", "SUBMIT", "NOTES", "NGKSSEGID", "NGKSALIASID", gdb_version)
 
     return NG911_RoadAlias_Default
+
 
 class NG911_Adddress_Object(object):
 
     def __init__(self, u_STEWARD, u_L_UPDATE, u_EFF_DATE, u_EXP_DATE, u_ADDID, u_STATE, u_COUNTY, u_MUNI, u_HNO, u_HNS, u_PRD, u_STP,
                     u_RD, u_STS, u_POD, u_POM, u_ESN, u_MSAGCO, u_POSTCO, u_ZIP, u_ZIP4, u_BLD, u_FLR, u_UNIT, u_ROOM, u_SEAT, u_LMK,
                     u_LOC, u_PLC, u_LONG, u_LAT, u_ELEV, u_LABEL, u_UPDATEBY, u_LOCTYPE, u_USNGRID, u_KSPID, u_MILEPOST, u_ADDURI,
-                    u_UNINC, u_SUBMIT, u_NOTES, u_PRM):
+                    u_UNINC, u_SUBMIT, u_NOTES, u_PRM, u_RCLMATCH, u_GEOMSAG, u_RCLSIDE, u_gdb_version):
 
         self.STEWARD = u_STEWARD
         self.L_UPDATE = u_L_UPDATE
@@ -208,59 +220,53 @@ class NG911_Adddress_Object(object):
         self.SUBMIT = u_SUBMIT
         self.NOTES = u_NOTES
         self.PRM = u_PRM
-        self.REQUIRED_FIELDS = [self.STEWARD, self.L_UPDATE, self.EFF_DATE, self.UNIQUEID, self.STATE, self.COUNTY, self.MUNI, self.HNO,
-                                self.RD, self.MSAGCO, self.LABEL, self.UPDATEBY, self.LOCTYPE]
-        self.FIELD_MAP = [self.STEWARD, self.L_UPDATE, self.EFF_DATE, self.EXP_DATE, self.UNIQUEID, self.STATE, self.COUNTY, self.MUNI, self.HNO, self.HNS, self.PRD, self.STP,
+        self.RCLMATCH = u_RCLMATCH
+        self.GEOMSAG = u_GEOMSAG
+        self.RCLSIDE = u_RCLSIDE
+        self.GDB_VERSION = u_gdb_version
+        self.LABEL_FIELDS = [self.LABEL, self.HNO, self.HNS, self.PRD, self.STP, self.RD, self.STS, self.POD, self.POM, self.BLD,
+                            self.FLR, self.UNIT, self.ROOM, self.SEAT]
+        self.GEOCODE_LABEL_FIELDS = [self.HNO, self.PRD, self.STP, self.RD, self.STS, self.POD, self.POM]
+
+        reqFields = [self.STEWARD, self.L_UPDATE, self.EFF_DATE, self.UNIQUEID, self.STATE, self.COUNTY, self.MUNI, self.HNO,
+                    self.RD, self.LABEL, self.UPDATEBY, self.LOCTYPE]
+        fieldMap = [self.STEWARD, self.L_UPDATE, self.EFF_DATE, self.EXP_DATE, self.UNIQUEID, self.STATE, self.COUNTY, self.MUNI, self.HNO, self.HNS, self.PRD, self.STP,
                     self.RD, self.STS, self.POD, self.POM, self.ESN, self.MSAGCO, self.POSTCO, self.ZIP, self.ZIP4, self.BLD, self.FLR, self.UNIT, self.ROOM, self.SEAT, self.LMK,
                     self.LOC, self.PLC, self.LONG, self.LAT, self.ELEV, self.LABEL, self.UPDATEBY, self.LOCTYPE, self.USNGRID, self.KSPID, self.MILEPOST, self.ADDURI,
                     self.UNINC, self.SUBMIT, self.NOTES]
-        self.LABEL_FIELDS = [self.LABEL, self.HNO, self.HNS, self.PRD, self.STP, self.RD, self.STS, self.POD, self.POM, self.BLD, self.FLR, self.UNIT, self.ROOM, self.SEAT]
-        self.FIELDS_WITH_DOMAINS = [self.STEWARD, self.STATE, self.COUNTY, self.MUNI, self.PRD, self.STS, self.POD, self.POSTCO, self.ZIP,
-                                    self.PLC, self.LOCTYPE, self.SUBMIT]
-        self.FREQUENCY_FIELDS = [self.MUNI,self.HNO,self.HNS,self.PRD,self.STP,self.RD,self.STS,self.POD,self.POM,self.ZIP,self.BLD,self.FLR,self.UNIT,self.ROOM,
+        fieldsWithDomains = {self.STEWARD: "STEWARD", self.STATE: "STATE", self.COUNTY: "COUNTY", self.MUNI: "MUNI", self.HNO: "HNO", self.PRD: "PRD",
+                     self.STS: "STS", self.POD: "POD", self.POSTCO: "POSTCO", self.ZIP: "ZIP",
+                    self.PLC: "PLC", self.LOCTYPE: "LOCTYPE", self.SUBMIT: "YN"}
+        frequencyFields = [self.MUNI,self.HNO,self.HNS,self.PRD,self.STP,self.RD,self.STS,self.POD,self.POM,self.ZIP,self.BLD,self.FLR,self.UNIT,self.ROOM,
                                     self.SEAT,self.LOC,self.LOCTYPE,self.MSAGCO]
+
+        setList = [reqFields, fieldMap, frequencyFields]
+
+        if self.GDB_VERSION == "21":
+            # only geomsag has a domain of the new 2.1 fields
+            fieldsWithDomains[self.GEOMSAG] = "YN"
+            fieldsWithDomains[self.RCLSIDE] = "RCLSIDE"
+
+            for sL in setList:
+                for rf in [self.RCLMATCH, self.GEOMSAG, self.RCLSIDE]:
+                    sL.append(rf)
+
+        self.REQUIRED_FIELDS = reqFields
+        self.FIELD_MAP = fieldMap
+        self.FIELDS_WITH_DOMAINS = fieldsWithDomains
+        self.FREQUENCY_FIELDS = frequencyFields
         self.FREQUENCY_FIELDS_STRING = ";".join(self.FREQUENCY_FIELDS)
-        self.GEOCODE_LABEL_FIELDS = [self.HNO, self.PRD, self.STP, self.RD, self.STS, self.POD, self.POM]
 
-def getDefaultNG911AddressObject():
 
-    NG911_Address_Default = NG911_Adddress_Object("STEWARD", "L_UPDATE", "EFF_DATE", "EXP_DATE", "ADDID", "STATE", "COUNTY", "MUNI", "HNO", "HNS", "PRD", "STP",
-                    "RD", "STS", "POD", "POM", "ESN", "MSAGCO", "POSTCO", "ZIP", "ZIP4", "BLD", "FLR", "UNIT", "ROOM", "SEAT", "LMK",
-                    "LOC", "PLC", "LONG", "LAT", "ELEV", "LABEL", "UPDATEBY", "LOCTYPE", "USNGRID", "KSPID", "MILEPOST", "ADDURI",
-                    "UNINC", "SUBMIT", "NOTES", "")
-
-    return NG911_Address_Default
-
-def getDefault20NG911AddressObject():
+def getDefaultNG911AddressObject(gdb_version):
 
     NG911_Address_Default = NG911_Adddress_Object("STEWARD", "L_UPDATE", "EFF_DATE", "EXP_DATE", "NGADDID", "STATE", "COUNTY", "MUNI", "HNO", "HNS", "PRD", "STP",
                     "RD", "STS", "POD", "POM", "ESN", "MSAGCO", "POSTCO", "ZIP", "ZIP4", "BLD", "FLR", "UNIT", "ROOM", "SEAT", "LMK",
                     "LOC", "PLC", "LONG", "LAT", "ELEV", "LABEL", "UPDATEBY", "LOCTYPE", "USNGRID", "KSPID", "MILEPOST", "ADDURI",
-                    "UNINC", "SUBMIT", "NOTES", "PRM")
+                    "UNINC", "SUBMIT", "NOTES", "PRM", "RCLMATCH", "GEOMSAG", "RCLSIDE", gdb_version)
 
     return NG911_Address_Default
 
-class NG911_GeocodeExceptions_Object(object):
-
-    def __init__(self, u_ADDID, u_LABEL, u_NOTES):
-
-        self.ADDID = u_ADDID
-        self.UNIQUEID = u_ADDID
-        self.LABEL = u_LABEL
-        self.NOTES = u_NOTES
-
-
-def getDefaultNG911GeocodeExceptionsObject():
-
-    NG911_GeocodeExceptions_Default = NG911_GeocodeExceptions_Object("ADDID", "LABEL", "NOTES")
-
-    return NG911_GeocodeExceptions_Default
-
-def getDefaul20NG911GeocodeExceptionsObject():
-
-    NG911_GeocodeExceptions_Default = NG911_GeocodeExceptions_Object("NGADDID", "LABEL", "NOTES")
-
-    return NG911_GeocodeExceptions_Default
 
 class NG911_FieldValuesCheckResults_Object(object):
 
@@ -280,6 +286,7 @@ def getDefaultNG911FieldValuesCheckResultsObject():
 
     return NG911_FieldValuesCheckResults_Default
 
+
 class NG911_TemplateCheckResults_Object(object):
 
     def __init__(self, u_DATEFLAGGED, u_DESCRIPTION, u_CATEGORY, u_CHECK):
@@ -296,10 +303,11 @@ def getDefaultNG911TemplateCheckResultsObject():
 
     return NG911_TemplateCheckResults_Default
 
+
 class NG911_ESB_Object(object):
 
     def __init__(self, u_STEWARD, u_L_UPDATE, u_EFF_DATE, u_EXP_DATE, u_ESBID, u_STATE, u_AGENCYID, u_SERV_NUM, u_DISPLAY, u_ESB_TYPE, u_LAW,
-                u_FIRE, u_EMS, u_UPDATEBY, u_PSAP, u_SUBMIT, u_NOTES):
+                u_FIRE, u_EMS, u_UPDATEBY, u_PSAP, u_SUBMIT, u_NOTES, u_gdb_version):
 
         self.STEWARD = u_STEWARD
         self.L_UPDATE = u_L_UPDATE
@@ -319,30 +327,25 @@ class NG911_ESB_Object(object):
         self.PSAP = u_PSAP
         self.SUBMIT = u_SUBMIT
         self.NOTES = u_NOTES
+        self.GDB_VERSION = u_gdb_version
         self.REQUIRED_FIELDS = [self.STEWARD, self.L_UPDATE, self.EFF_DATE, self.UNIQUEID, self.STATE, self.AGENCYID, self.DISPLAY, self.ESB_TYPE, self.UPDATEBY]
-        self.FIELDS_WITH_DOMAINS = [self.STEWARD, self.STATE, self.AGENCYID, self.SUBMIT]
+        self.FIELDS_WITH_DOMAINS = {self.STEWARD: "STEWARD", self.STATE: "STATE", self.AGENCYID: "AGENCYID", self.SUBMIT: "YN"}
         self.FIELD_MAP = [self.STEWARD, self.L_UPDATE, self.EFF_DATE, self.EXP_DATE, self.UNIQUEID, self.STATE, self.AGENCYID,
                             self.SERV_NUM, self.DISPLAY, self.ESB_TYPE, self.LAW, self.FIRE, self.EMS, self.UPDATEBY, self.PSAP,
                             self.SUBMIT, self.NOTES]
 
 
-def getDefaultNG911ESBObject():
-
-    NG911_ESB_Default = NG911_ESB_Object("STEWARD", "L_UPDATE", "EFF_DATE", "EXP_DATE", "ESBID", "STATE", "AGENCYID", "SERV_NUM", "DISPLAY", "ESB_TYPE",
-                    "LAW", "FIRE", "EMS", "UPDATEBY", "PSAP", "SUBMIT", "NOTES")
-
-    return NG911_ESB_Default
-
-def getDefault20NG911ESBObject():
+def getDefaultNG911ESBObject(gdb_version):
 
     NG911_ESB_Default = NG911_ESB_Object("STEWARD", "L_UPDATE", "EFF_DATE", "EXP_DATE", "NGESBID", "STATE", "AGENCYID", "SERV_NUM", "DISPLAY", "ESB_TYPE",
-                    "LAW", "FIRE", "EMS", "UPDATEBY", "PSAP", "SUBMIT", "NOTES")
+                    "LAW", "FIRE", "EMS", "UPDATEBY", "PSAP", "SUBMIT", "NOTES", gdb_version)
 
     return NG911_ESB_Default
+
 
 class NG911_ESZ_Object(object):
 
-    def __init__(self, u_STEWARD, u_L_UPDATE, u_EFF_DATE, u_EXP_DATE, u_ESZID, u_STATE, u_AGENCYID, u_ESN, u_UPDATEBY, u_SUBMIT, u_NOTES):
+    def __init__(self, u_STEWARD, u_L_UPDATE, u_EFF_DATE, u_EXP_DATE, u_ESZID, u_STATE, u_AGENCYID, u_ESN, u_UPDATEBY, u_SUBMIT, u_NOTES, u_gdb_version):
 
         self.STEWARD = u_STEWARD
         self.L_UPDATE = u_L_UPDATE
@@ -356,27 +359,24 @@ class NG911_ESZ_Object(object):
         self.UPDATEBY = u_UPDATEBY
         self.SUBMIT = u_SUBMIT
         self.NOTES = u_NOTES
+        self.GDB_VERSION = u_gdb_version
         self.REQUIRED_FIELDS = [self.STEWARD, self.L_UPDATE, self.EFF_DATE, self.UNIQUEID, self.AGENCYID, self.ESN, self.UPDATEBY]
-        self.FIELDS_WITH_DOMAINS = [self.STEWARD, self.AGENCYID, self.SUBMIT]
+        self.FIELDS_WITH_DOMAINS = {self.STEWARD: "STEWARD", self.AGENCYID: "AGENCYID", self.SUBMIT: "YN"}
         self.FIELD_MAP = [self.STEWARD, self.L_UPDATE, self.EFF_DATE, self.EXP_DATE, self.UNIQUEID, self.AGENCYID,
                             self.ESN, self.UPDATEBY, self.SUBMIT, self.NOTES]
 
 
-def getDefaultNG911ESZObject():
+def getDefaultNG911ESZObject(gdb_version):
 
-    NG911_ESZ_Default = NG911_ESZ_Object("STEWARD", "L_UPDATE", "EFF_DATE", "EXP_DATE", "ESZID", "STATE", "AGENCYID", "ESN", "UPDATEBY", "SUBMIT", "NOTES")
-
-    return NG911_ESZ_Default
-
-def getDefault20NG911ESZObject():
-
-    NG911_ESZ_Default = NG911_ESZ_Object("STEWARD", "L_UPDATE", "EFF_DATE", "EXP_DATE", "NGESZID", "STATE", "AGENCYID", "ESN", "UPDATEBY", "SUBMIT", "NOTES")
+    NG911_ESZ_Default = NG911_ESZ_Object("STEWARD", "L_UPDATE", "EFF_DATE", "EXP_DATE", "NGESZID", "STATE", "AGENCYID", "ESN",
+                "UPDATEBY", "SUBMIT", "NOTES", gdb_version)
 
     return NG911_ESZ_Default
+
 
 class NG911_CountyBoundary_Object(object):
 
-    def __init__(self, u_STEWARD, u_L_UPDATE, u_COUNTYID, u_STATE, u_COUNTY, u_UPDATEBY, u_SUBMIT, u_NOTES):
+    def __init__(self, u_STEWARD, u_L_UPDATE, u_COUNTYID, u_STATE, u_COUNTY, u_UPDATEBY, u_SUBMIT, u_NOTES, u_gdb_version):
 
         self.STEWARD = u_STEWARD
         self.L_UPDATE = u_L_UPDATE
@@ -387,26 +387,23 @@ class NG911_CountyBoundary_Object(object):
         self.UPDATEBY = u_UPDATEBY
         self.SUBMIT = u_SUBMIT
         self.NOTES = u_NOTES
+        self.GDB_VERSION = u_gdb_version
         self.REQUIRED_FIELDS = [self.STEWARD, self.L_UPDATE, self.UNIQUEID, self.STATE, self.COUNTY, self.UPDATEBY]
-        self.FIELDS_WITH_DOMAINS = [self.STEWARD, self.STATE, self.COUNTY]
+        self.FIELDS_WITH_DOMAINS = {self.STEWARD: "STEWARD", self.STATE: 'STATE', self.COUNTY: "COUNTY"}
         self.FIELD_MAP = [self.STEWARD, self.L_UPDATE, self.UNIQUEID, self.STATE, self.COUNTY, self.UPDATEBY, self.SUBMIT, self.NOTES]
 
 
-def getDefaultNG911CountyBoundaryObject():
+def getDefaultNG911CountyBoundaryObject(gdb_version):
 
-    NG911_CountyBoundary_Default = NG911_CountyBoundary_Object("STEWARD", "L_UPDATE", "COUNTYID", "STATE", "COUNTY", "UPDATEBY", "SUBMIT", "NOTES")
-
-    return NG911_CountyBoundary_Default
-
-def getDefault20NG911CountyBoundaryObject():
-
-    NG911_CountyBoundary_Default = NG911_CountyBoundary_Object("STEWARD", "L_UPDATE", "NGCOUNTYID", "STATE", "COUNTY", "UPDATEBY", "SUBMIT", "NOTES")
+    NG911_CountyBoundary_Default = NG911_CountyBoundary_Object("STEWARD", "L_UPDATE", "NGCOUNTYID", "STATE", "COUNTY", "UPDATEBY",
+                "SUBMIT", "NOTES", gdb_version)
 
     return NG911_CountyBoundary_Default
+
 
 class NG911_AuthoritativeBoundary_Object(object):
 
-    def __init__(self, u_STEWARD, u_L_UPDATE, u_EFF_DATE, u_EXP_DATE, u_ABID, u_STATE, u_AGENCYID, u_DISPLAY, u_UPDATEBY, u_SUBMIT, u_NOTES):
+    def __init__(self, u_STEWARD, u_L_UPDATE, u_EFF_DATE, u_EXP_DATE, u_ABID, u_STATE, u_AGENCYID, u_DISPLAY, u_UPDATEBY, u_SUBMIT, u_NOTES, u_gdb_version):
 
         self.STEWARD = u_STEWARD
         self.L_UPDATE = u_L_UPDATE
@@ -420,30 +417,24 @@ class NG911_AuthoritativeBoundary_Object(object):
         self.UPDATEBY = u_UPDATEBY
         self.SUBMIT = u_SUBMIT
         self.NOTES = u_NOTES
+        self.GDB_VERSION = u_gdb_version
         self.REQUIRED_FIELDS = [self.STEWARD, self.L_UPDATE, self.EFF_DATE, self.UNIQUEID, self.AGENCYID, self.DISPLAY, self.UPDATEBY]
-        self.FIELDS_WITH_DOMAINS = [self.STEWARD, self.AGENCYID, self.SUBMIT]
+        self.FIELDS_WITH_DOMAINS = {self.STEWARD: "STEWARD", self.AGENCYID: "AGENCYID", self.SUBMIT: "YN"}
         self.FIELD_MAP = [self.STEWARD, self.L_UPDATE, self.EFF_DATE, self.EXP_DATE, self.UNIQUEID, self.AGENCYID, self.DISPLAY,
                             self.UPDATEBY, self.SUBMIT, self.NOTES]
 
 
-def getDefaultNG911AuthoritativeBoundaryObject():
-
-    NG911_AuthoritativeBoundary_Default = NG911_AuthoritativeBoundary_Object("STEWARD", "L_UPDATE", "EFF_DATE", "EXP_DATE", "ABID", "STATE", "AGENCYID",
-                        "DISPLAY", "UPDATEBY", "SUBMIT", "NOTES")
-
-    return NG911_AuthoritativeBoundary_Default
-
-def getDefault20NG911AuthoritativeBoundaryObject():
+def getDefaultNG911AuthoritativeBoundaryObject(gdb_version):
 
     NG911_AuthoritativeBoundary_Default = NG911_AuthoritativeBoundary_Object("STEWARD", "L_UPDATE", "EFF_DATE", "EXP_DATE", "NGABID", "STATE", "AGENCYID",
-                        "DISPLAY", "UPDATEBY", "SUBMIT", "NOTES")
+                        "DISPLAY", "UPDATEBY", "SUBMIT", "NOTES", gdb_version)
 
     return NG911_AuthoritativeBoundary_Default
 
 
 class NG911_MunicipalBoundary_Object(object):
 
-    def __init__(self, u_STEWARD, u_L_UPDATE, u_EFF_DATE, u_EXP_DATE, u_MUNI_ID, u_STATE, u_COUNTY, u_MUNI, u_UPDATEBY, u_SUBMIT, u_NOTES):
+    def __init__(self, u_STEWARD, u_L_UPDATE, u_EFF_DATE, u_EXP_DATE, u_MUNI_ID, u_STATE, u_COUNTY, u_MUNI, u_UPDATEBY, u_SUBMIT, u_NOTES, u_gdb_version):
 
         self.STEWARD = u_STEWARD
         self.L_UPDATE = u_L_UPDATE
@@ -457,29 +448,25 @@ class NG911_MunicipalBoundary_Object(object):
         self.UPDATEBY = u_UPDATEBY
         self.SUBMIT = u_SUBMIT
         self.NOTES = u_NOTES
+        self.GDB_VERSION = u_gdb_version
         self.REQUIRED_FIELDS = [self.STEWARD, self.L_UPDATE, self.EFF_DATE, self.UNIQUEID, self.STATE, self.COUNTY, self.MUNI, self.UPDATEBY]
-        self.FIELDS_WITH_DOMAINS = [self.STEWARD, self.STATE, self.COUNTY, self.MUNI, self.SUBMIT]
+        self.FIELDS_WITH_DOMAINS = {self.STEWARD: "STEWARD", self.STATE: "STATE", self.COUNTY: "COUNTY", self.MUNI: "MUNI", self.SUBMIT: "YN"}
         self.FIELD_MAP = [self.STEWARD, self.L_UPDATE, self.EFF_DATE, self.EXP_DATE, self.UNIQUEID, self.STATE, self.COUNTY, self.MUNI,
                             self.UPDATEBY, self.SUBMIT, self.NOTES]
 
 
-def getDefaultNG911MunicipalBoundaryObject():
-
-    NG911_MunicipalBoundary_Default = NG911_MunicipalBoundary_Object("STEWARD", "L_UPDATE", "EFF_DATE", "EXP_DATE", "MUNI_ID", "STATE", "COUNTY", "MUNI",
-                        "UPDATEBY", "SUBMIT", "NOTES")
-
-    return NG911_MunicipalBoundary_Default
-
-def getDefault20NG911MunicipalBoundaryObject():
+def getDefaultNG911MunicipalBoundaryObject(gdb_version):
 
     NG911_MunicipalBoundary_Default = NG911_MunicipalBoundary_Object("STEWARD", "L_UPDATE", "EFF_DATE", "EXP_DATE", "NGMUNI_ID", "STATE", "COUNTY", "MUNI",
-                        "UPDATEBY", "SUBMIT", "NOTES")
+                        "UPDATEBY", "SUBMIT", "NOTES", gdb_version)
 
     return NG911_MunicipalBoundary_Default
+
 
 class NG911_Hydrant_Object(object):
 
-    def __init__(self, u_STEWARD, u_L_UPDATE, u_EFF_DATE, u_EXP_DATE, u_HYDID, u_HYDTYPE, u_PROVIDER, u_STATUS, u_PRIVATE, u_UPDATEBY, u_SUBMIT, u_NOTES):
+    def __init__(self, u_STEWARD, u_L_UPDATE, u_EFF_DATE, u_EXP_DATE, u_HYDID, u_HYDTYPE, u_PROVIDER, u_STATUS, u_PRIVATE, u_UPDATEBY,
+            u_SUBMIT, u_NOTES, u_gdb_version):
 
         self.STEWARD = u_STEWARD
         self.L_UPDATE = u_L_UPDATE
@@ -494,43 +481,48 @@ class NG911_Hydrant_Object(object):
         self.SUBMIT = u_SUBMIT
         self.NOTES = u_NOTES
         self.PRIVATE = u_PRIVATE
+        self.GDB_VERSION = u_gdb_version
         self.REQUIRED_FIELDS = [self.STEWARD, self.L_UPDATE, self.EFF_DATE, self.UNIQUEID, self.HYDTYPE, self.STATUS, self.PRIVATE, self.UPDATEBY]
-        self.FIELDS_WITH_DOMAINS = [self.STEWARD, self.SUBMIT, self.HYDTYPE, self.STATUS, self.PRIVATE]
+        self.FIELDS_WITH_DOMAINS = {self.STEWARD: "STEWARD", self.SUBMIT: "YN", self.HYDTYPE: "HYDTYPE",
+                                self.STATUS: "HYDSTATUS", self.PRIVATE: "PRIVATE"}
         self.FIELD_MAP = [self.STEWARD, self.L_UPDATE, self.EFF_DATE, self.EXP_DATE, self.UNIQUEID, self.HYDTYPE, self.PROVIDER, self.STATUS,
                             self.UPDATEBY, self.SUBMIT, self.NOTES, self.PRIVATE]
 
 
-def getDefault20NG911HydrantObject():
+def getDefaultNG911HydrantObject(gdb_version):
 
     NG911_Hydrant_Default = NG911_Hydrant_Object("STEWARD", "L_UPDATE", "EFF_DATE", "EXP_DATE", "NGHYDID", "HYDTYPE", "PROVIDER", "STATUS",
-                        "PRIVATE", "UPDATEBY", "SUBMIT", "NOTES")
+                        "PRIVATE", "UPDATEBY", "SUBMIT", "NOTES", gdb_version)
 
     return NG911_Hydrant_Default
 
+
 class NG911_Parcel_Object(object):
 
-    def __init__(self, u_STEWARD, u_KSPID, u_SUBMIT, u_NOTES):
+    def __init__(self, u_STEWARD, u_KSPID, u_SUBMIT, u_NOTES, u_gdb_version):
 
         self.STEWARD = u_STEWARD
         self.NGKSPID = u_KSPID
         self.UNIQUEID = self.NGKSPID
         self.SUBMIT = u_SUBMIT
         self.NOTES = u_NOTES
+        self.GDB_VERSION = u_gdb_version
         self.REQUIRED_FIELDS = [self.STEWARD, self.UNIQUEID]
-        self.FIELDS_WITH_DOMAINS = [self.STEWARD, self.SUBMIT]
+        self.FIELDS_WITH_DOMAINS = {self.STEWARD: "STEWARD", self.SUBMIT: "YN"}
         self.FIELD_MAP = [self.STEWARD, self.UNIQUEID, self.SUBMIT, self.NOTES]
 
 
-def getDefault20NG911ParcelObject():
+def getDefaultNG911ParcelObject(gdb_version):
 
-    NG911_Parcel_Default = NG911_Parcel_Object("STEWARD", "NGKSPID", "SUBMIT", "NOTES")
+    NG911_Parcel_Default = NG911_Parcel_Object("STEWARD", "NGKSPID", "SUBMIT", "NOTES", gdb_version)
 
     return NG911_Parcel_Default
+
 
 class NG911_Gate_Object(object):
 
     def __init__(self, u_STEWARD, u_NGGATEID, u_GATE_TYPE, u_SIREN, u_RF_OP, u_KNOXBOX, u_KEYPAD,
-                    u_MAN_OPEN, u_GATEOPEN, u_G_OWNER, u_SUBMIT, u_NOTES):
+                    u_MAN_OPEN, u_GATEOPEN, u_G_OWNER, u_SUBMIT, u_NOTES, u_gdb_version):
 
         self.STEWARD = u_STEWARD
         self.NGGATEID = u_NGGATEID
@@ -545,23 +537,113 @@ class NG911_Gate_Object(object):
         self.G_OWNER = u_G_OWNER
         self.SUBMIT = u_SUBMIT
         self.NOTES = u_NOTES
+        self.GDB_VERSION = u_gdb_version
         self.REQUIRED_FIELDS = [self.STEWARD, self.UNIQUEID, self.GATE_TYPE, self.SIREN, self.RF_OP, self.KNOXBOX, self.KEYPAD, self.MAN_OPEN, self.GATEOPEN]
-        self.FIELDS_WITH_DOMAINS = [self.STEWARD, self.SUBMIT, self.GATE_TYPE, self.SIREN, self.RF_OP, self.KNOXBOX, self.KEYPAD, self.KEYPAD, self.MAN_OPEN, self.GATEOPEN]
+        self.FIELDS_WITH_DOMAINS = {self.STEWARD: "STEWARD", self.SUBMIT: "YN", self.GATE_TYPE: "GATE_TYPE", self.SIREN: "YNU",
+                            self.RF_OP: "YNU", self.KNOXBOX: "YNU", self.KEYPAD: "YNU", self.KEYPAD: "YNU", self.MAN_OPEN: "YNU", self.GATEOPEN: "YNU"}
         self.FIELD_MAP = [self.STEWARD, self.UNIQUEID, self.GATE_TYPE, self.SIREN, self.RF_OP, self.KNOXBOX, self.KEYPAD, self.MAN_OPEN,
                             self.GATEOPEN, self.G_OWNER, self.SUBMIT, self.NOTES]
 
 
-def getDefault20NG911GateObject():
+def getDefaultNG911GateObject(gdb_version):
 
     NG911_Gate_Default = NG911_Gate_Object("STEWARD", "NGGATEID", "GATE_TYPE", "SIREN", "RF_OP", "KNOXBOX", "KEYPAD",
-                    "MAN_OPEN", "GATEOPEN", "G_OWNER", "SUBMIT", "NOTES")
+                    "MAN_OPEN", "GATEOPEN", "G_OWNER", "SUBMIT", "NOTES", gdb_version)
 
     return NG911_Gate_Default
+
+
+class NG911_Utility_Object(object):
+
+    def __init__(self, u_STEWARD, u_NGUSERVID, u_UTIL_NAME, u_PHONENUM, u_SUBMIT, u_NOTES, u_gdb_version):
+
+        self.STEWARD = u_STEWARD
+        self.NGUSERVID = u_NGUSERVID
+        self.UNIQUEID = self.NGUSERVID
+        self.UTIL_NAME = u_UTIL_NAME
+        self.PHONENUM = u_PHONENUM
+        self.SUBMIT = u_SUBMIT
+        self.NOTES = u_NOTES
+        self.GDB_VERSION = u_gdb_version
+        self.REQUIRED_FIELDS = [self.STEWARD, self.UNIQUEID, self.UTIL_NAME, self.PHONENUM]
+        self.FIELDS_WITH_DOMAINS = {self.STEWARD: "STEWARD"}
+        self.FIELD_MAP = [self.STEWARD, self.UNIQUEID, self.UTIL_NAME, self.PHONENUM, self.SUBMIT, self.NOTES]
+
+
+def getDefaultNG911UtilityObject(gdb_version):
+
+    NG911_Utility_Default = NG911_Utility_Object("STEWARD", "NGUSERVID", "UTIL_NAME", "PHONENUM", "SUBMIT", "NOTES", gdb_version)
+
+    return NG911_Utility_Default
+
+
+class NG911_Bridge_Object(object):
+
+    def __init__(self, u_STEWARD, u_NGBRIDGE, u_LPA_NAME, u_STRUCT_NO, u_WEIGHT_L, u_OVERUNDER, u_STATUS, u_SUBMIT, u_NOTES, u_gdb_version):
+
+        self.STEWARD = u_STEWARD
+        self.NGBRIDGE = u_NGBRIDGE
+        self.UNIQUEID = self.NGBRIDGE
+        self.LPA_NAME = u_LPA_NAME
+        self.STRUCT_NO = u_STRUCT_NO
+        self.WEIGHT_L = u_WEIGHT_L
+        self.OVERUNDER = u_OVERUNDER
+        self.STATUS = u_STATUS
+        self.SUBMIT = u_SUBMIT
+        self.NOTES = u_NOTES
+        self.GDB_VERSION = u_gdb_version
+        self.REQUIRED_FIELDS = [self.STEWARD, self.UNIQUEID]
+        self.FIELDS_WITH_DOMAINS= {self.STEWARD: "STEWARD", self.STATUS: "BRIDGESTATUS", self.OVERUNDER: "OVERUNDER"}
+        self.FIELD_MAP = [self.STEWARD, self.UNIQUEID, self.LPA_NAME, self.STRUCT_NO, self.WEIGHT_L, self.OVERUNDER, self.STATUS,
+                     self.SUBMIT, self.NOTES]
+
+
+def getDefaultNG911BridgeObject(gdb_version):
+
+    NG911_Bridge_Default = NG911_Bridge_Object("STEWARD", "NGBRIDGE", "LPA_NAME", "STRUCT_NO", "WEIGHT_L",
+            "OVERUNDER", "STATUS", "SUBMIT", "NOTES", gdb_version)
+
+    return NG911_Bridge_Default
+
+
+class NG911_CellSite_Object(object):
+
+    def __init__(self, u_STEWARD, u_L_UPDATE, u_NGCELLID, u_EFF_DATE, u_EXP_DATE, u_STATE, u_COUNTY, u_HEIGHT,
+                    u_TWR_TYP, u_UPDATEBY, u_SUBMIT, u_NOTES, u_gdb_version):
+
+        self.STEWARD = u_STEWARD
+        self.L_UPDATE = u_L_UPDATE
+        self.NGCELLID = u_NGCELLID
+        self.UNIQUEID = self.NGCELLID
+        self.EFF_DATE = u_EFF_DATE
+        self.EXP_DATE = u_EXP_DATE
+        self.WEIGHT_L = u_WEIGHT_L
+        self.STATE = u_STATE
+        self.COUNTY = u_COUNTY
+        self.HEIGHT = u_HEIGHT
+        self.TWR_TYP = u_TWR_TYP
+        self.UPDATEBY = u_UPDATEBY
+        self.SUBMIT = u_SUBMIT
+        self.NOTES = u_NOTES
+        self.GDB_VERSION = u_gdb_version
+        self.REQUIRED_FIELDS = [self.STEWARD, self.L_UPDATE, self.UNIQUEID, self.EFF_DATE, self.STATE, self.COUNTY, self.UPDATEBY]
+        self.FIELDS_WITH_DOMAINS= {self.STEWARD: "STEWARD", self.TWR_TYP: "TWR_TYP"}
+        self.FIELD_MAP = [self.STEWARD, self.UNIQUEID, self.LPA_NAME, self.STRUCT_NO, self.WEIGHT_L, self.OVERUNDER, self.STATUS,
+                     self.SUBMIT, self.NOTES]
+
+
+def getDefaultNG911CellSiteObject(gdb_version):
+
+    NG911_CellSite_Default = NG911_CellSite_Object("STEWARD", "L_UPDATE", "NGCELLID", "EFF_DATE", "EXP_DATE", "STATE", "COUNTY"
+            "HEIGHT", "TWR_TYP", "UPDATEBY", "SUBMIT", "NOTES", gdb_version)
+
+    return NG911_CellSite_Default
+
 
 class NG911_CellSector_Object(object):
 
     def __init__(self, u_STEWARD, u_L_UPDATE, u_EFF_DATE, u_EXP_DATE, u_NGCELLID, u_STATE, u_COUNTY, u_SITEID, u_SECTORID, u_SWITCHID,
-                u_C_SITEID, u_ESRD, u_LASTESRK, u_SECORN, u_TECH, u_UPDATEBY, u_SUBMIT, u_NOTES):
+                u_C_SITEID, u_ESRD, u_LASTESRK, u_SECORN, u_TECH, u_UPDATEBY, u_SUBMIT, u_NOTES, u_gdb_version):
 
         self.STEWARD = u_STEWARD
         self.L_UPDATE = u_L_UPDATE
@@ -582,20 +664,22 @@ class NG911_CellSector_Object(object):
         self.UPDATEBY = u_UPDATEBY
         self.SUBMIT = u_SUBMIT
         self.NOTES = u_NOTES
+        self.GDB_VERSION = u_gdb_version
         self.REQUIRED_FIELDS = [self.STEWARD, self.L_UPDATE, self.EFF_DATE, self.UNIQUEID, self.STATE, self.COUNTY, self.SECTORID,
                             self.SECORN, self.UPDATEBY]
-        self.FIELDS_WITH_DOMAINS = [self.STATE, self.COUNTY, self.SUBMIT, self.STEWARD]
+        self.FIELDS_WITH_DOMAINS = {self.STATE: "STATE", self.COUNTY: "COUNTY", self.SUBMIT: "YN", self.STEWARD: "STEWARD"}
         self.FIELD_MAP = [self.STEWARD, self.L_UPDATE, self.EFF_DATE, self.EXP_DATE, self.UNIQUEID, self.STATE, self.COUNTY, self.SITEID,
                             self.SECTORID, self.SWITCHID, self.C_SITEID, self.ESRD, self.LASTESRK, self.SECORN, self.TECH,
                              self.UPDATEBY, self.SUBMIT, self.NOTES]
 
 
-def getDefault20NG911CellSectorObject():
+def getDefaultNG911CellSectorObject(gdb_version):
 
     NG911_CellSector_Default = NG911_CellSector_Object("STEWARD", "L_UPDATE", "EFF_DATE", "EXP_DATE", "NGCELLID", "STATE", "COUNT", "SITEID",
-                        "SECTORID", "SWITCHID", "C_SITEID", "ESRD", "LASTESRK", "SECORN", "TECH", "UPDATEBY", "SUBMIT", "NOTES")
+                        "SECTORID", "SWITCHID", "C_SITEID", "ESRD", "LASTESRK", "SECORN", "TECH", "UPDATEBY", "SUBMIT", "NOTES", gdb_version)
 
     return NG911_CellSector_Default
+
 
 class TN_Object(object):
 
@@ -634,27 +718,10 @@ def getTNObject(gdb):
 
 
 class NG911_Session_obj(object):
-    def __init__(self, gdb, folder, gdbObject, a_obj, rc_obj, esb_obj, ab_obj, ra_obj, cb_obj, mb_obj, esz_obj, psap_obj,
-                fvcr_obj, tcr_obj, cell_obj, parc_obj, gate_obj, hyd_obj, layer_obj_dict):
+    def __init__(self, gdb, folder, gdbObject):
         self.gdbPath = gdb
         self.domainsFolderPath = folder
         self.gdbObject = gdbObject #contains fcList & esbList
-        self.a_obj = a_obj
-        self.rc_obj = rc_obj
-        self.esb_obj = esb_obj
-        self.ab_obj = ab_obj
-        self.ra_obj = ra_obj
-        self.cb_obj = cb_obj
-        self.mb_obj = mb_obj
-        self.esz_obj = esz_obj
-        self.psap_obj = psap_obj
-        self.fvcr_obj = fvcr_obj
-        self.tcr_obj = tcr_obj
-        self.cell_obj = cell_obj
-        self.parc_obj = parc_obj
-        self.gate_obj = gate_obj
-        self.hyd_obj = hyd_obj
-        self.layer_obj_dict = layer_obj_dict
         self.checkList = ""
 
 def getProjectionFile():
@@ -670,239 +737,49 @@ def NG911_Session(gdb):
 
     #get geodatabase object set up
     gdbObject = getGDBObject(gdb)
-
-    #set feature class list
-    fcList = gdbObject.fcList
-    #set esb list
-    esbList = gdbObject.esbList
-
-    #make sure feature class list only contains the layers that exist
-    for fc in fcList:
-        if not Exists(fc):
-            fcList.remove(fc)
-
-    #remove any esb entries that don't exist
-    for esb in esbList:
-        if not Exists(esb):
-            esbList.remove(esb)
-        else:
-            #add esb's to the feature class list
-            fcList.append(esb)
-
-    #reset the gdbObject's fcList & esbList since now both show the layers that really exist
-    gdbObject.fcList = fcList
-    gdbObject.esbList = esbList
-
-    addressPoints = gdbObject.AddressPoints
-
-    if addressPoints in fcList:
-        a_obj = getFCObject(addressPoints)
-    else:
-        a_obj = ""
-    if gdbObject.RoadCenterline in fcList:
-        rc_obj = getFCObject(gdbObject.RoadCenterline)
-    else:
-        rc_obj = ""
-    if gdbObject.ESB in fcList:
-        esb_obj = getFCObject(gdbObject.ESB)
-    elif gdbObject.EMS in fcList:
-        esb_obj = getFCObject(gdbObject.EMS)
-    else:
-        esb_obj = ''
-    if gdbObject.ESZ in fcList:
-        esz_obj = getFCObject(gdbObject.ESZ)
-    else:
-        esz_obj = ''
-    if gdbObject.AuthoritativeBoundary in fcList:
-        ab_obj = getFCObject(gdbObject.AuthoritativeBoundary)
-    else:
-        ab_obj = ""
-    if gdbObject.RoadAlias in fcList:
-        ra_obj = getFCObject(gdbObject.RoadAlias)
-    else:
-        ra_obj = ""
-    if gdbObject.CountyBoundary in fcList:
-        cb_obj = getFCObject(gdbObject.CountyBoundary)
-    else:
-        cb_obj = ""
-    if gdbObject.MunicipalBoundary in fcList:
-        mb_obj = getFCObject(gdbObject.MunicipalBoundary)
-    else:
-        mb_obj = ""
-
-    psap_obj = esb_obj
-    tcr_obj = getDefaultNG911TemplateCheckResultsObject()
-    fvcr_obj = getDefaultNG911FieldValuesCheckResultsObject()
-
-    if gdbObject.CELL_SECTOR != "" and gdbObject.CELL_SECTOR in fcList:
-        cell_obj = getFCObject(gdbObject.CELL_SECTOR)
-    else:
-        cell_obj = ""
-
-    if gdbObject.PARCELS != "" and gdbObject.PARCELS in fcList:
-        parc_obj = getFCObject(gdbObject.PARCELS)
-    else:
-        parc_obj = ""
-
-    if gdbObject.GATES != "" and gdbObject.GATES in fcList:
-        gate_obj = getFCObject(gdbObject.GATES)
-    else:
-        gate_obj = ""
-
-    if gdbObject.HYDRANTS != "" and gdbObject.HYDRANTS in fcList:
-        hyd_obj = getFCObject(gdbObject.HYDRANTS)
-    else:
-        hyd_obj = ""
-
-    layer_obj_dict = {"ADDRESSPOINTS": a_obj, "ROADCENTERLINE": rc_obj, "ESB": esb_obj, "AUTHORITATIVEBOUNDARY": ab_obj,
-                    "ROADALIAS": ra_obj, "COUNTYBOUNDARY": cb_obj, "MUNICIPALBOUNDARY":mb_obj, "ESZ": esz_obj,
-                    "PSAP": esb_obj, "FieldValuesCheckResults":fvcr_obj, "TemplateCheckResults":tcr_obj,
-                    "CELL_SITES": cell_obj, "PARCELS": parc_obj, "GATES": gate_obj, "HYDRANTS": hyd_obj}
-
-    NG911_obj = NG911_Session_obj(gdb, folder, gdbObject, a_obj, rc_obj, esb_obj, ab_obj, ra_obj, cb_obj, mb_obj, esz_obj, psap_obj,
-                fvcr_obj, tcr_obj, cell_obj, parc_obj, gate_obj, hyd_obj, layer_obj_dict)
+    NG911_obj = NG911_Session_obj(gdb, folder, gdbObject)
 
     return NG911_obj
 
 
 def getGDBObject(gdb):
-    addyPtTest = join(gdb, "NG911", "AddressPoints")
-
-    if fieldExists(addyPtTest, "NGADDID"):
-        gdbObject = get20GDBObject(gdb)
-    else:
-        gdbObject = get11GDBObject(gdb)
-
-    return gdbObject
-
-def get11GDBObject(gdb):
-    from NG911_arcpy_shortcuts import fieldExists
-    from arcpy import ListFeatureClasses, env
-
-    #determine (hopefully) which layers are the esb layers
-    fds = join(gdb, "NG911")
-    env.workspace = fds
-    fcs = ListFeatureClasses()
-    ems, law, fire, psap, esb = "", "", "", "", ""
-    emsList = []
-    lawList = []
-    fireList = []
-
-    for f in fcs:
-        f = f.upper()
-        if "EMS" in f:
-            emsList.append(join(fds, f))
-        if "LAW" in f or "LE" in f:
-            lawList.append(join(fds, f))
-        if "FIRE" in f:
-            fireList.append(join(fds, f))
-        if "PSAP" in f:
-            psap = join(fds, f)
-        if "ESB" in f and "EMS" not in f and "LAW" not in f and "FIRE" not in f and "LE" not in f:
-            esb = join(fds, f)
-
-    #see how many layers are EMS layers
-    if len(emsList) > 1:
-        for e in emsList:
-            #pick which one has "primary" in the name
-            if "PRIMARY" in e:
-                ems = e
-    elif len(emsList) == 1:
-        ems = emsList[0]
-
-    #see how many layers are law layers
-    if len(lawList) > 1:
-        for l in lawList:
-            if "PRIMARY" in l:
-                law = l
-    elif len(lawList) == 1:
-        law = lawList[0]
-
-    #see how many layers are fire layers
-    if len(fireList) > 1:
-        for fr in fireList:
-            if "PRIMARY" in fr:
-                fire = fr
-    elif len(fireList) == 1:
-        fire = fireList[0]
-
-    esbList = []
-    for e in [ems, law, fire, psap, esb]:
-        if Exists(e):
-            if e not in esbList:
-                esbList.append(e)
-
-    prj = getProjectionFile()
-
-    # This is a class used represent the NG911 geodatabase
-    class NG911_GDB_Object():
-        def __init__(self):
-            self.gdbPath = gdb
-            self.ProjectionFile = prj
-            self.NG911_FeatureDataset = join(gdb, "NG911")
-            self.AddressPoints = join(self.NG911_FeatureDataset, "AddressPoints")
-            self.RoadCenterline = join(self.NG911_FeatureDataset, "RoadCenterline")
-            self.RoadAlias = join(gdb, "RoadAlias")
-            self.AuthoritativeBoundary = join(self.NG911_FeatureDataset, "AuthoritativeBoundary")
-            self.MunicipalBoundary = join(self.NG911_FeatureDataset, "MunicipalBoundary")
-            self.CountyBoundary = join(self.NG911_FeatureDataset, "CountyBoundary")
-            self.ESZ = join(self.NG911_FeatureDataset, "ESZ")
-            self.PSAP = psap
-            self.EMS = ems
-            self.LAW = law
-            self.FIRE = fire
-            self.ESB = esb
-            self.Topology = join(self.NG911_FeatureDataset, "NG911_Topology")
-            self.Locator = join(gdb, "Locator")
-            self.gc_test = join(gdb, "gc_test")
-            self.GeocodeTable = join(gdb, "GeocodeTable")
-            self.GeocodeExceptions = join(gdb, "GeocodeExceptions")
-            self.AddressPointFrequency = join(gdb, "AP_Freq")
-            self.RoadCenterlineFrequency = join(gdb, "Road_Freq")
-            self.FieldValuesCheckResults = join(gdb, "FieldValuesCheckResults")
-            self.TemplateCheckResults = join(gdb, "TemplateCheckResults")
-            self.HYDRANTS = join(gdb, "HYDRANTS")
-            self.PARCELS = join(gdb, "PARCELS")
-            self.GATES = join(gdb, "GATES")
-            self.CELL_SECTOR = join(gdb, "Cell_Sector")
-            self.AdminBoundaryList = [self.AuthoritativeBoundary, self.CountyBoundary, self.MunicipalBoundary,
-                                    self.ESZ, self.PSAP]
-            self.fcList = [self.AddressPoints, self.RoadCenterline, self.RoadAlias, self.AuthoritativeBoundary, self.MunicipalBoundary,
-                        self.CountyBoundary, self.ESZ, self.PSAP, self.HYDRANTS, self.PARCELS, self.GATES, self.CELL_SECTOR]
-            self.esbList = esbList
-            self.otherLayers = [self.HYDRANTS, self.PARCELS, self.GATES, self.CELL_SECTOR]
-            self.requiredLayers = [self.RoadAlias, self.AddressPoints, self.RoadCenterline, self.AuthoritativeBoundary, self.ESZ] + esbList
-            self.fcDict = {"AuthoritativeBoundary": self.AuthoritativeBoundary, "MunicipalBoundary": self.MunicipalBoundary, "CountyBoundary":
-                            self.CountyBoundary, "ESZ": self.ESZ, "PSAP": self.PSAP, "EMS": self.EMS, "LAW": self.LAW, "FIRE": self.FIRE,
-                            "ESB": self.ESB, "HYDRANTS": self.HYDRANTS, "PARCELS": self.PARCELS, "GATES": self.GATES, "CELL_SECTOR": self.CELL_SECTOR,
-                            "AddressPoints": self.AddressPoints, "RoadCenterline": self.RoadCenterline, "RoadAlias": self.RoadAlias}
-
-    NG911_GDB = NG911_GDB_Object()
-
-    return NG911_GDB
-
-def get20GDBObject(gdb):
+    from NG911_arcpy_shortcuts import fieldExists, hasRecords
 
     featureDataset = "NG911"
 
+    # see what version of the database we're working with
+    ap = join(gdb, featureDataset, "AddressPoints")
+    if fieldExists(ap, "RCLMATCH"):
+        version = "21"
+    else:
+        version = "20"
+
+    # prep potential ESB list
     ESB = join(gdb, featureDataset, "ESB")
     EMS = join(gdb, featureDataset, "ESB_EMS")
     FIRE = join(gdb, featureDataset, "ESB_FIRE")
     LAW = join(gdb, featureDataset, "ESB_LAW")
     PSAP = join(gdb, featureDataset, "ESB_PSAP")
 
+    # test to see what should be included in the for-real ESB list
     esbList = []
     for e in [ESB, EMS, FIRE, LAW, PSAP]:
-        if Exists(e):
-            if e not in esbList:
-                esbList.append(e)
+        if Exists(e): # make sure the layer exists
+            if hasRecords(e): # make sure the layer has records
+                if e not in esbList:
+                    esbList.append(e)
 
+    # set up a blank utility list to fill in later
+    utList = []
+
+    # get the path to the projection file
     prj = getProjectionFile()
 
     # This is a class used represent the NG911 geodatabase
-    class NG911_20GDB_Object():
+    class NG911_GDB_Object():
         def __init__(self):
             self.gdbPath = gdb
+            self.GDB_VERSION = version
             self.ProjectionFile = prj
             self.NG911_FeatureDataset = join(gdb, "NG911")
             self.AddressPoints = join(self.NG911_FeatureDataset, "AddressPoints")
@@ -914,10 +791,8 @@ def get20GDBObject(gdb):
             self.ESZ = join(self.NG911_FeatureDataset, "ESZ")
             self.PSAP = PSAP
             self.Topology = join(self.NG911_FeatureDataset, "NG911_Topology")
-            self.Locator = join(gdb, "Locator")
             self.gc_test = join(gdb, "gc_test")
             self.GeocodeTable = join(gdb, "GeocodeTable")
-            self.GeocodeExceptions = join(gdb, "GeocodeExceptions")
             self.AddressPointFrequency = join(gdb, "AP_Freq")
             self.RoadCenterlineFrequency = join(gdb, "Road_Freq")
             self.FieldValuesCheckResults = join(gdb, "FieldValuesCheckResults")
@@ -926,23 +801,57 @@ def get20GDBObject(gdb):
             self.EMS = EMS
             self.FIRE = FIRE
             self.LAW = LAW
-            self.HYDRANTS = join(gdb, "Hydrants")
-            self.PARCELS = join(gdb, "Parcels")
-            self.GATES = join(gdb, "Gates")
-            self.CELL_SECTOR = join(gdb, "Cell_Sector")
+
+            if self.GDB_VERSION == "20":
+                self.HYDRANTS = join(gdb, "Hydrants")
+                self.PARCELS = join(gdb, "Parcels")
+                self.GATES = join(gdb, "Gates")
+                self.CELL_SECTOR = join(gdb, "Cell_Sector")
+            elif self.GDB_VERSION == "21":
+                self.OPTIONAL_LAYERS_FD = join(gdb, "OptionalLayers")
+                self.HYDRANTS = join(self.OPTIONAL_LAYERS_FD, "HYDRANTS")
+                self.PARCELS = join(self.OPTIONAL_LAYERS_FD, "PARCELS")
+                self.GATES = join(self.OPTIONAL_LAYERS_FD, "GATES")
+                self.CELL_SECTOR = join(self.OPTIONAL_LAYERS_FD, "CELLSECTORS")
+                self.CELLSITES = join(self.OPTIONAL_LAYERS_FD, "CELLSITES")
+##                self.UTILITY = join(self.OPTIONAL_LAYERS_FD, "UTILITY")
+                self.BRIDGES = join(self.OPTIONAL_LAYERS_FD, "BRIDGES")
+
+                # populate the utility list
+                from arcpy import env, ListFeatureClasses
+                env.workspace = self.OPTIONAL_LAYERS_FD
+                fcs = ListFeatureClasses()
+                for fc in fcs:
+                    if fc[0:3] == "UT_":
+                        utList.append(fc)
+
+            # standard lists
             self.AdminBoundaryList = [basename(self.AuthoritativeBoundary), basename(self.CountyBoundary), basename(self.MunicipalBoundary),
                                     basename(self.ESZ), basename(self.PSAP)]
-            self.fcList = [self.AddressPoints, self.RoadCenterline, self.RoadAlias, self.AuthoritativeBoundary, self.MunicipalBoundary,
-                        self.CountyBoundary, self.ESZ, self.PSAP, self.HYDRANTS, self.PARCELS, self.GATES, self.CELL_SECTOR]
             self.esbList = esbList
-            self.otherLayers = [self.HYDRANTS, self.PARCELS, self.GATES, self.CELL_SECTOR]
             self.requiredLayers = [self.RoadAlias, self.AddressPoints, self.RoadCenterline, self.AuthoritativeBoundary, self.ESZ] + esbList
-            self.fcDict = {"AuthoritativeBoundary": self.AuthoritativeBoundary, "MunicipalBoundary": self.MunicipalBoundary, "CountyBoundary":
-                self.CountyBoundary, "ESZ": self.ESZ, "PSAP": self.PSAP, "EMS": self.EMS, "LAW": self.LAW, "FIRE": self.FIRE,
-                "ESB": self.ESB, "HYDRANTS": self.HYDRANTS, "PARCELS": self.PARCELS, "GATES": self.GATES, "CELL_SECTOR": self.CELL_SECTOR,
-                "AddressPoints": self.AddressPoints, "RoadCenterline": self.RoadCenterline, "RoadAlias": self.RoadAlias}
 
-    NG911_GDB = NG911_20GDB_Object()
+            # variable lists
+            featureClasses = [self.AddressPoints, self.RoadCenterline, self.RoadAlias, self.AuthoritativeBoundary, self.MunicipalBoundary,
+                        self.CountyBoundary, self.ESZ, self.PSAP, self.HYDRANTS, self.PARCELS, self.GATES, self.CELL_SECTOR]
+            otherLayers = [self.HYDRANTS, self.PARCELS, self.GATES, self.CELL_SECTOR]
+
+            # make sure a 2.1 object contains the right information
+            setList = [featureClasses, otherLayers]
+
+            if version == "21":
+                for sl in setList:
+                    for rf in utList + [self.BRIDGES, self.CELLSITES]:
+                        sl.append(rf)
+
+            # add all esb layers to fcList
+            for esb in esbList:
+                featureClasses.append(esb)
+
+            self.fcList = featureClasses
+            self.otherLayers = otherLayers
+
+    NG911_GDB = NG911_GDB_Object()
 
     return NG911_GDB
 
@@ -955,69 +864,64 @@ def getFCObject(fc):
     obj = object
 
     if "ROADCENTERLINE" in word:
-        if fieldExists(fc, "NGSEGID"):
-            #2.0 geodatabase
-            obj = getDefault20NG911RoadCenterlineObject()
+        if fieldExists(fc, "AUTH_L"):
+            # 2.1 indicator
+            version = "21"
         else:
-            obj = getDefaultNG911RoadCenterlineObject()
+            version = "20"
+        obj = getDefaultNG911RoadCenterlineObject(version)
 
     elif "ADDRESSPOINTS" in word:
-        if fieldExists(fc, "NGADDID"):
-            #2.0 geodatabase
-            obj = getDefault20NG911AddressObject()
+        if fieldExists(fc, "RCLMATCH"):
+            # 2.1 indicator
+            version = "21"
         else:
-            obj = getDefaultNG911AddressObject()
+            version = "20"
+        obj = getDefaultNG911AddressObject(version)
+
     elif "ROADALIAS" in word:
-        if fieldExists(fc, "NGALIASID"):
-            #2.0 geodatabase
-            obj = getDefault20NG911RoadAliasObject()
-        else:
-            obj = getDefaultNG911RoadAliasObject()
+        # 2.1 & 2.0 are the same
+        obj = getDefaultNG911RoadAliasObject("x")
+
     elif "AUTHORITATIVEBOUNDARY" in word:
-        if fieldExists(fc, "NGABID"):
-            #2.0 geodatabase
-            obj = getDefault20NG911AuthoritativeBoundaryObject()
-        else:
-            obj = getDefaultNG911AuthoritativeBoundaryObject()
+        # 2.1 & 2.0 are the same
+        obj = getDefaultNG911AuthoritativeBoundaryObject("x")
+
     elif "MUNICIPALBOUNDARY" in word:
-        if fieldExists(fc, "NGMUNI_ID"):
-            obj = getDefault20NG911MunicipalBoundaryObject()
-        else:
-            obj = getDefaultNG911MunicipalBoundaryObject()
+       # 2.1 & 2.0 are the same
+       obj = getDefaultNG911MunicipalBoundaryObject("x")
+
     elif "COUNTYBOUNDARY" in word:
-        if fieldExists(fc, "NGCOUNTYID"):
-            obj = getDefault20NG911CountyBoundaryObject()
-        else:
-            obj = getDefaultNG911CountyBoundaryObject()
+        # 2.1 & 2.0 are the same
+        obj = getDefaultNG911CountyBoundaryObject("x")
+
     elif "ESZ" in word:
-        if fieldExists(fc, "NGESZID"):
-            obj = getDefault20NG911ESZObject()
-        else:
-            obj = getDefaultNG911ESZObject()
+        # 2.1 & 2.0 are the same
+        obj = getDefaultNG911ESZObject("x")
+
+    elif "ESB" in word:
+        # 2.1 & 2.0 are the same
+        obj = getDefaultNG911ESBObject("x")
+
+    # get various optional layers
     elif "PARCELS" in word:
-        obj = getDefault20NG911ParcelObject()
+        obj = getDefaultNG911ParcelObject("x")
     elif "GATES" in word:
-        obj = getDefault20NG911GateObject()
+        obj = getDefaultNG911GateObject("x")
     elif "HYDRANTS" in word:
-        obj = getDefault20NG911HydrantObject()
-    elif "CELL_SECTOR" in word:
-        obj = getDefault20NG911CellSectorObject()
+        obj = getDefaultNG911HydrantObject("x")
+    elif "CELL_SECTOR" in word or "CELLSECTORS" in word:
+        obj = getDefaultNG911CellSectorObject("x")
+    elif "BRIDGES" in word:
+        obj = getDefaultNG911BridgeObject("x")
+    elif "CELLSITE" in word:
+        obj = getDefaultNG911CellSiteObject("x")
+    elif word[0:3] == "UT_":
+        obj = getDefaultNG911UtilityObject("x")
+
     elif word == "FIELDVALUESCHECKRESULTS":
         obj = getDefaultNG911FieldValuesCheckResultsObject()
     elif word == "TEMPLATECHECKRESULTS":
         obj = getDefaultNG911TemplateCheckResultsObject()
-    elif word == "GEOCODEEXCEPTIONS":
-        if fieldExists(fc, "NGADDID"):
-            obj = getDefaul20NG911GeocodeExceptionsObject()
-        else:
-            obj = getDefaultNG911GeocodeExceptionsObject()
-    elif "ESB" in word or "PSAP" in word or "EMS" in word or "LAW" in word or "FIRE" in word:
-        if fieldExists(fc, "NGESBID"):
-            obj = getDefault20NG911ESBObject()
-        else:
-            obj = getDefaultNG911ESBObject()
 
     return obj
-
-
-

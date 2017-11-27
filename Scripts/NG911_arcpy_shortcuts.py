@@ -53,7 +53,7 @@ def hasRecords(fc):
     if count > 0:
         records = True
 
-    return count
+    return records
 
 def AddFieldAndCalculate(fc, field, fieldType, length, expression, exp_lang):
     from arcpy import AddField_management, CalculateField_management
@@ -97,10 +97,7 @@ def countLayers(folder):
 def ListFieldNames(item):
     #create a list of field names
     from arcpy import ListFields
-    fields = ListFields(item)
-    fieldList = []
-    for f in fields:
-        fieldList.append(f.name.upper())
+    fieldList = map(lambda x: x.name.upper(), ListFields(item))
     return fieldList
 
 def fieldExists(fc, fieldName):
@@ -126,13 +123,8 @@ def hasIndex(fc):
 
 def ListIndexNames(fc):
     from arcpy import ListIndexes
-    exists = False
-    indexes = ListIndexes(fc)
-    indexList = []
-    for i in indexes:
-        indexList.append(i.name)
-    return indexList
-
+    names = map(lambda x: x.name, ListIndexes(lyr))
+    return names
 
 def MakeLayer(item, lyrName, wc):
     from arcpy import Describe, MakeFeatureLayer_management, MakeTableView_management
@@ -150,3 +142,11 @@ def MakeLayer(item, lyrName, wc):
         else:
             MakeTableView_management(item, lyrName)
     return lyrName
+
+
+def CalcWithWC(fc, fld, val, wc):
+    from arcpy import MakeFeatureLayer_management, CalculateField_management, Delete_management
+    fl_calc = "fl_calc"
+    MakeFeatureLayer_management(fc, fl_calc, wc)
+    CalculateField_management(fl_calc, fld, val, "PYTHON_9.3", "")
+    Delete_management(fl_calc)

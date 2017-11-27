@@ -53,21 +53,21 @@ issues. Not all fields will be filled out for all issues.
 -   **FeatureID**: the unique feature ID of the issue. The matching
     unique ID field depends on the layer name.
 
-    -   AddressPoints: ADDID/NGADDID
+    -   AddressPoints: NGADDID
 
-    -   AuthoritativeBoundary: ABID/NGABID
+    -   AuthoritativeBoundary: NGABID
 
-    -   CountyBoundary: COUNTYID/NGCOUNTYID
+    -   CountyBoundary: NGCOUNTYID
 
-    -   ESB (includes EMS, FIRE, LAW, PSAP): ESBID/NGESBID
+    -   ESB (includes EMS, FIRE, LAW, PSAP): NGESBID
 
-    -   ESZ: ESZID/NGESZID
+    -   ESZ: NGESZID
 
-    -   MunicipalBoundary: MUNI\_ID/NGMUNI\_ID
+    -   MunicipalBoundary: NGMUNI\_ID
 
-    -   RoadAlias: ALIASID/NGALIASID
+    -   RoadAlias: ANGALIASID
 
-    -   RoadCenterline: SEGID/NGSEGID
+    -   RoadCenterline: NGSEGID
 
 A quick way to visualize issues inside ArcMap is to create a join
 between a feature class’s unique ID field and FeatureID in
@@ -122,6 +122,7 @@ Errors
 |--------------------|-----------------------------------------------------------------|--------------------|
 |*FEATUREID did not geocode against centerline*|Found by: 2 Check Address Points &gt; Geocode Address Points<br><br>An address point was flagged as “Unmatched” during the geocoding process. If any geocoding issues are found, the tool leaves GeocodeTable (the input addresses) and gc\_test (the geocoding results) in the geodatabase instead of removing them for cleanup. To examine exactly what was geocoded, look at the SingleLineInput field of the GeocodeTable. The information for SingleLineInput is derived from the AddressPoints layer by concatenating the LABEL and ZIP fields. In gc\_test, the results of the geocoding process are coded in the Status field (M = Match, T = Tie, U = Unmatched).|Fixes for geocoding issues might either be in the AddressPoints layer or the RoadCenterline layer. Examine the LABEL and ZIP fields of the AddressPoints layer in comparison to the appropriate data in the Road Centerline layer to see if things match up correctly.<br><br>If you need to create geocoding exceptions, run Adjustment Tools &gt; Create Geocode Exceptions. Tool tip: leave only the geocoding issues you want to turn into geocoding exceptions in FieldValuesCheckResults prior to running the Geocode Exception tool.|
 |*Error: FEATUREID geocoded against more than one centerline segment. Possible address range overlap*|Found by: 2 Check Address Points &gt; Geocode Address Points<br><br>A primary address point was flagged as a “Tie” during the geocoding process. In most cases, the road centerline file contains overlapping address ranges. Secondary address points that “Tie” are not counted as errors and will show up as notices.|Follow the “Fix Tips” for unmatched geocoding, but see if any address ranges overlap.|
+|*Error: KSPID value is not the required 19 characters*|Found by: 2 Check Address Points &gt; Check Values Against Domains<br><br> A KSPID record was not 19 digits. The official KSPID format is 19 digits which includes the county code and cannot hold dashes or dots.|Run "Fix KSPID" in "Adjustment Tools" to remove any dashes or dots. Make sure all KSPID records include the county code.|
 
 ###### Road Alias
 |Error Message|Meaning|Fix Tips|
@@ -152,6 +153,8 @@ Notices:
 |*Road segment contains addresses for area outside PSAP boundary*|Found by: 3 Check Roads &gt; Check Address Ranges<br><br>A road centerline segment has different values for COUNTY_L and COUNTY_R and contains non-zero values for all four fields L_F_ADD, L_R_ADD, R_F_ADD and R_T_ADD. According to the NG911 data model, addresses outside the PSAP should be addressed as 0-0.|Edit address ranges outside of your PSAP as 0-0. For example, for a road segment, if COUNTY_L is not your county, the corresponding values for L_F_ADD and L_R_ADD should be 0 and 0.|
 |*Segment’s address range is from high to low instead of low to high*|Found by: 3 Check Roads &gt; Check Directionality<br><br>For the records indicated, either L\_T\_ADD is smaller than L\_F\_ADD or R\_T\_ADD is smaller than R\_F\_ADD. When a “to” portion of an address range is smaller than the “from” portion, geocoders have a harder time placing addresses correctly.|Look at the road segments identified to see if the road direction can be switched without negatively impacting the data.|
 |*This segment might contain a geometry cutback*|Found by: 3 Check Roads &gt; Check for cutbacks<br><br>A segment’s geometry follows an unpredictable pattern like a Z inside the feature or a tail on one end. In some cases of tight angles, a cutback is flagged by the geometry check but the geometry is actually ok.|Inside an edit session, take a look at the individual vertices of the indicated road segments. If Z’s or tails exist, remove them.|
+|*X Side- Address range is 0-0 but the parity is recorded as X OR Parity is marked as E but the ranges filled in are X and X*|Found by: 3 Check Roads &gt; Check Address Ranges<br><br>For the record indicated, there’s a difference between the actual address range and what is recorded as the parity.|Depending on the message reported, make sure all 0-0 ranges are marked as Z and that parities marked as E or O actually have E/O ranges.|
+
 
 ### Support Contact:
 

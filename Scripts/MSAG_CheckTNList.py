@@ -111,7 +111,7 @@ def prepXLS(tnxls, gdb):
     streetSuffixDict = getFieldDomain("STS", folder).keys()
     postDirectionalDict = getFieldDomain("POD", folder).keys()
 
-    with UpdateCursor(outTable, postRoadFields) as rows:
+    with UpdateCursor(outTable, postRoadFields, "RD not like '%OLD H%'") as rows:
         for row in rows:
             fullNameList = row[2].split()
             i = 1
@@ -159,7 +159,7 @@ def geocodeTable(gdb):
     AddUniqueIDField(tname, uniqueFieldID)
 
     addy_field_list = ["NAME_COMPARE", "PRD", "RD", "STS", "POD"]
-    launch_compare(gdb, tname, "HNO", "MUNI", addy_field_list)
+    launch_compare(gdb, tname, "HNO", "MUNI", addy_field_list, True)
 
     #see if any records did not match
     wc = "MATCH <> 'M'"

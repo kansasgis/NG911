@@ -8,8 +8,8 @@ automatically determine, calculate and import the KSPID into the address
 points. The tool can use 16 or 19 digit PIDs, and the 19 digit version
 will be added to the address points.
 
-[*Assign Unique Identifier*](#UniqueID): creates a unique ID for all null features in
-a feature class.
+[*Assign Unique Identifier/Assign Unique Identifier Road Alias Table*](#UniqueID): 
+creates a unique ID for all null features in a feature class or the road alias table.
 
 [*Calculate Label*](#CalcLabel): calculates the label field of either an address point
 file or the road centerline file. For address points, the fields used
@@ -231,31 +231,7 @@ Running *Verify Road Alias*:
 
 The enhancement tools require:
 
--   Python scripts:
-
-    -   Enhancement\_AddKSPID.py
-
-    -   Enhancement\_AssignID.py
-
-    -   Enhancement\_CalculateLabel.py
-
-    -   Enhancement\_CheckRoadElevationDirection.py
-
-    -   Enhancement\_CreateRoadAliasRecords.py
-
-    -   Enhancement\_FindAddressRangeOverlaps.py
-
-    -   Enhancement\_GeocodeAddressPoints.py
-    
-    -   Enhancement\_RoadNameComparison.py
-	
-	-   Enhancement\_SplitSingleESBLayer.py
-
-    -   Enhancement\_VerifyRoadAlias.py
-
-    -   Enhancement\_XYUSNGCal.py
-
-    -   CoordConvertor.py
+-	The complete NG911 toolbox setup and all scripts it includes.
 
 Support Contact:
 

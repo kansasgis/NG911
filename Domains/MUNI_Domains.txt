@@ -562,6 +562,7 @@ SYRACUSE|Municipality in Kansas
 TAMPA|Municipality in Kansas
 TESCOTT|Municipality in Kansas
 THAYER|Municipality in Kansas
+THE HIGHLANDS|Municipality in Kansas
 TIMKEN|Municipality in Kansas
 TIPTON|Municipality in Kansas
 TONGANOXIE|Municipality in Kansas
