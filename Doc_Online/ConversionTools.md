@@ -41,7 +41,7 @@ submission to DASC
 Running 2.0 to 2.1 Conversion Tools:
 
 For full documentation, please see the official conversion documentation called 
-"ConvertingGDB_2.0_to_2.1".
+"[ConvertingGDB_2.0_to_2.1](#https://github.com/kansasgis/NG911/blob/master/Doc/ConvertingGDB_2.0_to_2.1.docx)".
 
 <a name="parcels"></a>
 Running *Add/Update Parcel Layer*:
