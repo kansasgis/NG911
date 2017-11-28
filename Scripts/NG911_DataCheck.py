@@ -483,6 +483,8 @@ def checkUniqueIDFrequency(currentPathSettings):
     env.workspace = gdb
     table = "ESB_IDS"
 
+
+
     #create temp table of esbID's
     if len(esbList) > 1 and esbList[0] != esbList[1]:
         layerList = ["ESB_IDS"]
@@ -520,50 +522,59 @@ def checkUniqueIDFrequency(currentPathSettings):
             values = [(today, fc + " does not exist")]
             RecordResults("DASCmessage", values, gdb)
 
+
+
     #loop through layers in the gdb that aren't esb & ESB_IDS
     values = []
     recordType = "fieldValues"
     today = strftime("%m/%d/%y")
 
+
     for layer in layerList:
-        freq_table = layer + "_freq"
-        deleteExisting(freq_table)
-        obj = NG911_GDB_Objects.getFCObject(layer)
-        Statistics_analysis(layer, freq_table, [[obj.UNIQUEID,"COUNT"]], obj.UNIQUEID)
+        try:
+            freq_table = layer + "_freq"
+            deleteExisting(freq_table)
+            obj = NG911_GDB_Objects.getFCObject(layer)
+            Statistics_analysis(layer, freq_table, [[obj.UNIQUEID,"COUNT"]], obj.UNIQUEID)
 
-        #set parameters for the search cursor
-        where_clause = "FREQUENCY > 1"
-        fields = (esb_uniqueid, "FREQUENCY")
+            #set parameters for the search cursor
+            where_clause = "FREQUENCY > 1"
 
-        fl = "fl"
+            fields = (obj.UNIQUEID, "FREQUENCY")
 
-        MakeTableView_management(freq_table, fl, where_clause)
+            fl = "fl"
 
-        if getFastCount(fl) > 0:
+            MakeTableView_management(freq_table, fl, where_clause)
 
-            #set a search cursor with just the unique ID field
-            with SearchCursor(freq_table, fields, where_clause) as rows2:
-                stringESBReport = ""
-                for row2 in rows2:
-                    reportLayer = layer
-                    if layer == "ESB_IDS":
-                        reportLayer = "ESB"
-                        stringEsbInfo = []
-                        wc2 = esb_uniqueid + " = '" + str(row2[0]) + "'"
-                        with SearchCursor("ESB_IDS", ("ESB_LYR"), wc2) as esbRows:
-                            for esbRow in esbRows:
-                                stringEsbInfo.append(esbRow[0])
+            if getFastCount(fl) > 0:
 
-                        stringESBReport = " and ".join(stringEsbInfo)
+                #set a search cursor with just the unique ID field
+                with SearchCursor(freq_table, fields, where_clause) as rows2:
+                    stringESBReport = ""
+                    for row2 in rows2:
+                        reportLayer = layer
+                        if layer == "ESB_IDS":
+                            reportLayer = "ESB"
+                            stringEsbInfo = []
+                            wc2 = esb_uniqueid + " = '" + str(row2[0]) + "'"
+                            with SearchCursor("ESB_IDS", ("ESB_LYR"), wc2) as esbRows:
+                                for esbRow in esbRows:
+                                    stringEsbInfo.append(esbRow[0])
 
-                    #report duplicate IDs
-                    report = "Error: " + str(row2[0]) + " is a duplicate ID"
-                    if stringESBReport != "":
-                        report = report + " in " + stringESBReport
-                    val = (today, report, reportLayer, esb_uniqueid, row2[0], "Check Unique IDs")
-                    values.append(val)
+                            stringESBReport = " and ".join(stringEsbInfo)
 
-        cleanUp([freq_table, fl])
+                        #report duplicate IDs
+                        report = "Error: " + str(row2[0]) + " is a duplicate ID"
+                        if stringESBReport != "":
+                            report = report + " in " + stringESBReport
+                        val = (today, report, reportLayer, esb_uniqueid, row2[0], "Check Unique IDs")
+                        values.append(val)
+
+            cleanUp([freq_table, fl])
+
+        except Exception as e:
+            userWarning(str(e))
+            userMessage("Issue with " + layer)
 
     #report duplicate records
     if values != []:
@@ -862,7 +873,10 @@ def checkMsagLabelCombo(msag, label, overlaps, rd_fc, fields, msagList, name_fie
         if "'" in label:
             label = label.replace("'", "''")
 
-        wc = msagfield + " LIKE '%" + msag + "%' AND " + name_field + " = '" + label + "' AND AUTH_" + side + " = 'Y' AND GEOMSAG" + side + " = 'Y'"
+        wc = msagfield + " LIKE '%" + msag + "%' AND " + name_field + " = '" + label + "'"
+
+        if fieldExists(rd_fc, "AUTH_" + side):
+            wc = wc + " AND AUTH_" + side + " = 'Y' AND GEOMSAG" + side + " = 'Y'"
 
         with SearchCursor(rd_fc, fields, wc) as rows:
             for row in rows:
