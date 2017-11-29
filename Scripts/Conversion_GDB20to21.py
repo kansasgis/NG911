@@ -159,6 +159,9 @@ def main():
         if editorF:
             DisableEditorTracking_management(itemF, "DISABLE_CREATOR", "DISABLE_CREATION_DATE", "DISABLE_LAST_EDITOR", "DISABLE_LAST_EDIT_DATE")
 
+        # force common fields
+        forceCommonFields(itemC, itemF)
+
         # records can just be appended over NO_TEST for the most part
         Append_management(itemC, itemF, "NO_TEST")
 
