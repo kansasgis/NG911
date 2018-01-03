@@ -634,7 +634,7 @@ class NG911_CellSite_Object(object):
 
 def getDefaultNG911CellSiteObject(gdb_version):
 
-    NG911_CellSite_Default = NG911_CellSite_Object("STEWARD", "L_UPDATE", "NGCELLID", "EFF_DATE", "EXP_DATE", "STATE", "COUNTY"
+    NG911_CellSite_Default = NG911_CellSite_Object("STEWARD", "L_UPDATE", "NGCELLID", "EFF_DATE", "EXP_DATE", "STATE", "COUNTY",
             "HEIGHT", "TWR_TYP", "UPDATEBY", "SUBMIT", "NOTES", gdb_version)
 
     return NG911_CellSite_Default
