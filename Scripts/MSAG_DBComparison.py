@@ -7,7 +7,8 @@
 # Created:     10/05/2017
 #-------------------------------------------------------------------------------
 from NG911_GDB_Objects import getFCObject
-from os.path import join, dirname
+from os import remove
+from os.path import join, dirname, exists
 from arcpy.da import SearchCursor, UpdateCursor, Editor
 from arcpy import (Copy_management, AddField_management, AddMessage,
                     MakeFeatureLayer_management, Delete_management,
@@ -21,10 +22,17 @@ import time
 def prep_roads_for_comparison(rd_fc, name_field, code_fields, city_fields, field_list):
 
     rd_object = getFCObject(rd_fc)
+##    AddMessage(", ".join(field_list))
 
     # add the NAME_OVERLAP field
     if not fieldExists(rd_fc, name_field):
-        AddField_management(rd_fc, name_field, "TEXT", "", "", 50)
+        AddField_management(rd_fc, name_field, "TEXT", "", "", 100)
+
+    i = 0
+
+    if "rcTable" in rd_fc:
+        field_list.append("NGSEGID")
+        i = field_list.index("NGSEGID")
 
     # calculate values for NAME_OVLERAP field
     fields1 = tuple(field_list)
@@ -51,7 +59,10 @@ def prep_roads_for_comparison(rd_fc, name_field, code_fields, city_fields, field
                 start_int = start_int + 1
 
             row[0] = label.replace("||","|")
-            rows.updateRow(row)
+            try:
+                rows.updateRow(row)
+            except:
+                AddMessage("Error with NGSEGID " + row[i])
 
     edit.stopEditing(True)
 
@@ -108,7 +119,12 @@ def prep_roads_for_comparison(rd_fc, name_field, code_fields, city_fields, field
                        else:
                            a2 = b[name[2].upper()]
 
-                       tot = tot * a0 - a1 + a2
+                       if name[-1].upper() not in b:
+                           a3 = 45
+                       else:
+                           a3 = b[name[-1].upper()]
+
+                       tot = tot * a0 - a1 + a2 - a3
 
                    return tot"""
 
@@ -138,8 +154,6 @@ def ap_compare(hno, hno_code, ap_fc):
         # search cursor to get all ties
 
         segid_field = "NGADDID"
-        if not fieldExists(ap_fc, segid_field):
-            segid_field = "ADDID"
 
         rd_fields = (segid_field)
 
@@ -167,7 +181,12 @@ def ap_compare(hno, hno_code, ap_fc):
     del segid_list
 
 
-def db_compare(hno, hno_code, tempTable):
+def db_compare(hno, hno_code, tempTable, addid, txt, idField):
+    # see if the text file exists already
+    if exists(txt):
+        method = "a"
+    else:
+        method = "w"
 
     # see if the address number is even or odd
     if hno & 1: # bitwise operation to test for odd/even (thanks to Sherry M.)
@@ -197,11 +216,11 @@ def db_compare(hno, hno_code, tempTable):
                 range_counter = 1
 
             # get the range by 2s
-            sideRange = list(range(r_row[1], r_row[2] + 2, range_counter))
+            sideRange = list(range(r_row[1], r_row[2] + range_counter, range_counter))
 
             # if the range was high to low, flip it
             if sideRange == []:
-                sideRange = list(range(r_row[2], r_row[1] + 2, range_counter))
+                sideRange = list(range(r_row[2], r_row[1] + range_counter, range_counter))
 
             if hno in sideRange:
                 segid_list.append(r_row[0])
@@ -222,6 +241,8 @@ def db_compare(hno, hno_code, tempTable):
         segid = ""
         side = "N"
     else:
+        segids = idField + " " + addid + " TIES WHERE CLAUSE: NGSEGID in ('" + "', '".join(segid_list) + "')\n"
+        writeToText(txt, segids, method)
         segid = "TIES"
         side = "N"
 
@@ -229,7 +250,14 @@ def db_compare(hno, hno_code, tempTable):
     del segid_list
 
 
+def writeToText(textFile, stuff, method):
+    FILE = open(textFile, method)
+    FILE.writelines(stuff)
+    FILE.close()
+
+
 def launch_compare(gdb, output_table, HNO, addy_city_field, addy_field_list, queryAP):
+
 ##    start_time = time.time()
     rd_fc = join(gdb, "NG911", "RoadCenterline")
     ap_fc = join(gdb, "NG911", "AddressPoints")
@@ -384,7 +412,11 @@ def launch_compare(gdb, output_table, HNO, addy_city_field, addy_field_list, que
         if not fieldExists(output_table, fld):
             AddField_management(output_table, fld, "TEXT", "", "", length)
 
-    addy_fields = [HNO, code_field, "MATCH", rd_object.UNIQUEID, "MATCH_LAYER", "RCLSIDE"]
+    idField = "NGADDID"
+    if "TN_List" in output_table:
+        idField = "NGTNID"
+
+    addy_fields = [HNO, code_field, "MATCH", rd_object.UNIQUEID, "MATCH_LAYER", "RCLSIDE", idField]
 
     non_match_count = 0
     count = 1
@@ -396,6 +428,11 @@ def launch_compare(gdb, output_table, HNO, addy_city_field, addy_field_list, que
     three_quarters = half + quarter
     timeDict = {quarter: "1/4", half:"1/2", three_quarters:"3/4"}
 
+    # create a text file that will report back geocoding ties
+    txt = gdb.replace(".gdb", "_TIES.txt")
+    if exists(txt):
+        remove(txt)
+
     # loop through address points to compare each one
     no1_wc = "CODE_COMPARE <> 1"
     with UpdateCursor(output_table, addy_fields, no1_wc) as rows:
@@ -404,13 +441,14 @@ def launch_compare(gdb, output_table, HNO, addy_city_field, addy_field_list, que
             # set defaults
             segid = ""
             side = ""
+            addid = row[6]
 
             # start testing out addresses
             hno, hno_code = row[0], row[1]
             if hno not in (None, "", " "):
 ##                try:
                     hno = int(hno)
-                    match_combo = db_compare(hno, hno_code, tempTable)
+                    match_combo = db_compare(hno, hno_code, tempTable, addid, txt, idField)
                     segid = match_combo[0]
                     side = match_combo[1]
 ##                except:
@@ -466,8 +504,8 @@ def launch_compare(gdb, output_table, HNO, addy_city_field, addy_field_list, que
         print("All address points match. Good job.")
         AddMessage("All address points match. Good job.")
     else:
-        print("Some address points did not match. Results are available in " + output_table + ". Please examine the MATCH field to find U (unmatched) records or T (ties).")
-        AddMessage("Some address points did not match. Results are available in " + output_table + ". Please examine the MATCH field to find U (unmatched) records or T (ties).")
+        print("Some address points did not match. Results are available in " + output_table + ", ties are listed in " + txt + ". Please examine the MATCH field to find U (unmatched) records or T (ties).")
+        AddMessage("Some address points did not match. Results are available in " + output_table + ", ties are listed in " + txt + ". Please examine the MATCH field to find U (unmatched) records or T (ties).")
 
 ##    end_time = time.time()
 ##    print("Elapsed time was %g seconds" % (end_time - start_time))
@@ -479,7 +517,7 @@ def launch_compare(gdb, output_table, HNO, addy_city_field, addy_field_list, que
         pass
 
     for field in ["NAME_COMPARE", "CODE_COMPARE", "CODE_COMPARE_L", "CODE_COMPARE_R"]:
-        for data in [output_table, ap_fc]:
+        for data in [ap_fc]:
             if fieldExists(data, field):
                 try:
                     DeleteField_management(data, field)

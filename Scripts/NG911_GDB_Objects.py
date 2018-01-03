@@ -769,7 +769,7 @@ def getGDBObject(gdb):
                 if e not in esbList:
                     esbList.append(e)
 
-    # set up a blank utility list to fill in later
+    # set utList just in case
     utList = []
 
     # get the path to the projection file
@@ -807,6 +807,12 @@ def getGDBObject(gdb):
                 self.PARCELS = join(gdb, "Parcels")
                 self.GATES = join(gdb, "Gates")
                 self.CELL_SECTOR = join(gdb, "Cell_Sector")
+                self.BRIDGES = ""
+                self.CELLSITES = ""
+                self.UT_ELECTRIC = ""
+                self.UT_GAS = ""
+                self.UT_SEWER = ""
+                self.UT_WATER = ""
             elif self.GDB_VERSION == "21":
                 self.OPTIONAL_LAYERS_FD = join(gdb, "OptionalLayers")
                 self.HYDRANTS = join(self.OPTIONAL_LAYERS_FD, "HYDRANTS")
@@ -816,14 +822,13 @@ def getGDBObject(gdb):
                 self.CELLSITES = join(self.OPTIONAL_LAYERS_FD, "CELLSITES")
 ##                self.UTILITY = join(self.OPTIONAL_LAYERS_FD, "UTILITY")
                 self.BRIDGES = join(self.OPTIONAL_LAYERS_FD, "BRIDGES")
+                self.UT_ELECTRIC = join(self.OPTIONAL_LAYERS_FD, "UT_ELECTRIC")
+                self.UT_GAS = join(self.OPTIONAL_LAYERS_FD, "UT_GAS")
+                self.UT_SEWER = join(self.OPTIONAL_LAYERS_FD, "UT_SEWER")
+                self.UT_WATER = join(self.OPTIONAL_LAYERS_FD, "UT_WATER")
 
-                # populate the utility list
-                from arcpy import env, ListFeatureClasses
-                env.workspace = self.OPTIONAL_LAYERS_FD
-                fcs = ListFeatureClasses()
-                for fc in fcs:
-                    if fc[0:3] == "UT_":
-                        utList.append(fc)
+            # populate the utility list
+            utList = [self.UT_ELECTRIC, self.UT_GAS, self.UT_SEWER, self.UT_WATER]
 
             # standard lists
             self.AdminBoundaryList = [basename(self.AuthoritativeBoundary), basename(self.CountyBoundary), basename(self.MunicipalBoundary),

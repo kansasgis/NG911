@@ -247,10 +247,15 @@ def checkParities(currentPathSettings):
     check = "Check Parity"
 
     # these combinations are acceptable and will be used for comparisons
-    a_phrase = ["EEE", "OOO", "Z00", "BOE", "BEO", "BEE", "BOO"]
+    a_phrase = ["EEE", "OOO", "Z00", "BOE", "BEO", "BEE", "BOO", "B0O", "B0E"]
+
+    # make sure we're only checking roads for submission
+    wc = "SUBMIT = 'Y'"
+    rds = "rds"
+    MakeFeatureLayer_management(roads, rds, wc)
 
     # run a search cursor on the road layer
-    with SearchCursor(roads, fields) as rows:
+    with SearchCursor(rds, fields) as rows:
         for row in rows:
             auth_l, auth_r = "Y",'Y'
             if version == 21:
@@ -263,15 +268,16 @@ def checkParities(currentPathSettings):
 
             # loop through all r/l/to/from address numbers to get their even/odd/zero status
             while starter < 7:
-                if row[starter] == 0:
-                    eo = "0"
-                else:
-                    if (row[starter] % 2 == 0):
-                        eo = "E"
+                if row[starter] is not None:
+                    if row[starter] == 0:
+                        eo = "0"
                     else:
-                        eo = "O"
+                        if (row[starter] % 2 == 0):
+                            eo = "E"
+                        else:
+                            eo = "O"
 
-                pDict[str(starter)] = eo
+                    pDict[str(starter)] = eo
                 starter += 1
 
             # create a phrase for each side of the road
@@ -873,7 +879,7 @@ def checkMsagLabelCombo(msag, label, overlaps, rd_fc, fields, msagList, name_fie
         if "'" in label:
             label = label.replace("'", "''")
 
-        wc = msagfield + " LIKE '%" + msag + "%' AND " + name_field + " = '" + label + "'"
+        wc = msagfield + " LIKE '" + msag + "' AND " + name_field + " = '" + label + "'"
 
         if fieldExists(rd_fc, "AUTH_" + side):
             wc = wc + " AND AUTH_" + side + " = 'Y' AND GEOMSAG" + side + " = 'Y'"
@@ -1208,32 +1214,38 @@ def checkRCLMATCH(pathsInfoObject):
         # look at ranges
         compare_ranges_wc = a_obj.RCLSIDE + " = '" + side + "' AND rcTable.NGSEGID is not null AND apTable.CODE_COMPARE = rcTable.CODE_COMPARE_" + side
 
-        flds = (a_ngaddid, "apTable.HNO", "rcTable." + side + "_F_ADD", "rcTable." + side + "_T_ADD", "rcTable.PARITY_" + side)
+        # get count of potential problems
+        SelectLayerByAttribute_management(a, "NEW_SELECTION", compare_ranges_wc)
+        count = getFastCount(a)
 
-        with SearchCursor(a, flds, compare_ranges_wc) as rows:
-            for row in rows:
+        if count > 0:
 
-                # set the counter for the range, it'll usually be 2
-                range_counter = 2
-                if row[4] == "B": # if the range is B (both sides), the counter = 1
-                    range_counter = 1
+            flds = (a_ngaddid, "apTable.HNO", "rcTable." + side + "_F_ADD", "rcTable." + side + "_T_ADD", "rcTable.PARITY_" + side)
 
-                # get the range by the specified count
-                sideRange = list(range(row[2], row[3] + 2, range_counter))
+            with SearchCursor(a, flds, compare_ranges_wc) as rows:
+                for row in rows:
 
-                # if the range was high to low, flip it
-                if sideRange == []:
-                    sideRange = list(range(row[3], row[2] + 2, range_counter))
+                    # set the counter for the range, it'll usually be 2
+                    range_counter = 2
+                    if row[4] == "B": # if the range is B (both sides), the counter = 1
+                        range_counter = 1
 
-                # see if HNO is in the range
-                if int(row[1]) not in sideRange:
-                    doesnt_match_range.append(row[0])
-##                    userMessage("HNO: " + str(row[1]))
-##                    userMessage("From: " + str(row[2]))
-##                    userMessage("To: " + str(row[3]))
-##                    userMessage("Range: " + str(sideRange))
+                    # get the range by the specified count
+                    sideRange = list(range(row[2], row[3] + 2, range_counter))
 
-            del row, rows
+                    # if the range was high to low, flip it
+                    if sideRange == []:
+                        sideRange = list(range(row[3], row[2] + 2, range_counter))
+
+                    # see if HNO is in the range
+                    if int(row[1]) not in sideRange:
+                        doesnt_match_range.append(row[0])
+    ##                    userMessage("HNO: " + str(row[1]))
+    ##                    userMessage("From: " + str(row[2]))
+    ##                    userMessage("To: " + str(row[3]))
+    ##                    userMessage("Range: " + str(sideRange))
+
+                del row, rows
 
     issueDict = {"Error: RCLMATCH is reporting an NGSEGID that does not exist in the road centerline": ngsegid_doesnt_exist,
                  "Error: RCLMATCH does not correspond to an NGSEGID that matches attributes": streets_or_msags_dont_match,
@@ -1426,6 +1438,10 @@ def checkValuesAgainstDomain(pathsInfoObject):
 
             Delete_management(fullPathlyr)
 
+            # make sure the parcel ID's go through testing for character length
+            if "PARCELS" in fullPath.upper():
+                checkKSPID(fullPath, "NGKSPID")
+
         else:
             userWarning(fullPath + " does not exist")
 
@@ -1613,6 +1629,8 @@ def checkSubmissionNumbers(pathsInfoObject):
             if "AddressPoints" in fc:
                 a_obj = NG911_GDB_Objects.getFCObject(fc)
                 wc2 = wc2 + " AND " + a_obj.LOCTYPE + " = 'PRIMARY'"
+            userMessage(fc)
+            userMessage(wc2)
             MakeTableView_management(fc, lyr2, wc2)
 
             #get count of the results
@@ -1923,34 +1941,45 @@ def getNumbers():
     return numbers
 
 
-def checkKSPID(addressPoints):
+def checkKSPID(fc, field):
     # make sure the KSPID value is 19 characters long
     values = []
-    kspid_wc = "KSPID is not null and CHAR_LENGTH(KSPID) <> 19"
+    kspid_wc = field + " is not null and CHAR_LENGTH(" + field + ") <> 19"
     kspid_fl = "kspid_fl"
-    MakeFeatureLayer_management(addressPoints, kspid_fl, kspid_wc)
+    MakeFeatureLayer_management(fc, kspid_fl, kspid_wc)
 
     # get the count of how many are too long or short
     if getFastCount(kspid_fl) > 0:
         today = strftime("%m/%d/%y")
-        layer = "AddressPoints"
+        layer = basename(fc)
+        if layer == "AddressPoints":
+            fields = (field, "NGADDID")
+            ID_index = 1
+        else:
+            fields = (field)
+            ID_index = 0
 
-        with SearchCursor(kspid_fl, ("NGADDID", "KSPID"), kspid_wc) as rows:
+        with SearchCursor(kspid_fl, fields, kspid_wc) as rows:
             for row in rows:
                 # try to make sure we're not getting any blanks reported
-                if row[1] not in ('', ' '):
-                    fid = row[0]
-                    report = "Error: KSPID value is not the required 19 characters."
-                    val = (today, report, layer, "KSPID", fid, "Check KSPID")
+                if row[0] not in ('', ' '):
+                    fid = row[ID_index]
+                    report = "Error: " + field + " value is not the required 19 characters."
+                    val = (today, report, layer, field, fid, "Check " + field)
                     values.append(val)
 
     # report
     if values != []:
-        gdb = dirname(dirname(addressPoints))
+        if dirname(fc)[-3:] != 'gdb':
+            gdb = dirname(dirname(fc))
+        else:
+            gdb = dirname(fc)
         RecordResults("fieldValues", values, gdb)
-        userWarning("Completed check on KSPID: " + str(len(values)) + " issues found. See FieldValuesCheckResults.")
+        userWarning("Completed check on " + basename(fc) + " " + field + ": " + str(len(values)) + " issues found. See FieldValuesCheckResults. Parcel IDs must be 19 digits with county code and no dots or dashes.")
     else:
-        userMessage("Completed check on KSPID: 0 issues found")
+        userMessage("Completed check on " + basename(fc) + " " + field + ": 0 issues found")
+
+    Delete_management(kspid_fl)
 
 
 def VerifyRoadAlias(gdb, domainFolder):
@@ -2191,7 +2220,7 @@ def sanityCheck(currentPathSettings):
     # check address points
 ##    geocodeAddressPoints(currentPathSettings)
     addressPoints = gdbObject.AddressPoints
-    checkKSPID(addressPoints)
+    checkKSPID(addressPoints, "KSPID")
     checkMSAGCOspaces(addressPoints, gdb)
     if fieldExists(addressPoints, "RCLMATCH"):
         checkRCLMATCH(currentPathSettings)
@@ -2296,7 +2325,7 @@ def main_check(checkType, currentPathSettings):
         if checkList[0] == "true":
             checkValuesAgainstDomain(currentPathSettings)
             checkMSAGCOspaces(addressPoints, gdb)
-            checkKSPID(addressPoints)
+            checkKSPID(addressPoints, "KSPID")
             if fieldExists(addressPoints, "RCLMATCH"):
                 checkRCLMATCH(currentPathSettings)
 

@@ -47,3 +47,6 @@ Temporary Items
 NG911_Config.pyc
 NG911_DataCheck.pyc
 NG911_Frontend_3.py
+*.pyc
+Scripts/NG911_GDB_Objects.pyc
+*.pyc
