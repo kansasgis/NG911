@@ -25,7 +25,7 @@ def geocompare(gdb, version, emptyOnly):
     rd_fc = join(gdb, "NG911", "RoadCenterline")
     addy_object = getFCObject(addy_fc)
     rd_object = getFCObject(rd_fc)
-    addy_field_list = rd_object.LABEL_FIELDS
+    addy_field_list = ["NAME_COMPARE", "PRD", "STP", "RD", "STS", "POD", "POM"]
 
     a_id = addy_object.UNIQUEID
 
@@ -37,7 +37,7 @@ def geocompare(gdb, version, emptyOnly):
 
     # set up where clause if the user only wants empty records done
     if emptyOnly == "true":
-        wc = wc + " AND (" + addy_object.RCLMATCH + " is null or " + addy_object.RCLMATCH + " in ('', ' ','TIES'))"
+        wc = wc + " AND (" + addy_object.RCLMATCH + " is null or " + addy_object.RCLMATCH + " in ('', ' ','TIES','NO_MATCH'))"
 
     # make sure we're dealing with a clean output table
     if Exists(output_table):

@@ -1132,10 +1132,9 @@ def checkRCLMATCH(pathsInfoObject):
     name_field = "NAME_COMPARE"
     code_field = "CODE_COMPARE"
     city_field = a_obj.MSAGCO
-    addy_field_list = r_obj.LABEL_FIELDS
     version = r_obj.GDB_VERSION
-    road_field_list = r_obj.LABEL_FIELDS
-    road_field_list[0] = name_field
+    road_field_list = ["NAME_COMPARE", "PRD", "STP", "RD", "STS", "POD", "POM"]
+    addy_field_list = ["NAME_COMPARE", "PRD", "STP", "RD", "STS", "POD", "POM"]
 
     # prep roads & address points for comparison
 
@@ -1157,6 +1156,7 @@ def checkRCLMATCH(pathsInfoObject):
     wc = a_obj.SUBMIT + " = 'Y' AND " + a_obj.RCLMATCH + " <> 'NO_MATCH'"
     MakeFeatureLayer_management(ap, ap_table_view, wc)
     CopyRows_management(ap_table_view, at)
+
     prep_roads_for_comparison(at, name_field, [code_field], [city_field], addy_field_list)
 
     # join road & address table based on RCLMATCH & NGSEGID
@@ -1629,8 +1629,8 @@ def checkSubmissionNumbers(pathsInfoObject):
             if "AddressPoints" in fc:
                 a_obj = NG911_GDB_Objects.getFCObject(fc)
                 wc2 = wc2 + " AND " + a_obj.LOCTYPE + " = 'PRIMARY'"
-            userMessage(fc)
-            userMessage(wc2)
+##            userMessage(fc)
+##            userMessage(wc2)
             MakeTableView_management(fc, lyr2, wc2)
 
             #get count of the results

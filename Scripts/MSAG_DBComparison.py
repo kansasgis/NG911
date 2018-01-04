@@ -22,7 +22,11 @@ import time
 def prep_roads_for_comparison(rd_fc, name_field, code_fields, city_fields, field_list):
 
     rd_object = getFCObject(rd_fc)
-##    AddMessage(", ".join(field_list))
+##    AddMessage(rd_fc)
+##    AddMessage("Initial field list:" + ", ".join(field_list))
+
+    # calculate values for NAME_OVLERAP field
+    fields1 = tuple(field_list)
 
     # add the NAME_OVERLAP field
     if not fieldExists(rd_fc, name_field):
@@ -33,9 +37,14 @@ def prep_roads_for_comparison(rd_fc, name_field, code_fields, city_fields, field
     if "rcTable" in rd_fc:
         field_list.append("NGSEGID")
         i = field_list.index("NGSEGID")
+    elif "apTable" in rd_fc:
+        if "NGSEGID" in field_list:
+            field_list.remove("NGSEGID")
+        field_list.append("NGADDID")
+        i = field_list.index("NGADDID")
 
-    # calculate values for NAME_OVLERAP field
-    fields1 = tuple(field_list)
+##    AddMessage("Query field list:" + ", ".join(field_list))
+
 
     # start edit session
     working_gdb = dirname(rd_fc)
@@ -62,7 +71,7 @@ def prep_roads_for_comparison(rd_fc, name_field, code_fields, city_fields, field
             try:
                 rows.updateRow(row)
             except:
-                AddMessage("Error with NGSEGID " + row[i])
+                AddMessage("Error with " + rd_fc + field_list[i] + row[i])
 
     edit.stopEditing(True)
 
@@ -268,13 +277,11 @@ def launch_compare(gdb, output_table, HNO, addy_city_field, addy_field_list, que
     ap_object = getFCObject(ap_fc)
 
     # prep address points with concatenated label field
-    if addy_field_list[0] != name_field:
-        addy_field_list[0] = name_field
+
     prep_roads_for_comparison(output_table, name_field, [code_field], [addy_city_field], addy_field_list)
 
     # prep road centerline with concatenated label field
-    road_field_list = rd_object.LABEL_FIELDS
-    road_field_list[0] = name_field
+    road_field_list = ["NAME_COMPARE", "PRD", "STP", "RD", "STS", "POD", "POM"]
     segid_field = rd_object.UNIQUEID
     version = rd_object.GDB_VERSION
 
@@ -290,7 +297,8 @@ def launch_compare(gdb, output_table, HNO, addy_city_field, addy_field_list, que
 
     # prep address points with concatenated label field if necessary
     if queryAP == True:
-        prep_roads_for_comparison(ap_fc, name_field, [code_field], [city_field], road_field_list)
+        addy_field_list1 = ["NAME_COMPARE", "PRD", "STP", "RD", "STS", "POD", "POM"]
+        prep_roads_for_comparison(ap_fc, name_field, [code_field], [city_field], addy_field_list1)
 
     if version == "20":
 

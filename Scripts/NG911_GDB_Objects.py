@@ -617,7 +617,6 @@ class NG911_CellSite_Object(object):
         self.UNIQUEID = self.NGCELLID
         self.EFF_DATE = u_EFF_DATE
         self.EXP_DATE = u_EXP_DATE
-        self.WEIGHT_L = u_WEIGHT_L
         self.STATE = u_STATE
         self.COUNTY = u_COUNTY
         self.HEIGHT = u_HEIGHT
@@ -628,8 +627,8 @@ class NG911_CellSite_Object(object):
         self.GDB_VERSION = u_gdb_version
         self.REQUIRED_FIELDS = [self.STEWARD, self.L_UPDATE, self.UNIQUEID, self.EFF_DATE, self.STATE, self.COUNTY, self.UPDATEBY]
         self.FIELDS_WITH_DOMAINS= {self.STEWARD: "STEWARD", self.TWR_TYP: "TWR_TYP"}
-        self.FIELD_MAP = [self.STEWARD, self.UNIQUEID, self.LPA_NAME, self.STRUCT_NO, self.WEIGHT_L, self.OVERUNDER, self.STATUS,
-                     self.SUBMIT, self.NOTES]
+        self.FIELD_MAP = [self.STEWARD, self.L_UPDATE, self.UNIQUEID, self.EFF_DATE, self.EXP_DATE, self.STATE, self.COUNTY,
+                    self.HEIGHT, self.TWR_TYP, self.UPDATEBY, self.SUBMIT, self.NOTES]
 
 
 def getDefaultNG911CellSiteObject(gdb_version):
@@ -643,7 +642,7 @@ def getDefaultNG911CellSiteObject(gdb_version):
 class NG911_CellSector_Object(object):
 
     def __init__(self, u_STEWARD, u_L_UPDATE, u_EFF_DATE, u_EXP_DATE, u_NGCELLID, u_STATE, u_COUNTY, u_SITEID, u_SECTORID, u_SWITCHID,
-                u_C_SITEID, u_ESRD, u_LASTESRK, u_SECORN, u_TECH, u_UPDATEBY, u_SUBMIT, u_NOTES, u_gdb_version):
+                u_MARKETID, u_C_SITEID, u_ESRD, u_LASTESRK, u_SECORN, u_UPDATEBY, u_SUBMIT, u_NOTES, u_gdb_version):
 
         self.STEWARD = u_STEWARD
         self.L_UPDATE = u_L_UPDATE
@@ -656,11 +655,11 @@ class NG911_CellSector_Object(object):
         self.SITEID = u_SITEID
         self.SECTORID = u_SECTORID
         self.SWITCHID = u_SWITCHID
+        self.MARKETID = u_MARKETID
         self.C_SITEID = u_C_SITEID
         self.ESRD = u_ESRD
         self.LASTESRK = u_LASTESRK
         self.SECORN = u_SECORN
-        self.TECH = u_TECH
         self.UPDATEBY = u_UPDATEBY
         self.SUBMIT = u_SUBMIT
         self.NOTES = u_NOTES
@@ -669,14 +668,14 @@ class NG911_CellSector_Object(object):
                             self.SECORN, self.UPDATEBY]
         self.FIELDS_WITH_DOMAINS = {self.STATE: "STATE", self.COUNTY: "COUNTY", self.SUBMIT: "YN", self.STEWARD: "STEWARD"}
         self.FIELD_MAP = [self.STEWARD, self.L_UPDATE, self.EFF_DATE, self.EXP_DATE, self.UNIQUEID, self.STATE, self.COUNTY, self.SITEID,
-                            self.SECTORID, self.SWITCHID, self.C_SITEID, self.ESRD, self.LASTESRK, self.SECORN, self.TECH,
-                             self.UPDATEBY, self.SUBMIT, self.NOTES]
+                        self.SECTORID, self.SWITCHID, self.MARKETID, self.C_SITEID, self.ESRD, self.LASTESRK, self.SECORN,
+                            self.UPDATEBY, self.SUBMIT, self.NOTES]
 
 
 def getDefaultNG911CellSectorObject(gdb_version):
 
-    NG911_CellSector_Default = NG911_CellSector_Object("STEWARD", "L_UPDATE", "EFF_DATE", "EXP_DATE", "NGCELLID", "STATE", "COUNT", "SITEID",
-                        "SECTORID", "SWITCHID", "C_SITEID", "ESRD", "LASTESRK", "SECORN", "TECH", "UPDATEBY", "SUBMIT", "NOTES", gdb_version)
+    NG911_CellSector_Default = NG911_CellSector_Object("STEWARD", "L_UPDATE", "EFF_DATE", "EXP_DATE", "NGCELLID", "STATE", "COUNTY", "SITEID",
+                        "SECTORID", "SWITCHID", "MARKETID", "C_SITEID", "ESRD", "LASTESRK", "SECORN", "UPDATEBY", "SUBMIT", "NOTES", gdb_version)
 
     return NG911_CellSector_Default
 

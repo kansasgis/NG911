@@ -188,7 +188,7 @@ def main():
     DisableEditorTracking_management(rd_fc, "DISABLE_CREATOR", "DISABLE_CREATION_DATE", "DISABLE_LAST_EDITOR", "DISABLE_LAST_EDIT_DATE")
 
     #prep TN list
-    prepXLS(tnxls, gdb)
+##    prepXLS(tnxls, gdb)
 
     #geocode addresses
     geocodeTable(gdb)
