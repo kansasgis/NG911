@@ -8,7 +8,7 @@
 #-------------------------------------------------------------------------------
 
 def main():
-    from arcpy import GetParameterAsText, Exists
+    from arcpy import GetParameterAsText, Exists, AddMessage
     from os.path import join
     from NG911_DataCheck import main_check
     from NG911_GDB_Objects import NG911_Session
@@ -28,7 +28,7 @@ def main():
     NG911_Session.checkList = checkList
     gdbObject = session_object.gdbObject
 
-    fcPossList = gdbObject.AdminBoundaryList + session_object.gdbObject.esbList
+    fcPossList = gdbObject.AdminBoundaryFullPathList + gdbObject.esbList
     fcList = []
     for fc in fcPossList:
         if Exists(fc):

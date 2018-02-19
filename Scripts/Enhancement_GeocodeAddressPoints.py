@@ -12,6 +12,7 @@ from arcpy import (GetParameterAsText, Exists, CopyFeatures_management, DisableE
             Delete_management, MakeFeatureLayer_management, AddIndex_management, ListFields, AddMessage, ListIndexes)
 from MSAG_DBComparison import launch_compare
 from NG911_GDB_Objects import getFCObject
+from NG911_arcpy_shortcuts import fieldExists, ListFieldNames
 from os.path import join
 
 
@@ -80,9 +81,29 @@ def geocompare(gdb, version, emptyOnly):
         # join the output table to the address point file
         AddJoin_management(fl, a_id, ot_fl, a_id, "KEEP_COMMON")
 
+        # make a list of the field names in upper case
+        uc_fieldNames = []
+        flds = ListFields(fl)
+        for fld in flds:
+            uc_fieldNames.append(fld.name.upper())
+
+        # define fields to be calculated
+        rclmatch = "AddressPoints.RCLMATCH"
+        rclside = "AddressPoints.RCLSIDE"
+        ngsegid_exp = "!AddressPt_GC_Results.NGSEGID!"
+        rclside_exp = "!AddressPt_GC_Results.RCLSIDE!"
+
+        # fix for Butler County if those fields don't exist
+        if rclmatch.upper() not in uc_fieldNames:
+            rclmatch = "KSNG911S.DBO." + rclmatch
+            ngsegid_exp = "!KSNG911S.DBO.AddressPt_GC_Results.NGSEGID!"
+        if rclside.upper() not in uc_fieldNames:
+            rclside = "KSNG911S.DBO." + rclside
+            rclside_exp = "!KSNG911S.DBO.AddressPt_GC_Results.RCLSIDE!"
+
         # calculate field
-        CalculateField_management(fl, "AddressPoints.RCLMATCH", "!AddressPt_GC_Results.NGSEGID!", "PYTHON_9.3", "")
-        CalculateField_management(fl, "AddressPoints.RCLSIDE", "!AddressPt_GC_Results.RCLSIDE!", "PYTHON_9.3", "")
+        CalculateField_management(fl, rclmatch, ngsegid_exp, "PYTHON_9.3", "")
+        CalculateField_management(fl, rclside, rclside_exp, "PYTHON_9.3", "")
 
         # remove the join
         RemoveJoin_management(fl)

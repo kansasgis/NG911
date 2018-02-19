@@ -29,6 +29,7 @@ from Validation_ClearOldResults import ClearOldResults
 import NG911_GDB_Objects
 from NG911_arcpy_shortcuts import deleteExisting, getFastCount, cleanUp, ListFieldNames, fieldExists
 from MSAG_DBComparison import prep_roads_for_comparison
+import time
 
 def checkToolboxVersion():
     import json, urllib, sys
@@ -212,11 +213,11 @@ def getParityReport(phrase):
 
     # create report based on what needs to be addressed
     if phrase[1:] == "00":
-        report = "Address range is 0-0, but the parity is recorded as " + phrase[0] + " instead of Z"
+        report = "Address range is 0-0, but the parity is recorded as %s instead of Z" % (phrase[0])
     elif phrase[0] == "Z":
         report = "Parity is Z (0-0), but the address range is filled in with non-zero numbers."
     elif phrase[0] in "EO" and phrase[1:] != "00":
-        report = "Parity is marked as " + phrase[0] + " but the ranges filled in are " + phrase[1] + " and " + phrase[2]
+        report = "Parity is marked as %s but the ranges filled in are %s and %s" % (phrase[0], phrase[1], phrase[2])
 
     if report == "":
         report = "Send this phrase to kristen@kgs.ku.edu so she can create an error message for it: " + phrase
@@ -278,6 +279,8 @@ def checkParities(currentPathSettings):
                             eo = "O"
 
                     pDict[str(starter)] = eo
+                else:
+                    userWarning("You have one or more parities set as null. Please populate those fields.")
                 starter += 1
 
             # create a phrase for each side of the road
@@ -301,7 +304,7 @@ def checkParities(currentPathSettings):
     # report records
     if values != []:
         RecordResults(recordType, values, gdb)
-        userWarning("Completed parity check. There were " + str(len(values)) + " issues. Results are in table FieldValuesCheckResults")
+        userWarning("Completed parity check. There were %s issues. Results are in table FieldValuesCheckResults" % (str(len(values))))
     else:
         userMessage("Completed parity check. No issues found.")
 
@@ -351,7 +354,7 @@ def checkDirectionality(fc, gdb):
                     rTo = addyList[3]
 
                     check = "both"
-                    issue = "no"
+                    issue = False
 
                     #see if we're working with any 0's
                     if lFrom == 0 or lTo == 0 or checkL == 'N':
@@ -362,15 +365,15 @@ def checkDirectionality(fc, gdb):
                     #see if any road values don't follow low to high pattern
                     if check == "both":
                         if rTo < rFrom or lTo < lFrom:
-                            issue = "yes"
+                            issue = True
                     elif check == "right":
                         if rTo < rFrom:
-                            issue = "yes"
+                            issue = True
                     elif check == "left":
                         if lTo < lFrom:
-                            issue = "yes"
+                            issue = True
 
-                    if issue == "yes":
+                    if issue == True:
                         val = (today, report, filename, "", segid, "Check Directionality")
                         values.append(val)
 
@@ -382,7 +385,7 @@ def checkDirectionality(fc, gdb):
     #report records
     if values != []:
         RecordResults(recordType, values, gdb)
-        userWarning("Completed road directionality check. There were " + str(len(values)) + " issues. Results are in table FieldValuesCheckResults")
+        userWarning("Completed road directionality check. There were %s issues. Results are in table FieldValuesCheckResults" % (str(len(values))))
     else:
         userMessage("Completed road directionality check. No issues found.")
 
@@ -423,7 +426,9 @@ def checkESNandMuniAttribute(currentPathSettings):
 
                             #make feature layer
                             lyr1 = "lyr1"
-                            qry = fieldList[1] + " = '" + str(poly[1]) + "'"
+##                            qry = fieldList[1] + " = '" + str(poly[1]) + "'"
+                            qryList = [fieldList[1], " = '", str(poly[1]), "'"]
+                            qry = "".join(qryList)
                             MakeFeatureLayer_management(layer, lyr1, qry)
 
                             #select by location
@@ -442,14 +447,14 @@ def checkESNandMuniAttribute(currentPathSettings):
                                             #see if the values match
                                             if value_addy.strip() != feature_value.strip():
                                                 #this issue has been demoted to a notice
-                                                report = "Notice: Address point " + feature + " does not match " + feature + " in " + basename(layer) + " layer"
+                                                report = "Notice: Address point %s does not match %s in %s layer. FeatureID is ObjectID" % (feature, feature, basename(layer))
                                                 val = (today, report, filename, feature, segID, "Check ESN MUNI Attributes")
                                                 values.append(val)
                                         except:
-                                            userMessage("Issue comparing value for " + feature + " with OBJECTID: " + str(objectID))
+                                            userMessage("Issue comparing value for %s with OBJECTID: %s" % (feature, str(objectID)))
                                     else:
-                                        userMessage("Issue comparing value for " + feature + " with OBJECTID: " + str(objectID))
-                                        report = "Notice: Address point " + feature + " does not match " + feature + " in " + basename(layer) + " layer. FeatureID is ObjectID"
+                                        userMessage("Issue comparing value for %s with OBJECTID: %s" % (feature, str(objectID)))
+                                        report = "Notice: Address point %s does not match %s in %s layer. FeatureID is ObjectID" % (feature, feature, basename(layer))
                                         val = (today, report, filename, feature, str(objectID), "Check ESN MUNI Attributes")
                                         values.append(val)
 
@@ -473,7 +478,7 @@ def checkESNandMuniAttribute(currentPathSettings):
     #report records
     if values != []:
         RecordResults(recordType, values, gdb)
-        userWarning("Address point ESN/Municipality check complete. " + str(len(values)) + " issues found. Results are in the FieldValuesCheckResults table.")
+        userWarning("Address point ESN/Municipality check complete. %s issues found. Results are in the FieldValuesCheckResults table." % (str(len(values))))
     else:
         userMessage("Address point ESN/Municipality check complete. No issues found.")
 
@@ -523,9 +528,10 @@ def checkUniqueIDFrequency(currentPathSettings):
         if Exists(fc):
             layerList.append(basename(fc))
         else:
-            userWarning(fc + " does not exist")
+            msg = "%s does not exist" % (fc)
+            userWarning(msg)
             today = strftime("%m/%d/%y")
-            values = [(today, fc + " does not exist")]
+            values = [(today, msg)]
             RecordResults("DASCmessage", values, gdb)
 
 
@@ -562,7 +568,9 @@ def checkUniqueIDFrequency(currentPathSettings):
                         if layer == "ESB_IDS":
                             reportLayer = "ESB"
                             stringEsbInfo = []
-                            wc2 = esb_uniqueid + " = '" + str(row2[0]) + "'"
+                            wc2List = [esb_uniqueid, " = '", str(row2[0]), "'"]
+##                            wc2 = esb_uniqueid + " = '" + str(row2[0]) + "'"
+                            wc2 = "".join(wc2List)
                             with SearchCursor("ESB_IDS", ("ESB_LYR"), wc2) as esbRows:
                                 for esbRow in esbRows:
                                     stringEsbInfo.append(esbRow[0])
@@ -570,7 +578,7 @@ def checkUniqueIDFrequency(currentPathSettings):
                             stringESBReport = " and ".join(stringEsbInfo)
 
                         #report duplicate IDs
-                        report = "Error: " + str(row2[0]) + " is a duplicate ID"
+                        report = "Error: %s is a duplicate ID" % (str(row2[0]))
                         if stringESBReport != "":
                             report = report + " in " + stringESBReport
                         val = (today, report, reportLayer, esb_uniqueid, row2[0], "Check Unique IDs")
@@ -585,7 +593,7 @@ def checkUniqueIDFrequency(currentPathSettings):
     #report duplicate records
     if values != []:
         RecordResults(recordType, values, gdb)
-        userWarning("Checked unique ID frequency. There were " + str(len(values)) + " issues. Results are in table FieldValuesCheckResults.")
+        userWarning("Checked unique ID frequency. There were %s issues. Results are in table FieldValuesCheckResults." % (str(len(values))))
     else:
         userMessage("All ID's are unique.")
 
@@ -605,7 +613,7 @@ def checkFrequency(fc, freq, fields, gdb, fullFreq):
         try:
             deleteExisting(freq)
         except:
-            userMessage("Please manually delete " + freq + " and then run the frequency check again")
+            userMessage("Please manually delete %s and then run the frequency check again" % (freq))
 
         if not Exists(freq):
             filename = basename(fc)
@@ -627,9 +635,12 @@ def checkFrequency(fc, freq, fields, gdb, fullFreq):
 
                 #see if we're working with address points or roads, create a where clause
                 if basename(freq) == "AP_Freq":
-                    wc1 = obj.HNO + " <> 0 and " + obj.LOCTYPE + " = 'PRIMARY' AND SUBMIT = 'Y'"
+##                    wc1 = obj.HNO + " <> 0 and " + obj.LOCTYPE + " = 'PRIMARY' AND SUBMIT = 'Y'"
+                    wc1List = [obj.HNO, " <> 0 and ", obj.LOCTYPE, " = 'PRIMARY' AND SUBMIT = 'Y'"]
                 elif basename(freq) == "Road_Freq":
-                    wc1 = obj.L_F_ADD + " <> 0 AND " + obj.L_T_ADD + " <> 0 AND " + obj.R_F_ADD + " <> 0 AND " + obj.R_T_ADD + " <> 0 AND SUBMIT = 'Y'"
+##                    wc1 = obj.L_F_ADD + " <> 0 AND " + obj.L_T_ADD + " <> 0 AND " + obj.R_F_ADD + " <> 0 AND " + obj.R_T_ADD + " <> 0 AND SUBMIT = 'Y'"
+                    wc1List = [obj.L_F_ADD, " <> 0 AND ", obj.L_T_ADD, " <> 0 AND ", obj.R_F_ADD, " <> 0 AND ", obj.R_T_ADD, " <> 0 AND SUBMIT = 'Y'"]
+                wc1 = "".join(wc1List)
 
                 #run query on fc to make sure 0's are ignored
                 MakeTableView_management(fc, fl1, wc1)
@@ -640,10 +651,7 @@ def checkFrequency(fc, freq, fields, gdb, fullFreq):
 
                 #split field names
                 fieldsList = fields.split(";")
-                fl_fields = []
-                for f in fieldsList:
-                    f = f.strip()
-                    fl_fields.append(f)
+                fl_fields = [f.strip() for f in fieldsList]
 
                 #run frequency analysis
                 try:
@@ -666,21 +674,28 @@ def checkFrequency(fc, freq, fields, gdb, fullFreq):
                             for row in rows:
                                 i = 0
                                 #generate where clause to find duplicate ID's
-                                wc = ""
+                                wcList = []
                                 while i < fCount:
-                                    stuff = ""
+                                    stuffList = []
                                     if row[i] != None:
                                         try:
-                                            stuff = " = '" + row[i] + "' "
+##                                            stuff = " = '" + row[i] + "' "
+                                            stuffList = [" = '", row[i], "' "]
                                         except:
-                                            stuff = " = " + str(row[i]) + " "
+                                            stuffList = [" = ", str(row[i]), " "]
+##                                            stuff = " = " + str(row[i]) + " "
                                     else:
-                                        stuff = " is null "
-                                    wc = wc + fl_fields[i] + stuff + "and "
+##                                        stuff = " is null "
+                                        stuffList = [" is null "]
+                                    stuff = "".join(stuffList)
+##                                    wc = wc + fl_fields[i] + stuff + "and "
+                                    wcList = wcList + [fl_fields[i], stuff, "and "]
                                     i += 1
 
                                 #trim last "and " off where clause
-                                wc = wc[0:-5]
+                                wcList.pop()
+                                wc = "".join(wcList)
+##                                wc = wc[0:-5]
 
                                 #find records with duplicates to get their unique ID's
                                 with SearchCursor(fl1, (id1), wc) as sRows:
@@ -689,14 +704,14 @@ def checkFrequency(fc, freq, fields, gdb, fullFreq):
 
                                         #add information to FieldValuesCheckResults for all duplicates
                                         if fullFreq == "true":
-                                            report = "Error: " + str(fID) + " has duplicate field information"
+                                            report = "Error: %s has duplicate field information" % (str(fID))
                                         else:
-                                            report = "Notice: " + str(fID) + " has duplicate address range information"
+                                            report = "Notice: %s has duplicate address range information" % (str(fID))
                                         val = (today, report, filename, "", fID, "Check " + filename + " Frequency")
                                         values.append(val)
 
                     else:
-                        userMessage("Checked frequency. All records are unique.")
+                        userMessage(filename + ": Checked frequency. All records are unique.")
 
                 except Exception as e:
                     userMessage(str(e))
@@ -707,7 +722,7 @@ def checkFrequency(fc, freq, fields, gdb, fullFreq):
                 #report duplicate records
                 if values != []:
                     RecordResults(recordType, values, gdb)
-                    userWarning("Checked frequency. There were " + str(len(values)) + " duplicate records. Individual results are in table FieldValuesCheckResults")
+                    userWarning("Checked frequency. There were %s duplicate records. Individual results are in table FieldValuesCheckResults" % (str(len(values))))
 
                 #clean up
                 try:
@@ -748,7 +763,7 @@ def checkLayerList(pathsInfoObject):
 
     for l in layerList:
         if not Exists(l):
-            report = "Error: Required layer " + l + " is not in geodatabase."
+            report = "Error: Required layer %s is not in geodatabase." % (l)
             userMessage(report)
             val = (today, report, "Layer", "Check Layer List")
             values.append(val)
@@ -803,7 +818,7 @@ def getRequiredFields(folder):
             #set value as list
             rfDict[fc] = fieldList
     else:
-        userMessage("The file " + path1 + " is required to run field checks.")
+        userMessage("The file %s is required to run field checks." % (path1))
 
     return rfDict
 
@@ -829,47 +844,44 @@ def getFieldDomain(domain, folder):
         for line in doc.readlines():
             if line != "\n":
                 stuffList = line.split("|")
-                domainDict[stuffList[0].rstrip().lstrip()] = stuffList[1].rstrip().lstrip()
+                domainDict[stuffList[0].strip()] = stuffList[1].strip()
 
     else:
-        userWarning("The file " + docPath + " is required to run a domain check.")
+        userWarning("The file %s is required to run a domain check." % (docPath))
 
     return domainDict
 
 
-def getRange(low, high, what):
-    whatRange = []
-
-    increment = 2 if what in ["E", "O"] else 1
-
-    if low == high:
-        whatRange.append(low)
-    else:
-        while low <= high:
-            whatRange.append(low)
-            low += increment
-
-    return whatRange
-
-
 def launchRangeFinder(f_add, t_add, parity):
-    thisRange = []
+    sideRange = []
+
     if [f_add, t_add] != [0,0]:
+
         if parity != 'Z':
-            # get the high and low
-            if f_add < t_add:
-                low = f_add
-                high = t_add
-            else:
-                low = t_add
+            # set the counter for the range, it'll usually be 2
+            range_counter = 2
+            if parity == "B": # if the range is B (both sides), the counter = 1
+                range_counter = 1
+
+            # get the range
+            sideRange = []
+            sideRange = list(range(f_add, t_add + range_counter, range_counter))
+            high = t_add
+
+            # if the range was high to low, flip it
+            if sideRange == []:
+                sideRange = list(range(t_add, f_add + range_counter, range_counter))
                 high = f_add
 
-            # get the range of possible addresses
-            thisRange = getRange(low, high, parity)
-    return thisRange
+            # make sure the range didn't extend beyond the high
+            if len(sideRange) > 1:
+                while sideRange[-1] > high:
+                    sideRange.pop()
+
+    return sideRange
 
 
-def checkMsagLabelCombo(msag, label, overlaps, rd_fc, fields, msagList, name_field, txt):
+def checkMsagLabelCombo(msag, label, overlaps, rd_fc, fields, msagList, name_field, txt, v21):
     address_list = []
     checked_segids = []
     dict_ranges = {}
@@ -879,10 +891,12 @@ def checkMsagLabelCombo(msag, label, overlaps, rd_fc, fields, msagList, name_fie
         if "'" in label:
             label = label.replace("'", "''")
 
-        wc = msagfield + " LIKE '" + msag + "' AND " + name_field + " = '" + label + "'"
+        wcList = [msagfield, " = '", msag, "' AND ", name_field, " = '", label, "' AND SUBMIT = 'Y'"]
 
-        if fieldExists(rd_fc, "AUTH_" + side):
-            wc = wc + " AND AUTH_" + side + " = 'Y' AND GEOMSAG" + side + " = 'Y'"
+        if v21 == 1:
+            wcList = wcList + [" AND AUTH_", side, " = 'Y' AND GEOMSAG", side, " = 'Y'"]
+
+        wc = "".join(wcList)
 
         with SearchCursor(rd_fc, fields, wc) as rows:
             for row in rows:
@@ -930,6 +944,7 @@ def checkMsagLabelCombo(msag, label, overlaps, rd_fc, fields, msagList, name_fie
 
 
 def FindOverlaps(working_gdb):
+##    start_time = time.time()
     userMessage("Checking overlapping address ranges...")
     #get gdb object
     gdb_object = NG911_GDB_Objects.getGDBObject(working_gdb)
@@ -975,8 +990,9 @@ def FindOverlaps(working_gdb):
         Delete_management(final_fc)
 
     # add the NAME_OVERLAP field
-    if not fieldExists(rd_fc, name_field):
-        AddField_management(rd_fc, name_field, "TEXT", "", "", 50)
+    if fieldExists(rd_fc, name_field):
+        DeleteField_management(rd_fc, name_field)
+    AddField_management(rd_fc, name_field, "TEXT", "", "", 50)
 
     # calculate values for NAME_OVERLAP field
     field_list = rd_object.LABEL_FIELDS
@@ -1010,20 +1026,24 @@ def FindOverlaps(working_gdb):
     trim_expression = '" ".join(!' + name_field + '!.split())'
     CalculateField_management(rd_fc, name_field, trim_expression, "PYTHON_9.3")
 
+##    now_time = time.time()
+##    print("Marker: done processing feature class. Elapsed time was %g seconds" % (now_time - start_time))
+
     # make sure the text file notification only shows up if there's an overlap problem
     overlap_error_flag = 0
 
-    try:
-##    if 1 == 1:
+##    try:
+    if 1 == 1:
         already_checked = []
         rd_fields = [msagco_l, msagco_r, name_field, segid]
+        v21 = 0
         if version == "21":
-            for f in [auth_l, auth_r, geomsag_l, geomsag_r]:
-                rd_fields.append(f)
+            v21 = 1
+            rd_fields = rd_fields + [auth_l, auth_r, geomsag_l, geomsag_r]
 
         overlaps = []
 
-        with SearchCursor(rd_fc, rd_fields) as all_rows:
+        with SearchCursor(rd_fc, rd_fields, "SUBMIT = 'Y'") as all_rows:
             for all_row in all_rows:
 
                 # in the 2.1 geodatabase, make sure only authoritative sides are checked
@@ -1056,20 +1076,24 @@ def FindOverlaps(working_gdb):
 
                 if checkL == 1 and all_row[0] + "|" + all_row[2] not in already_checked:
                     # check the left side MSAGCO & LABEL combo
-                    overlaps = checkMsagLabelCombo(all_row[0], all_row[2], overlaps, rd_fc, fields, msagList, name_field, txt)
+                    overlaps = checkMsagLabelCombo(all_row[0], all_row[2], overlaps, rd_fc, fields, msagList, name_field, txt, v21)
                     already_checked.append(all_row[0] + "|" + all_row[2])
 
                 # if the r & l msagco are different, run the right side
                 if checkR == 1 and all_row[0] != all_row[1] and all_row[1] + "|" + all_row[2] not in already_checked:
-                    overlaps = checkMsagLabelCombo(all_row[1], all_row[2], overlaps, rd_fc, fields, msagList, name_field, txt)
+                    overlaps = checkMsagLabelCombo(all_row[1], all_row[2], overlaps, rd_fc, fields, msagList, name_field, txt, v21)
                     already_checked.append(all_row[1] + "|" + all_row[2])
 
+##        now_time = time.time()
+##        print("Marker: done checking MSAGs. Elapsed time was %g seconds" % (now_time - start_time))
 
         if overlaps != []:
             overlap_error_flag = 1
-            userMessage(str(len(overlaps)) + " overlapping address range segments found. Please see " + final_fc + " for overlap results.")
+            userMessage("%s overlapping address range segments found. Please see %s for overlap results." % (str(len(overlaps)), final_fc))
             # add code here for exporting the overlaps to a feature class
-            wc = segid + " in ('" +"','".join(overlaps) + "')"
+            wcList = [segid, " in ('" +"','".join(overlaps), "')"]
+            wc = "".join(wcList)
+##            wc = segid + " in ('" +"','".join(overlaps) + "')"
             overlaps_lyr = "overlaps_lyr"
             MakeFeatureLayer_management(rd_fc, overlaps_lyr, wc)
 
@@ -1084,15 +1108,21 @@ def FindOverlaps(working_gdb):
 
             # add reporting for overlapping segments
             for ov in overlaps:
-                report = "Error: " + str(ov) + " has an overlapping address range."
+                report = "Error: %s has an overlapping address range." % (str(ov))
                 val = (today, report, basename(rd_fc), "", ov, "Overlapping Address Range")
                 values.append(val)
 
+##            now_time = time.time()
+##            print("Marker: done creating error report. Elapsed time was %g seconds" % (now_time - start_time))
+
         else:
             userMessage("No overlaping address ranges found.")
+##
+##            now_time = time.time()
+##            print("Marker: skipped error reporting. Elapsed time was %g seconds" % (now_time - start_time))
 
-    except Exception as e:
-        userWarning(str(e))
+##    except Exception as e:
+##        userWarning(str(e))
 
     # delete field if need be
     if fieldExists(rd_fc, name_field):
@@ -1103,14 +1133,20 @@ def FindOverlaps(working_gdb):
 
     if values != []:
         RecordResults(resultType, values, working_gdb)
-        userWarning("Completed checking overlapping addresses: " + str(len(values)) + " issues found. See table FieldValuesCheckResults for results.")
+        userWarning("Completed checking overlapping addresses: %s issues found. See table FieldValuesCheckResults for results." % (str(len(values))))
         if overlap_error_flag == 1:
             userWarning("All specific overlaps with corresponding NGSEGIDs are listed in " + txt)
     else:
         userMessage("Completed checking overlapping addresses: 0 issues found")
 
+##    now_time = time.time()
+##    print("Marker: done reporting. Elapsed time was %g seconds" % (now_time - start_time))
+
     # turn editor tracking back on
     EnableEditorTracking_management(rd_fc, "", "", "UPDATEBY", "L_UPDATE", "NO_ADD_FIELDS", "UTC")
+
+##    end_time = time.time()
+##    print("Elapsed time was %g seconds" % (end_time - start_time))
 
 
 def checkRCLMATCH(pathsInfoObject):
@@ -1153,7 +1189,9 @@ def checkRCLMATCH(pathsInfoObject):
     at = join(gdb, "apTable")
     if Exists(at):
         Delete_management(at)
-    wc = a_obj.SUBMIT + " = 'Y' AND " + a_obj.RCLMATCH + " <> 'NO_MATCH'"
+##    wc = a_obj.SUBMIT + " = 'Y' AND " + a_obj.RCLMATCH + " <> 'NO_MATCH'"
+    wcList = [a_obj.SUBMIT, " = 'Y' AND ", a_obj.RCLMATCH, " <> 'NO_MATCH'"]
+    wc = "".join(wcList)
     MakeFeatureLayer_management(ap, ap_table_view, wc)
     CopyRows_management(ap_table_view, at)
 
@@ -1196,8 +1234,9 @@ def checkRCLMATCH(pathsInfoObject):
     for side in sides:
 
         # first, toss out any where code compares don't match
-        compare_codes_wc = a_obj.RCLSIDE + " = '" + side + "' AND rcTable.NGSEGID is not null AND apTable.CODE_COMPARE <> rcTable.CODE_COMPARE_" + side
-
+##        compare_codes_wc = a_obj.RCLSIDE + " = '" + side + "' AND rcTable.NGSEGID is not null AND apTable.CODE_COMPARE <> rcTable.CODE_COMPARE_" + side
+        compare_codes_wc_list = [a_obj.RCLSIDE, " = '", side, "' AND rcTable.NGSEGID is not null AND apTable.CODE_COMPARE <> rcTable.CODE_COMPARE_", side]
+        compare_codes_wc = "".join(compare_codes_wc_list)
         SelectLayerByAttribute_management(a, "NEW_SELECTION", compare_codes_wc)
         count = getFastCount(a)
 
@@ -1212,7 +1251,9 @@ def checkRCLMATCH(pathsInfoObject):
         SelectLayerByAttribute_management(a, "CLEAR_SELECTION")
 
         # look at ranges
-        compare_ranges_wc = a_obj.RCLSIDE + " = '" + side + "' AND rcTable.NGSEGID is not null AND apTable.CODE_COMPARE = rcTable.CODE_COMPARE_" + side
+##        compare_ranges_wc = a_obj.RCLSIDE + " = '" + side + "' AND rcTable.NGSEGID is not null AND apTable.CODE_COMPARE = rcTable.CODE_COMPARE_" + side
+        compare_ranges_wc_list = [a_obj.RCLSIDE, " = '", side, "' AND rcTable.NGSEGID is not null AND apTable.CODE_COMPARE = rcTable.CODE_COMPARE_", side]
+        compare_ranges_wc = "".join(compare_ranges_wc_list)
 
         # get count of potential problems
         SelectLayerByAttribute_management(a, "NEW_SELECTION", compare_ranges_wc)
@@ -1220,7 +1261,7 @@ def checkRCLMATCH(pathsInfoObject):
 
         if count > 0:
 
-            flds = (a_ngaddid, "apTable.HNO", "rcTable." + side + "_F_ADD", "rcTable." + side + "_T_ADD", "rcTable.PARITY_" + side)
+            flds = (a_ngaddid, "apTable.HNO", "rcTable.%s_F_ADD" % (side), "rcTable.%s_T_ADD" % (side), "rcTable.PARITY_%s" % (side))
 
             with SearchCursor(a, flds, compare_ranges_wc) as rows:
                 for row in rows:
@@ -1231,19 +1272,20 @@ def checkRCLMATCH(pathsInfoObject):
                         range_counter = 1
 
                     # get the range by the specified count
-                    sideRange = list(range(row[2], row[3] + 2, range_counter))
+                    if row[3] > row[2]:
+                        sideRange = list(range(row[2], row[3] + 2, range_counter))
 
                     # if the range was high to low, flip it
-                    if sideRange == []:
+                    else:
                         sideRange = list(range(row[3], row[2] + 2, range_counter))
 
                     # see if HNO is in the range
                     if int(row[1]) not in sideRange:
                         doesnt_match_range.append(row[0])
-    ##                    userMessage("HNO: " + str(row[1]))
-    ##                    userMessage("From: " + str(row[2]))
-    ##                    userMessage("To: " + str(row[3]))
-    ##                    userMessage("Range: " + str(sideRange))
+##                        userMessage("HNO: " + str(row[1]))
+##                        userMessage("From: " + str(row[2]))
+##                        userMessage("To: " + str(row[3]))
+##                        userMessage("Range: " + str(sideRange))
 
                 del row, rows
 
@@ -1264,7 +1306,7 @@ def checkRCLMATCH(pathsInfoObject):
 
     if values != []:
         RecordResults(resultType, values, gdb)
-        userWarning("Check complete. " + str(len(values)) + " issues found. See table FieldValuesCheckResults for results.")
+        userWarning("Check complete. %s issues found. See table FieldValuesCheckResults for results." % (str(len(values))))
     else:
         userMessage("Check complete. All RCLMATCH records correspond to appropriate road centerline segments.")
 
@@ -1300,7 +1342,7 @@ def checkMSAGCOspaces(fc1, gdb):
             if getFastCount(fl) > 0:
                 with SearchCursor(fl, (uniqueID)) as rows:
                     for row in rows:
-                        report = "Error: " + field + " has a leading or trailing space or is null or blank."
+                        report = "Error: %s has a leading or trailing space or is null or blank." % field
                         val = (today, report, fc, field, row[0], "Check Values Against Domains")
                         values.append(val)
 
@@ -1309,7 +1351,7 @@ def checkMSAGCOspaces(fc1, gdb):
 
     if values != []:
         RecordResults(resultType, values, gdb)
-        userWarning("Check complete. " + str(len(values)) + " issues found. See table FieldValuesCheckResults for results.")
+        userWarning("Check complete. %s issues found. See table FieldValuesCheckResults for results." % (str(len(values))))
     else:
         userMessage("Check complete. No MSAGCO records have leading or trailing spaces.")
 
@@ -1388,9 +1430,8 @@ def checkValuesAgainstDomain(pathsInfoObject):
                                 listOfBadValues = []
                                 with SearchCursor(output, (fieldN)) as rows:
                                     for row in rows:
-                                        if row[0] not in domainList:
-                                            if row[0] is not None:
-                                                listOfBadValues.append(row[0])
+                                        if row[0] not in domainList and row[0] is not None:
+                                            listOfBadValues.append(row[0])
                                 try:
                                     del rows, row
                                 except:
@@ -1404,10 +1445,13 @@ def checkValuesAgainstDomain(pathsInfoObject):
 
                                         # set up the where clause to find all bad records
                                         if badun is not None:
-                                            wc = str(fieldN) + " = '" + str(badun) + "'"
-                                            userMessage(wc)
+                                            wcList = [str(fieldN), " = '", str(badun), "'"]
+##                                            wc = str(fieldN) + " = '" + str(badun) + "'"
                                         else:
-                                            wc = fieldN + " is null"
+                                            wcList = [fieldN, " is null"]
+
+                                        wc = "".join(wcList)
+                                        userMessage(wc)
 
                                         # run a query to find all the offending unique ids
                                         with SearchCursor(fullPathlyr, (id1, fieldN), wc) as rows:
@@ -1417,7 +1461,7 @@ def checkValuesAgainstDomain(pathsInfoObject):
                                                     fieldVal = "Null"
                                                 else:
                                                     fieldVal = row[1]
-                                                report = "Error: Value " + str(row[1]) + " not in approved domain for field " + fieldN
+                                                report = "Error: Value %s not in approved domain for field %s" % (str(row[1]), fieldN)
                                                 val = (today, report, fc, fieldN, fID, "Check Values Against Domains")
                                                 values.append(val)
                                         del rows, row
@@ -1428,7 +1472,7 @@ def checkValuesAgainstDomain(pathsInfoObject):
                                 for row in rows:
                                     hno = row[1]
                                     if hno > 999999 or hno < 0:
-                                        report = "Error: Value " + str(row[1]) + " not in approved domain for field " + fieldN
+                                        report = "Error: Value %s not in approved domain for field %s" % (str(row[1]), fieldN)
                                         val = (today, report, fc, fieldN, row[0], "Check Values Against Domains")
                                         values.append(val)
 
@@ -1447,7 +1491,7 @@ def checkValuesAgainstDomain(pathsInfoObject):
 
     if values != []:
         RecordResults(resultType, values, gdb)
-        userWarning("Completed checking fields against domains: " + str(len(values)) + " issues found. See table FieldValuesCheckResults for results.")
+        userWarning("Completed checking fields against domains: %s issues found. See table FieldValuesCheckResults for results." % (str(len(values))))
     else:
         userMessage("Completed checking fields against domains: 0 issues found")
 
@@ -1499,12 +1543,16 @@ def checkRequiredFieldValues(pathsInfoObject):
                     if getFastCount(lyr2) > 0:
 
                         #create where clause to select any records where required values aren't populated
-                        wc = ""
+##                        wc = ""
+                        wcList = []
 
                         for field in matchingFields:
-                            wc = wc + " " + field + " is null or "
+                            wcList = wcList + [" ", field, " is null", " or "]
+##                            wc = wc + " " + field + " is null or "
 
-                        wc = wc[0:-4]
+                        wcList.pop() # take off the last " is null or"
+##                        wc = wc[0:-4]
+                        wc = "".join(wcList)
 
                         #make table view using where clause
                         lyr = "lyr"
@@ -1529,7 +1577,7 @@ def checkRequiredFieldValues(pathsInfoObject):
                                             #see if the value is nothing
                                             if row[k] is None:
                                                 #report the value if it is indeed null
-                                                report = "Error: " + matchingFields[k] + " is null for Feature ID " + oid
+                                                report = "Error: %s is null for Feature ID %s" % (matchingFields[k], oid)
                                                 userMessage(report)
                                                 val = (today, report, basename(filename), matchingFields[k], oid, "Check Required Field Values")
                                                 values.append(val)
@@ -1537,7 +1585,7 @@ def checkRequiredFieldValues(pathsInfoObject):
                                             #iterate!
                                             k = k + 1
                             except:
-                                userMessage("Could not check all fields in " + layer + ". Looking for " + ", ".join(matchingFields))
+                                userMessage("Could not check all fields in %s. Looking for " % (layer) + ", ".join(matchingFields) )
                         else:
                             userMessage( "All required values present for " + layer)
 
@@ -1552,7 +1600,7 @@ def checkRequiredFieldValues(pathsInfoObject):
 
     if values != []:
         RecordResults("fieldValues", values, gdb)
-        userWarning("Completed check for required field values: " + str(len(values)) + " issues found. See table FieldValuesCheckResults for results.")
+        userWarning("Completed check for required field values: %s issues found. See table FieldValuesCheckResults for results." % (str(len(values))))
     else:
         userMessage("Completed check for required field values: 0 issues found")
 
@@ -1582,7 +1630,7 @@ def checkRequiredFields(pathsInfoObject):
             #loop through required fields to make sure they exist in the geodatabase
             for comparisonField in comparisonList:
                 if comparisonField.upper() not in fields:
-                    report = "Error: " + filename + " does not have required field " + comparisonField
+                    report = "Error: %s does not have required field %s" % (filename, comparisonField)
                     userMessage(report)
                     #add issue to list of values
                     val = (today, report, "Field", "Check Required Fields")
@@ -1605,7 +1653,7 @@ def checkRequiredFields(pathsInfoObject):
     #record issues if any exist
     if values != []:
         RecordResults("template", values, gdb)
-        userWarning("Completed check for required fields: " + str(len(values)) + " issues found. See table FieldValuesCheckResults for results.")
+        userWarning("Completed check for required fields: %s issues found. See table FieldValuesCheckResults for results." % (str(len(values))))
     else:
         userMessage("Completed check for required fields: 0 issues found")
 
@@ -1625,22 +1673,27 @@ def checkSubmissionNumbers(pathsInfoObject):
         if Exists(fc):
             #count records that are for submission
             lyr2 = "lyr2"
-            wc2 = "SUBMIT = 'Y'"
+##            wc2 = "SUBMIT = 'Y'"
+            wc2List = ["SUBMIT = 'Y'"]
             if "AddressPoints" in fc:
                 a_obj = NG911_GDB_Objects.getFCObject(fc)
-                wc2 = wc2 + " AND " + a_obj.LOCTYPE + " = 'PRIMARY'"
+##                wc2 = wc2 + " AND " + a_obj.LOCTYPE + " = 'PRIMARY'"
+                wc2List = wc2List + [" AND ", a_obj.LOCTYPE, " = 'PRIMARY'"]
 ##            userMessage(fc)
 ##            userMessage(wc2)
+            wc2 = "".join(wc2List)
             MakeTableView_management(fc, lyr2, wc2)
 
             #get count of the results
             count = getFastCount(lyr2)
             bn = basename(fc)
 
-            userMessage(bn + ": " + str(count) + " records marked for submission")
+            umList = [bn, ": ", str(count), " records marked for submission"]
+            um = "".join(umList)
+            userMessage(um)
 
             if count == 0:
-                report = "Error: " + bn + " has 0 records for submission"
+                report = "Error: %s has 0 records for submission" % (bn)
                 if bn.upper() in skipList or bn[0:3].upper() == 'UT_':
                     report = report.replace("Error", "Notice")
                 #add issue to list of values
@@ -1723,12 +1776,16 @@ def checkFeatureLocations(pathsInfoObject):
     for fullPath in fcList:
         if Exists(fullPath):
             fl = "fl"
-            wc = "SUBMIT = 'Y'"
+##            wc = "SUBMIT = 'Y'"
+            wcList = ["SUBMIT = 'Y'"]
             if "RoadCenterline" in fullPath:
                 rc_obj = NG911_GDB_Objects.getFCObject(fullPath)
-                wc = wc + " AND " + rc_obj.EXCEPTION + " not in ('EXCEPTION INSIDE', 'EXCEPTION BOTH')"
+##                wc = wc + " AND " + rc_obj.EXCEPTION + " not in ('EXCEPTION INSIDE', 'EXCEPTION BOTH')"
+                wcList = wcList + [" AND ", rc_obj.EXCEPTION, " not in ('EXCEPTION INSIDE', 'EXCEPTION BOTH')"]
                 if rc_obj.GDB_VERSION == "21":
-                    wc = wc + " AND AUTH_L = 'Y' AND AUTH_R = 'Y'"
+##                    wc = wc + " AND AUTH_L = 'Y' AND AUTH_R = 'Y'"
+                    wcList.append(" AND AUTH_L = 'Y' AND AUTH_R = 'Y'")
+            wc = "".join(wcList)
             MakeFeatureLayer_management(fullPath, fl, wc)
 
             try:
@@ -1772,7 +1829,7 @@ def checkFeatureLocations(pathsInfoObject):
 
     if values != []:
         RecordResults("fieldValues", values, gdb)
-        userWarning("Completed check on feature locations: " + str(len(values)) + " issues found. See table FieldValuesCheckResults.")
+        userWarning("Completed check on feature locations: %s issues found. See table FieldValuesCheckResults." % (str(len(values))))
     else:
         userMessage("Completed check on feature locations: 0 issues found")
 
@@ -1844,14 +1901,14 @@ def findInvalidGeometry(pathsInfoObject):
                             values.append(val)
 
             else:
-                userMessage("ID column " + id_column + " does not exist in " + fullPath)
+                userMessage("ID column %s does not exist in %s" % (id_column, fullPath))
 
         else:
             userWarning(fullPath + " does not exist")
 
     if values != []:
         RecordResults("fieldValues", values, gdb)
-        userWarning("Completed for invalid geometry: " + str(len(values)) + " issues found. See FieldValuesCheckResults.")
+        userWarning("Completed for invalid geometry: %s issues found. See FieldValuesCheckResults." % (str(len(values))))
     else:
         userMessage("Completed for invalid geometry: 0 issues found")
 
@@ -1928,12 +1985,12 @@ def checkCutbacks(pathsInfoObject):
 
     if values != []:
         RecordResults("fieldValues", values, gdb)
-        userWarning("Completed check on cutbacks: " + str(len(values)) + " issues found. See FieldValuesCheckResults.")
+        userWarning("Completed check on cutbacks: %s issues found. See FieldValuesCheckResults." % (str(len(values))))
     else:
         userMessage("Completed check on cutbacks: 0 issues found")
 
     if k != 0:
-        userMessage("Could not complete cutback check on " + str(k) + " segments.")
+        userMessage("Could not complete cutback check on %s segments." % (str(k)))
 
 
 def getNumbers():
@@ -1944,7 +2001,7 @@ def getNumbers():
 def checkKSPID(fc, field):
     # make sure the KSPID value is 19 characters long
     values = []
-    kspid_wc = field + " is not null and CHAR_LENGTH(" + field + ") <> 19"
+    kspid_wc = "%s is not null and CHAR_LENGTH(%s) <> 19" % (field, field)
     kspid_fl = "kspid_fl"
     MakeFeatureLayer_management(fc, kspid_fl, kspid_wc)
 
@@ -1964,20 +2021,25 @@ def checkKSPID(fc, field):
                 # try to make sure we're not getting any blanks reported
                 if row[0] not in ('', ' '):
                     fid = row[ID_index]
-                    report = "Error: " + field + " value is not the required 19 characters."
+                    report = "Error: %s value is not the required 19 characters." % (field)
                     val = (today, report, layer, field, fid, "Check " + field)
                     values.append(val)
 
     # report
+    msgList = ["Completed check on ", basename(fc), " ", field, ": "]
     if values != []:
         if dirname(fc)[-3:] != 'gdb':
             gdb = dirname(dirname(fc))
         else:
             gdb = dirname(fc)
         RecordResults("fieldValues", values, gdb)
-        userWarning("Completed check on " + basename(fc) + " " + field + ": " + str(len(values)) + " issues found. See FieldValuesCheckResults. Parcel IDs must be 19 digits with county code and no dots or dashes.")
+        msgList = msgList + [str(len(values)), " issues found. See FieldValuesCheckResults. Parcel IDs must be 19 digits with county code and no dots or dashes."]
+        msg = "".join(msgList)
+        userWarning(msg)
     else:
-        userMessage("Completed check on " + basename(fc) + " " + field + ": 0 issues found")
+        msgList.append("0 issues found")
+        msg = "".join(msgList)
+        userMessage(msg)
 
     Delete_management(kspid_fl)
 
@@ -2029,7 +2091,7 @@ def VerifyRoadAlias(gdb, domainFolder):
 
         #get variables set up
         #where clause for the search cursor
-        wc = ra_obj.A_STS + " is null or " + ra_obj.A_STS + " in ('HWY', '', ' ')"
+        wc = "%s is null or %s in ('HWY', '', ' ')" % (ra_obj.A_STS, ra_obj.A_STS)
 
         #variables for error reporting
         errorList = []
@@ -2070,7 +2132,7 @@ def VerifyRoadAlias(gdb, domainFolder):
                                     if road not in hwy_dict[roadNum]:
                                         if fID not in errorList:
                                             errorList.append(fID)
-                                            report = "Notice: " + road + " is not in the approved highway name list"
+                                            report = "Notice: %s is not in the approved highway name list" % (road)
                                             val = (today, report, filename, field, fID, "Check Road Alias")
                                             values.append(val)
 
@@ -2088,12 +2150,12 @@ def VerifyRoadAlias(gdb, domainFolder):
         #set up custom error count message
         count = len(errorList)
         if count > 1:
-            countReport = "There were " + str(count) + " issues. "
+            countReport = "There were %s issues." % (str(count))
         else:
-            countReport = "There was 1 issue. "
+            countReport = "There was 1 issue."
 
         RecordResults(recordType, values, gdb)
-        userWarning("Checked highway names in the road alias table. " + countReport + "Results are in table FieldValuesCheckResults")
+        userWarning("Checked highway names in the road alias table. %s Results are in table FieldValuesCheckResults" % (countReport))
     else:
         userMessage("Checked highway names in the road alias table.")
 
@@ -2165,16 +2227,18 @@ def checkRoadAliases(pathsInfoObject):
             MakeTableView_management(road_alias, ra_tbl)
 
         #make sure all road alias records relate back to the road centerline file
-        alias_count = checkJoin(gdb, ra_tbl, rdslyr, "RoadCenterline." + rc_obj.RD + " is null", "Notice: Road alias entry does not have a corresponding road centerline segment", "RoadAlias." + ra_obj.UNIQUEID)
+        alias_count = checkJoin(gdb, ra_tbl, rdslyr, "RoadCenterline.%s is null" % (rc_obj.RD), "Notice: Road alias entry does not have a corresponding road centerline segment", "RoadAlias." + ra_obj.UNIQUEID)
 
         #see if the highways link back to a road alias record
-        hwy_count = checkJoin(gdb, rdslyr, ra_tbl, "(RoadCenterline." + rc_obj.RD + " like '%HIGHWAY%' or RoadCenterline." + rc_obj.RD + " like '%HWY%' or RoadCenterline." + rc_obj.RD + " like '%INTERSTATE%') and RoadAlias." + ra_obj.A_RD + " is null",
-                                    "Notice: Road centerline highway segment does not have a corresponding road alias record", "RoadCenterline." + rc_obj.UNIQUEID)
+        wcList = ["(RoadCenterline.", rc_obj.RD, " like '%HIGHWAY%' or RoadCenterline.", rc_obj.RD, " like '%HWY%' or RoadCenterline.", rc_obj.RD, " like '%INTERSTATE%') and RoadAlias.", ra_obj.A_RD, " is null"]
+        wc = "".join(wcList)
+        hwy_count = checkJoin(gdb, rdslyr, ra_tbl, wc,
+                "Notice: Road centerline highway segment does not have a corresponding road alias record", "RoadCenterline." + rc_obj.UNIQUEID)
 
         total_count = alias_count + hwy_count
 
         if total_count > 0:
-            userMessage("Checked road alias records. There were " + str(total_count) + " issues. Results are in table FieldValuesCheckResults")
+            userMessage("Checked road alias records. There were %s issues. Results are in table FieldValuesCheckResults" % (str(total_count)))
         else:
             userMessage("Checked road alias records. No errors were found.")
 
@@ -2278,7 +2342,7 @@ def sanityCheck(currentPathSettings):
         RecordResults("DASCmessage", values, gdb)
         userMessage("Geodatabase passed all data checks.")
     else:
-        userWarning("There were " + str(numErrors) + " issues with the data that will prevent a successful submission. Please view errors in the TemplateCheckResults and:or FieldValuesCheckResults tables.")
+        userWarning("There were %s issues with the data that will prevent a successful submission. Please view errors in the TemplateCheckResults and:or FieldValuesCheckResults tables." % (str(numErrors)))
         userWarning("For documentation on Interpreting Tool Results, please copy and paste this link into your web browser: https://goo.gl/aUlrLH")
 
     checkToolboxVersionFinal()
@@ -2298,7 +2362,7 @@ def main_check(checkType, currentPathSettings):
     stuffToCheck = 0
     for cI in checkList:
         if cI == "true":
-            stuffToCheck = stuffToCheck + 1
+            stuffToCheck += 1
     if stuffToCheck == 0:
         userMessage("Warning: you choose no validation checks.")
 
@@ -2355,6 +2419,9 @@ def main_check(checkType, currentPathSettings):
             checkValuesAgainstDomain(currentPathSettings)
             checkMSAGCOspaces(roads, gdb)
 
+            # check parity
+            checkParities(currentPathSettings)
+
         if checkList[1] == "true":
             checkFeatureLocations(currentPathSettings)
 
@@ -2362,6 +2429,13 @@ def main_check(checkType, currentPathSettings):
             road_freq = gdbObject.RoadCenterlineFrequency
             road_fields = rc_obj.FREQUENCY_FIELDS_STRING
             checkFrequency(roads, road_freq, road_fields, gdb, "true")
+
+            # complete check for duplicate address ranges on dual carriageways
+            road_freq = gdbObject.RoadCenterlineFrequency
+            fields = rc_obj.FREQUENCY_FIELDS
+            fields.remove("ONEWAY")
+            fields_string = ";".join(fields)
+            checkFrequency(roads, road_freq, fields_string, gdb, "false")
 
         if checkList[3] == "true":
             checkUniqueIDFrequency(currentPathSettings)
@@ -2376,19 +2450,9 @@ def main_check(checkType, currentPathSettings):
             checkRoadAliases(currentPathSettings)
 
         if checkList[7] == "true":
-
-            # complete check for duplicate address ranges on dual carriageways
-            road_freq = gdbObject.RoadCenterlineFrequency
-            fields = rc_obj.FREQUENCY_FIELDS
-            fields.remove("ONEWAY")
-            fields_string = ";".join(fields)
-            checkFrequency(roads, road_freq, fields_string, gdb, "false")
-
             # check for address range overlaps
             FindOverlaps(gdb)
 
-            # check parity
-            checkParities(currentPathSettings)
 
     # run standard checks
     elif checkType == "standard":

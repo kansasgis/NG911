@@ -17,6 +17,7 @@ from arcpy.da import UpdateCursor, SearchCursor, InsertCursor
 from os import mkdir
 from os.path import exists, dirname, basename, join
 from time import strftime
+import csv
 
 
 class MSAG_Object(object):
@@ -39,8 +40,8 @@ class MSAG_Object(object):
 
 def getMSAGObject(gdb, today):
     #too many things to remember, needed an object
-    workspace_folder = join(dirname(gdb), "MSAG_analysis_" + today)
-    workingGDB = join(workspace_folder, "MSAG_analysis_" + today + ".gdb")
+    workspace_folder = join(dirname(gdb), "MSAG_analysis_" + basename(gdb.replace(".gdb","")))
+    workingGDB = join(workspace_folder, "MSAG_analysis_" + basename(gdb))
     workingRoads = join(workingGDB, "RoadCenterline")
     msag_table = join(workingGDB, "MSAG_" + today)
     rc_names = workingRoads + "_NAMES"
@@ -145,13 +146,33 @@ def prepRoads(msag_object, gdb, field):
 
     userMessage("Prepped roads for analysis")
 
+def checkField(table, val):
+    # if "Low" and "High" don't exist in the table, find some good candidates
+    if not fieldExists(table, val):
+        val = ""
+        fields = ListFieldNames(table)
+        for f in fields:
+            if val.upper() in f.upper():
+                val = f
+    return val
+
 def prepMSAG(msag_object, msag, field):
     msag_table = msag_object.msag_table
 
     #import msag to table
-    if not Exists(msag_table):
-        ExcelToTable_conversion(msag, msag_table)
-        userMessage("MSAG spreadsheet converted")
+    if Exists(msag_table):
+        Delete_management(msag_table)
+    ExcelToTable_conversion(msag, msag_table)
+    userMessage("MSAG spreadsheet converted")
+
+    # set low & high fields
+    low = checkField(msag_table, "Low")
+    high = checkField(msag_table, "High")
+
+    # error trapping in case the fields didn't get set
+    if low == "" or high == "":
+        userMessage("MSAG spreadsheet does not have columns with the words 'Low' and:or 'High'. Please edit the spreadsheet so two columns names contains the words 'Low' and 'High'.")
+        exit()
 
     #add comparison fields
     if not fieldExists(msag_table, field):
@@ -166,6 +187,7 @@ def prepMSAG(msag_object, msag, field):
     CalculateField_management(msag_table, field, "!" + field + "!.replace(" + '"' + "'" + '"' + ",'')", "PYTHON")
 
     userMessage("Prepped MSAG for analysis")
+    return([low, high])
 
 def insertReports(workingGDB, report, records, high, low):
     #prepare reporting
@@ -366,6 +388,8 @@ def compareMSAGnames(msag_object):
 
     #clean up: remove the join
     RemoveJoin_management(lyr_road_names)
+    Delete_management(lyr_msag_names)
+    Delete_management(lyr_road_names)
 
 def compareMSAGranges(msag_object):
     #loop through road centerline names
@@ -427,13 +451,17 @@ def compareMSAGranges(msag_object):
                     insertReports(msag_object.workingGDB, "Not in NG911 road- " + friendly_reporting2, [row[0]], '', '')
 
     del row, rows, r_row, r_rows, m_row, m_rows
+    Delete_management(rc_mm_freq)
+    Delete_management(msag_mm_freq)
 
 def main():
 
     #set variables
     msag = GetParameterAsText(0)
     gdb = GetParameterAsText(1)
-##    provider = GetParameterAsText(2)
+    road_flag = GetParameterAsText(2)
+    msag_flag = GetParameterAsText(3)
+
     today = strftime('%Y%m%d')
     field = "COMPARE"
 
@@ -450,12 +478,18 @@ def main():
         CreateFileGDB_management(workspaceFolder, basename(workingGDB))
 
     #copy over road centerline
-    prepRoads(msag_object, gdb, field)
-    consolidateMSAG(msag_object.workingRoads, "COMPARE_L", ("L_F_ADD", "L_T_ADD", "R_F_ADD", "R_T_ADD"))
+    if road_flag == "true" or not Exists(msag_object.workingRoads):
+        prepRoads(msag_object, gdb, field)
+        consolidateMSAG(msag_object.workingRoads, "COMPARE_L", ("L_F_ADD", "L_T_ADD", "R_F_ADD", "R_T_ADD"))
+    else:
+        userMessage("Road data already converted.")
 
     #prep msag table
-    prepMSAG(msag_object, msag, field)
-    consolidateMSAG(msag_object.msag_table, "COMPARE", ("Low","High"))
+    if msag_flag == "true" or not Exists(msag_object.msag_table):
+        fields = prepMSAG(msag_object, msag, field)
+        consolidateMSAG(msag_object.msag_table, "COMPARE", (fields[0],fields[1]))
+    else:
+        userMessage("MSAG data already converted.")
 
     #compare msag names
     userMessage("Comparing MSAG segment names...")

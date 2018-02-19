@@ -759,10 +759,11 @@ def getGDBObject(gdb):
     FIRE = join(gdb, featureDataset, "ESB_FIRE")
     LAW = join(gdb, featureDataset, "ESB_LAW")
     PSAP = join(gdb, featureDataset, "ESB_PSAP")
+    RESCUE = join(gdb, featureDataset, "ESB_RESCUE")
 
     # test to see what should be included in the for-real ESB list
     esbList = []
-    for e in [ESB, EMS, FIRE, LAW, PSAP]:
+    for e in [ESB, EMS, FIRE, LAW, PSAP, RESCUE]:
         if Exists(e): # make sure the layer exists
             if hasRecords(e): # make sure the layer has records
                 if e not in esbList:
@@ -800,6 +801,7 @@ def getGDBObject(gdb):
             self.EMS = EMS
             self.FIRE = FIRE
             self.LAW = LAW
+            self.RESCUE = RESCUE
 
             if self.GDB_VERSION == "20":
                 self.HYDRANTS = join(gdb, "Hydrants")
@@ -819,7 +821,6 @@ def getGDBObject(gdb):
                 self.GATES = join(self.OPTIONAL_LAYERS_FD, "GATES")
                 self.CELL_SECTOR = join(self.OPTIONAL_LAYERS_FD, "CELLSECTORS")
                 self.CELLSITES = join(self.OPTIONAL_LAYERS_FD, "CELLSITES")
-##                self.UTILITY = join(self.OPTIONAL_LAYERS_FD, "UTILITY")
                 self.BRIDGES = join(self.OPTIONAL_LAYERS_FD, "BRIDGES")
                 self.UT_ELECTRIC = join(self.OPTIONAL_LAYERS_FD, "UT_ELECTRIC")
                 self.UT_GAS = join(self.OPTIONAL_LAYERS_FD, "UT_GAS")
@@ -832,6 +833,8 @@ def getGDBObject(gdb):
             # standard lists
             self.AdminBoundaryList = [basename(self.AuthoritativeBoundary), basename(self.CountyBoundary), basename(self.MunicipalBoundary),
                                     basename(self.ESZ), basename(self.PSAP)]
+            self.AdminBoundaryFullPathList = [self.AuthoritativeBoundary, self.CountyBoundary, self.MunicipalBoundary,
+                                    self.ESZ, self.PSAP]
             self.esbList = esbList
             self.requiredLayers = [self.RoadAlias, self.AddressPoints, self.RoadCenterline, self.AuthoritativeBoundary, self.ESZ] + esbList
 

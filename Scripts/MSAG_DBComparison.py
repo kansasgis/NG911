@@ -45,13 +45,20 @@ def prep_roads_for_comparison(rd_fc, name_field, code_fields, city_fields, field
 
 ##    AddMessage("Query field list:" + ", ".join(field_list))
 
-
     # start edit session
     working_gdb = dirname(rd_fc)
-    if working_gdb[-3:] != "gdb":
+    if working_gdb[-3:] not in ("gdb"):
         working_gdb = dirname(dirname(rd_fc))
+    if r"Database Servers\GISS01_SQLEXPRESSGIS.gds" in working_gdb:
+        working_gdb =  r"Database Servers\GISS01_SQLEXPRESSGIS.gds\KSNG911S(VERSION:dbo.DEFAULT)"
+
+    # made some changes to account for Butler Co's SDE gdb
+    AddMessage(working_gdb)
     edit = Editor(working_gdb)
-    edit.startEditing(False, False)
+    if "dbo.DEFAULT" not in working_gdb:
+        edit.startEditing(False, False)
+    else:
+        edit.startEditing(False, True)
 
     # run update cursor
     with UpdateCursor(rd_fc, fields1) as rows:
@@ -215,7 +222,8 @@ def db_compare(hno, hno_code, tempTable, addid, txt, idField):
     segid_field = "NGSEGID"
     side = "N"
 
-    rd_fields = (segid_field, "FROM_", "TO", "RCLSIDE", "PARITY")
+    rd_fields = [segid_field, "FROM_ADD", "TO_ADD", "RCLSIDE", "PARITY"]
+
     with SearchCursor(tempTable, rd_fields, wc) as r_rows:
         for r_row in r_rows:
 
@@ -305,7 +313,7 @@ def launch_compare(gdb, output_table, HNO, addy_city_field, addy_field_list, que
         l_field_info = """OBJECTID OBJECTID HIDDEN NONE;Shape Shape HIDDEN NONE;STEWARD STEWARD HIDDEN NONE;L_UPDATE L_UPDATE HIDDEN NONE;
         EFF_DATE EFF_DATE HIDDEN NONE;EXP_DATE EXP_DATE HIDDEN NONE;NGSEGID NGSEGID VISIBLE NONE;STATE_L STATE_L HIDDEN NONE;
         STATE_R STATE_R HIDDEN NONE;COUNTY_L COUNTY_L HIDDEN NONE;COUNTY_R COUNTY_R HIDDEN NONE;MUNI_L MUNI_L HIDDEN NONE;
-        MUNI_R MUNI_R HIDDEN NONE;L_F_ADD FROM VISIBLE NONE;L_T_ADD TO VISIBLE NONE;R_F_ADD R_F_ADD HIDDEN NONE;
+        MUNI_R MUNI_R HIDDEN NONE;L_F_ADD FROM_ADD VISIBLE NONE;L_T_ADD TO_ADD VISIBLE NONE;R_F_ADD R_F_ADD HIDDEN NONE;
         R_T_ADD R_T_ADD HIDDEN NONE;PARITY_L PARITY VISIBLE NONE;PARITY_R PARITY_R HIDDEN NONE;POSTCO_L POSTCO_L HIDDEN NONE;
         POSTCO_R POSTCO_R HIDDEN NONE;ZIP_L ZIP_L HIDDEN NONE;ZIP_R ZIP_R HIDDEN NONE;ESN_L ESN_L HIDDEN NONE;ESN_R ESN_R HIDDEN NONE;
         MSAGCO_L MSAGCO_L HIDDEN NONE;MSAGCO_R MSAGCO_R HIDDEN NONE;PRD PRD HIDDEN NONE;STP STP HIDDEN NONE;RD RD HIDDEN NONE;
@@ -319,8 +327,8 @@ def launch_compare(gdb, output_table, HNO, addy_city_field, addy_field_list, que
         r_field_info = """OBJECTID OBJECTID HIDDEN NONE;Shape Shape HIDDEN NONE;STEWARD STEWARD HIDDEN NONE;L_UPDATE L_UPDATE HIDDEN NONE;
         EFF_DATE EFF_DATE HIDDEN NONE;EXP_DATE EXP_DATE HIDDEN NONE;NGSEGID NGSEGID VISIBLE NONE;STATE_L STATE_L HIDDEN NONE;
         STATE_R STATE_R HIDDEN NONE;COUNTY_L COUNTY_L HIDDEN NONE;COUNTY_R COUNTY_R HIDDEN NONE;MUNI_L MUNI_L HIDDEN NONE;
-        MUNI_R MUNI_R HIDDEN NONE;L_F_ADD L_F_ADD HIDDEN NONE;L_T_ADD L_T_ADD HIDDEN NONE;R_F_ADD FROM VISIBLE NONE;
-        R_T_ADD TO VISIBLE NONE;PARITY_L PARITY_L HIDDEN NONE;PARITY_R PARITY VISIBLE NONE;POSTCO_L POSTCO_L HIDDEN NONE;
+        MUNI_R MUNI_R HIDDEN NONE;L_F_ADD L_F_ADD HIDDEN NONE;L_T_ADD L_T_ADD HIDDEN NONE;R_F_ADD FROM_ADD VISIBLE NONE;
+        R_T_ADD TO_ADD VISIBLE NONE;PARITY_L PARITY_L HIDDEN NONE;PARITY_R PARITY VISIBLE NONE;POSTCO_L POSTCO_L HIDDEN NONE;
         POSTCO_R POSTCO_R HIDDEN NONE;ZIP_L ZIP_L HIDDEN NONE;ZIP_R ZIP_R HIDDEN NONE;ESN_L ESN_L HIDDEN NONE;ESN_R ESN_R HIDDEN NONE;
         MSAGCO_L MSAGCO_L HIDDEN NONE;MSAGCO_R MSAGCO_R HIDDEN NONE;PRD PRD HIDDEN NONE;STP STP HIDDEN NONE;RD RD HIDDEN NONE;
         STS STS HIDDEN NONE;POD POD HIDDEN NONE;POM POM HIDDEN NONE;SPDLIMIT SPDLIMIT HIDDEN NONE;ONEWAY ONEWAY HIDDEN NONE;
@@ -334,7 +342,7 @@ def launch_compare(gdb, output_table, HNO, addy_city_field, addy_field_list, que
         l_field_info = """OBJECTID OBJECTID HIDDEN NONE;Shape Shape HIDDEN NONE;STEWARD STEWARD HIDDEN NONE;L_UPDATE L_UPDATE HIDDEN NONE;
         EFF_DATE EFF_DATE HIDDEN NONE;EXP_DATE EXP_DATE HIDDEN NONE;NGSEGID NGSEGID VISIBLE NONE;STATE_L STATE_L HIDDEN NONE;
         STATE_R STATE_R HIDDEN NONE;COUNTY_L COUNTY_L HIDDEN NONE;COUNTY_R COUNTY_R HIDDEN NONE;MUNI_L MUNI_L HIDDEN NONE;
-        MUNI_R MUNI_R HIDDEN NONE;L_F_ADD FROM VISIBLE NONE;L_T_ADD TO VISIBLE NONE;R_F_ADD R_F_ADD HIDDEN NONE;
+        MUNI_R MUNI_R HIDDEN NONE;L_F_ADD FROM_ADD VISIBLE NONE;L_T_ADD TO_ADD VISIBLE NONE;R_F_ADD R_F_ADD HIDDEN NONE;
         R_T_ADD R_T_ADD HIDDEN NONE;PARITY_L PARITY VISIBLE NONE;PARITY_R PARITY_R HIDDEN NONE;POSTCO_L POSTCO_L HIDDEN NONE;
         POSTCO_R POSTCO_R HIDDEN NONE;ZIP_L ZIP_L HIDDEN NONE;ZIP_R ZIP_R HIDDEN NONE;ESN_L ESN_L HIDDEN NONE;ESN_R ESN_R HIDDEN NONE;
         MSAGCO_L MSAGCO_L HIDDEN NONE;MSAGCO_R MSAGCO_R HIDDEN NONE;PRD PRD HIDDEN NONE;STP STP HIDDEN NONE;RD RD HIDDEN NONE;
@@ -349,8 +357,8 @@ def launch_compare(gdb, output_table, HNO, addy_city_field, addy_field_list, que
         r_field_info = """OBJECTID OBJECTID HIDDEN NONE;Shape Shape HIDDEN NONE;STEWARD STEWARD HIDDEN NONE;L_UPDATE L_UPDATE HIDDEN NONE;
         EFF_DATE EFF_DATE HIDDEN NONE;EXP_DATE EXP_DATE HIDDEN NONE;NGSEGID NGSEGID VISIBLE NONE;STATE_L STATE_L HIDDEN NONE;
         STATE_R STATE_R HIDDEN NONE;COUNTY_L COUNTY_L HIDDEN NONE;COUNTY_R COUNTY_R HIDDEN NONE;MUNI_L MUNI_L HIDDEN NONE;
-        MUNI_R MUNI_R HIDDEN NONE;L_F_ADD L_F_ADD HIDDEN NONE;L_T_ADD L_T_ADD HIDDEN NONE;R_F_ADD FROM VISIBLE NONE;
-        R_T_ADD TO VISIBLE NONE;PARITY_L PARITY_L HIDDEN NONE;PARITY_R PARITY VISIBLE NONE;POSTCO_L POSTCO_L HIDDEN NONE;
+        MUNI_R MUNI_R HIDDEN NONE;L_F_ADD L_F_ADD HIDDEN NONE;L_T_ADD L_T_ADD HIDDEN NONE;R_F_ADD FROM_ADD VISIBLE NONE;
+        R_T_ADD TO_ADD VISIBLE NONE;PARITY_L PARITY_L HIDDEN NONE;PARITY_R PARITY VISIBLE NONE;POSTCO_L POSTCO_L HIDDEN NONE;
         POSTCO_R POSTCO_R HIDDEN NONE;ZIP_L ZIP_L HIDDEN NONE;ZIP_R ZIP_R HIDDEN NONE;ESN_L ESN_L HIDDEN NONE;ESN_R ESN_R HIDDEN NONE;
         MSAGCO_L MSAGCO_L HIDDEN NONE;MSAGCO_R MSAGCO_R HIDDEN NONE;PRD PRD HIDDEN NONE;STP STP HIDDEN NONE;RD RD HIDDEN NONE;
         STS STS HIDDEN NONE;POD POD HIDDEN NONE;POM POM HIDDEN NONE;SPDLIMIT SPDLIMIT HIDDEN NONE;ONEWAY ONEWAY HIDDEN NONE;
@@ -365,7 +373,7 @@ def launch_compare(gdb, output_table, HNO, addy_city_field, addy_field_list, que
     side_lists = [[rd_object.PARITY_L, rd_object.L_F_ADD, rd_object.L_T_ADD, rd_object.UNIQUEID,  code_field + "_L", "RoadCenterline_Layer", l_field_info],
                   [rd_object.PARITY_R, rd_object.R_F_ADD, rd_object.R_T_ADD, rd_object.UNIQUEID, code_field + "_R", "RoadCenterline_Layer2", r_field_info]]
 
-    wanted_fields = ["PARITY", "FROM_", "TO", "CODE_COMPARE"]
+    wanted_fields = ["PARITY", "FROM_ADD", "TO_ADD", "CODE_COMPARE"]
 
     if version == "21":
         wanted_fields.append("AUTH")
@@ -384,7 +392,8 @@ def launch_compare(gdb, output_table, HNO, addy_city_field, addy_field_list, que
         Delete_management(lyr)
 
         # made sure the table has a column for what side of the street it is
-        AddField_management(join(gdb, side[5]), "RCLSIDE", "TEXT", "", "", 1)
+        if not fieldExists(join(gdb, side[5]), "RCLSIDE"):
+            AddField_management(join(gdb, side[5]), "RCLSIDE", "TEXT", "", "", 1)
         CalculateField_management(join(gdb, side[5]), "RCLSIDE", '"' + side_x + '"', "PYTHON_9.3", "")
 
         fields = [side[0], side[1], side[2], side[4], "RCLSIDE"]
@@ -393,10 +402,12 @@ def launch_compare(gdb, output_table, HNO, addy_city_field, addy_field_list, que
         for w_f in wanted_fields:
             if not fieldExists(join(gdb, side[5]), w_f):
                 if "PARITY" in w_f:
-                    AddField_management(join(gdb, side[5]), w_f, "TEXT", "", "", 1)
+                    if not fieldExists(join(gdb, side[5]), w_f):
+                        AddField_management(join(gdb, side[5]), w_f, "TEXT", "", "", 1)
                     CalculateField_management(join(gdb, side[5]), w_f, "!" + fields[wanted_fields.index(w_f)] + "!", "PYTHON", "")
                 else:
-                    AddField_management(join(gdb, side[5]), w_f, "LONG")
+                    if not fieldExists(join(gdb, side[5]), w_f):
+                        AddField_management(join(gdb, side[5]), w_f, "LONG")
                     CalculateField_management(join(gdb, side[5]), w_f, "!" + fields[wanted_fields.index(w_f)] + "!", "PYTHON", "")
 
 
