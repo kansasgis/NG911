@@ -15,7 +15,7 @@ from arcpy import (Copy_management, AddField_management, AddMessage,
                     CalculateField_management, Exists, Merge_management,
                     MakeTableView_management, CopyRows_management,
                     DeleteField_management, SelectLayerByAttribute_management,
-                    ListFields)
+                    ListFields, AddWarning)
 from NG911_arcpy_shortcuts import getFastCount, fieldExists
 import time
 
@@ -53,7 +53,7 @@ def prep_roads_for_comparison(rd_fc, name_field, code_fields, city_fields, field
         working_gdb =  r"Database Servers\GISS01_SQLEXPRESSGIS.gds\KSNG911S(VERSION:dbo.DEFAULT)"
 
     # made some changes to account for Butler Co's SDE gdb
-    AddMessage(working_gdb)
+##    AddMessage(working_gdb)
     edit = Editor(working_gdb)
     if "dbo.DEFAULT" not in working_gdb:
         edit.startEditing(False, False)
@@ -126,12 +126,12 @@ def prep_roads_for_comparison(rd_fc, name_field, code_fields, city_fields, field
                            a0 = b[name[0].upper()]
 
                        if name[1].upper() not in b:
-                           a1 = 42
+                           a1 = 43
                        else:
                            a1 = b[name[1].upper()]
 
                        if name[2].upper() not in b:
-                           a2 = 42
+                           a2 = 44
                        else:
                            a2 = b[name[2].upper()]
 
@@ -140,7 +140,8 @@ def prep_roads_for_comparison(rd_fc, name_field, code_fields, city_fields, field
                        else:
                            a3 = b[name[-1].upper()]
 
-                       tot = tot * a0 - a1 + a2 - a3
+                       c = len(rd) + len(city)
+                       tot = tot * c - a1 + a2 - a3
 
                    return tot"""
 
@@ -240,10 +241,14 @@ def db_compare(hno, hno_code, tempTable, addid, txt, idField):
                 sideRange = list(range(r_row[2], r_row[1] + range_counter, range_counter))
 
             if hno in sideRange:
-                segid_list.append(r_row[0])
+                if r_row[0] is None:
+                    AddWarning("An NGSEGID value is blank/null. Matching records cannot be calculated. Make sure all NGSEGIDs are populated and run again.")
+                    segid_list.append("NULL_ID")
+                else:
+                    segid_list.append(r_row[0])
 
-                # grab the side, I'll reset later if it should be N
-                side = r_row[3]
+                    # grab the side, I'll reset later if it should be N
+                    side = r_row[3]
 
         try:
             del r_row, r_rows
@@ -295,7 +300,10 @@ def launch_compare(gdb, output_table, HNO, addy_city_field, addy_field_list, que
 
     # copy the roads to a table for comparison
     rc_table_view = "rc_table_view"
-    rt = join(gdb, "rcTable" + version)
+    if "TN_List" in output_table:
+        rt = join(dirname(output_table), "rcTable" + version)
+    else:
+        rt = join(gdb, "rcTable" + version)
     if Exists(rt):
         Delete_management(rt)
     wc = "SUBMIT = 'Y'"
@@ -401,7 +409,7 @@ def launch_compare(gdb, output_table, HNO, addy_city_field, addy_field_list, que
         # make sure that the side-neutral field names get added for comparison
         for w_f in wanted_fields:
             if not fieldExists(join(gdb, side[5]), w_f):
-                if "PARITY" in w_f:
+                if "PARITY" in w_f or "AUTH" in w_f:
                     if not fieldExists(join(gdb, side[5]), w_f):
                         AddField_management(join(gdb, side[5]), w_f, "TEXT", "", "", 1)
                     CalculateField_management(join(gdb, side[5]), w_f, "!" + fields[wanted_fields.index(w_f)] + "!", "PYTHON", "")
@@ -412,7 +420,10 @@ def launch_compare(gdb, output_table, HNO, addy_city_field, addy_field_list, que
 
 
     #create a temporary table of side-specific ranges
-    tempTable = join(gdb, "RoadsTemp")
+    if "TN_List" in output_table:
+        tempTable = join(dirname(output_table), "RoadList_" + time.strftime('%Y%m%d'))
+    else:
+        tempTable = join(gdb, "RoadsTemp")
     if Exists(tempTable):
         Delete_management(tempTable)
     rc_1 = join(gdb, "RoadCenterline_Layer")
@@ -530,10 +541,11 @@ def launch_compare(gdb, output_table, HNO, addy_city_field, addy_field_list, que
 ##    print("Elapsed time was %g seconds" % (end_time - start_time))
 
     # clean up
-    try:
-        Delete_management(tempTable)
-    except:
-        pass
+    if "TN_List" not in output_table:
+        try:
+            Delete_management(tempTable)
+        except:
+            pass
 
     for field in ["NAME_COMPARE", "CODE_COMPARE", "CODE_COMPARE_L", "CODE_COMPARE_R"]:
         for data in [ap_fc]:

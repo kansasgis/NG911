@@ -38,7 +38,7 @@ def geocompare(gdb, version, emptyOnly):
 
     # set up where clause if the user only wants empty records done
     if emptyOnly == "true":
-        wc = wc + " AND (" + addy_object.RCLMATCH + " is null or " + addy_object.RCLMATCH + " in ('', ' ','TIES','NO_MATCH'))"
+        wc = wc + " AND (" + addy_object.RCLMATCH + " is null or " + addy_object.RCLMATCH + " in ('', ' ','TIES','NO_MATCH','NULL_ID'))"
 
     # make sure we're dealing with a clean output table
     if Exists(output_table):

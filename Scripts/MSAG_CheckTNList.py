@@ -111,25 +111,65 @@ def prepXLS(tnxls, gdb):
     streetSuffixDict = getFieldDomain("STS", folder).keys()
     postDirectionalDict = getFieldDomain("POD", folder).keys()
 
-    with UpdateCursor(outTable, postRoadFields, "RD not like '%OLD H%'") as rows:
+    with UpdateCursor(outTable, postRoadFields) as rows:
         for row in rows:
-            fullNameList = row[2].split()
-            i = 1
-            rd =[fullNameList[0]]
-            while i < len(fullNameList):
-                if fullNameList[i] not in streetSuffixDict and fullNameList[i] not in postDirectionalDict:
-                    rd.append(fullNameList[i])
-                elif fullNameList[i] in streetSuffixDict:
-                    row[0] = fullNameList[i]
-                elif fullNameList[i] in postDirectionalDict:
-                    if fullNameList[0] not in ("AVENUE", "ROAD", "HIGHWAY", "HWY"):
-                        row[1] = fullNameList[i]
-                    else:
-                        rd.append(fullNameList[i])
-                i += 1
 
-            row[2] = " ".join(rd)
-            rows.updateRow(row)
+            # split the road name by spaces
+            fullNameList = row[2].split()
+
+            # try to skip things that are OLD HIGHWAY/HWY
+            strikes = 0
+            if "OLD" in fullNameList:
+                strikes += 2
+            if "HWY" in fullNameList:
+                strikes += 1
+            if "HIGHWAY" in fullNameList:
+                strikes += 1
+
+            # if it has less than three strikes, keep processing the split
+            if strikes < 3:
+
+                # set up an iteration to loop through the road name parts
+                i = 1
+                rd =[fullNameList[0]]
+                while i < len(fullNameList):
+                    # check to see if the road part is really a street suffix or post directional
+                    if fullNameList[i] not in streetSuffixDict and fullNameList[i] not in postDirectionalDict:
+                        rd.append(fullNameList[i])
+
+                    # if it's a street suffix...
+                    elif fullNameList[i] in streetSuffixDict:
+
+                        # see if it's the last part of the street name or in the middle
+                        if i < (len(fullNameList) - 1):
+                            # if it's in the middle and the last part is also a street suffix...
+
+                            if fullNameList[i + 1] in streetSuffixDict:
+                                # include the middle street suffix as part of the road name
+                                rd.append(fullNameList[i])
+                            elif fullNameList[0] in ["COUNTY", "STATE", "US"]:
+                                rd.append(fullNameList[i])
+                            else:
+                                # if not, set it as the street suffix since the last part is probable
+                                # a post directional
+                                row[0] = fullNameList[i]
+                        else:
+                            # if it's really the last part, set as the street suffix
+                            row[0] = fullNameList[i]
+
+                    # if it's a post directional
+                    elif fullNameList[i] in postDirectionalDict:
+                        # check for various components that indicate it's not actually a post directional
+                        if fullNameList[0] not in ("AVENUE", "ROAD", "HIGHWAY", "HWY", "CR", "AVE", "COUNTY", "STATE"):
+                            row[1] = fullNameList[i]
+                        else:
+                            rd.append(fullNameList[i])
+                    i += 1
+
+            # things with OLD HIGHWAY/HWY will leave the RD field as is for comparison purposes
+
+                    row[2] = " ".join(rd)
+                    rows.updateRow(row)
 
     userMessage("Conversion to geodatabase table successful. " + str(endRow-1) + " rows converted. VOIP and test rows were not converted.")
 

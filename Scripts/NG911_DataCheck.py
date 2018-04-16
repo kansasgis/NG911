@@ -258,47 +258,60 @@ def checkParities(currentPathSettings):
     # run a search cursor on the road layer
     with SearchCursor(rds, fields) as rows:
         for row in rows:
-            auth_l, auth_r = "Y",'Y'
-            if version == 21:
-                auth_l = row[7]
-                auth_r = row[8]
+            if None not in [type(row[3]), type(row[4]), type(row[5]), type(row[6])]:
+                auth_l, auth_r = "Y",'Y'
+                if version == 21:
+                    auth_l = row[7]
+                    auth_r = row[8]
 
-            # create a dictionary that will hold even/odd/zero status of r/l/to/from numbers
-            pDict = {}
-            starter = 3
+                # create a dictionary that will hold even/odd/zero status of r/l/to/from numbers
+                pDict = {}
+                starter = 3
 
-            # loop through all r/l/to/from address numbers to get their even/odd/zero status
-            while starter < 7:
-                if row[starter] is not None:
-                    if row[starter] == 0:
-                        eo = "0"
-                    else:
-                        if (row[starter] % 2 == 0):
-                            eo = "E"
+                # loop through all r/l/to/from address numbers to get their even/odd/zero status
+                while starter < 7:
+                    if row[starter] is not None:
+                        if row[starter] == 0:
+                            eo = "0"
                         else:
-                            eo = "O"
+                            if (row[starter] % 2 == 0):
+                                eo = "E"
+                            else:
+                                eo = "O"
 
-                    pDict[str(starter)] = eo
-                else:
-                    userWarning("You have one or more parities set as null. Please populate those fields.")
-                starter += 1
+                        pDict[str(starter)] = eo
+                    else:
+                        userWarning("You have one or more parities set as null. Please populate those fields.")
+                    starter += 1
 
-            # create a phrase for each side of the road
-            r_phrase = row[1] + pDict["3"] + pDict["4"]
+                # create a phrase for each side of the road
+                try:
+                    r_phrase = row[1] + pDict["3"] + pDict["4"]
 
-            l_phrase = row[2] + pDict["5"] + pDict["6"]
+                    l_phrase = row[2] + pDict["5"] + pDict["6"]
 
-            # compare the road side phrases with the phrases that are acceptable
-            # report road segments that don't match up correctly
-            if r_phrase not in a_phrase:
-                if auth_r == "Y":
-                    r_report = getParityReport(r_phrase)
-                    val = (today, "Notice: R Side- " + r_report, filename, "", row[0], check)
-                    values.append(val)
-            if l_phrase not in a_phrase:
-                if auth_l == "Y":
-                    l_report = getParityReport(l_phrase)
-                    val = (today, "Notice: L Side- " + l_report, filename, "", row[0], check)
+                    # compare the road side phrases with the phrases that are acceptable
+                    # report road segments that don't match up correctly
+                    if r_phrase not in a_phrase:
+                        if auth_r == "Y":
+                            r_report = getParityReport(r_phrase)
+                            val = (today, "Notice: R Side- " + r_report, filename, "", row[0], check)
+                            values.append(val)
+                    if l_phrase not in a_phrase:
+                        if auth_l == "Y":
+                            l_report = getParityReport(l_phrase)
+                            val = (today, "Notice: L Side- " + l_report, filename, "", row[0], check)
+                            values.append(val)
+                except Exception as e:
+                    if type(row[0]) is not None:
+                        userWarning("Could not process parity check for road segment " + row[0] + ". Please check address ranges and parities for null values.")
+                        val = (today, "Error: Could not process parity check. Look for null values.", filename, "", row[0], check)
+                        values.append(val)
+                    else:
+                        userWarning("Could not process parity check for a road segment. Please check address ranges and parities for null values.")
+            else:
+                if type(row[0]) is not None:
+                    val = (today, "Error: One or more address ranges are null", filename, "", row[0], check)
                     values.append(val)
 
     # report records
@@ -602,6 +615,11 @@ def checkUniqueIDFrequency(currentPathSettings):
 
 def checkFrequency(fc, freq, fields, gdb, fullFreq):
 
+    if fullFreq == "true":
+        userMessage("Checking record frequency...")
+    elif fullFreq == "false":
+        userMessage("Checking dual carriageways...")
+
     obj = NG911_GDB_Objects.getFCObject(fc)
 
     if Exists(fc):
@@ -616,8 +634,20 @@ def checkFrequency(fc, freq, fields, gdb, fullFreq):
             userMessage("Please manually delete %s and then run the frequency check again" % (freq))
 
         if not Exists(freq):
-            filename = basename(fc)
+
+            # set name of exported dbf
+            folder = dirname(dirname(dirname(fc)))
+            dbf = join(folder, "freq_shp_temp.dbf")
+
+            # make sure the shp copy doesn't exist
+            if Exists(dbf):
+                Delete_management(dbf)
+
+            # export the feature class to a shapefile
+            CopyRows_management(fc, dbf)
+
             #set up parameters to report duplicate records
+            filename = basename(fc)
             values = []
             recordType = "fieldValues"
             today = strftime("%m/%d/%y")
@@ -643,7 +673,7 @@ def checkFrequency(fc, freq, fields, gdb, fullFreq):
                 wc1 = "".join(wc1List)
 
                 #run query on fc to make sure 0's are ignored
-                MakeTableView_management(fc, fl1, wc1)
+                MakeTableView_management(dbf, fl1, wc1)
 
                 #set up field strings for statistics tool
                 fields = fields.replace(";;", ";")
@@ -678,24 +708,30 @@ def checkFrequency(fc, freq, fields, gdb, fullFreq):
                                 while i < fCount:
                                     stuffList = []
                                     if row[i] != None:
-                                        try:
-##                                            stuff = " = '" + row[i] + "' "
+
+                                        # see if the data type is an int
+                                        if type(row[i]) != int:
+                                            # if not, we need to include quotes
                                             stuffList = [" = '", row[i], "' "]
-                                        except:
+                                        else:
+                                            # if it is an int, we don't want quotes included
                                             stuffList = [" = ", str(row[i]), " "]
-##                                            stuff = " = " + str(row[i]) + " "
                                     else:
-##                                        stuff = " is null "
+                                        # or put in null
                                         stuffList = [" is null "]
+
+                                    # make one statement from the various field components
                                     stuff = "".join(stuffList)
-##                                    wc = wc + fl_fields[i] + stuff + "and "
-                                    wcList = wcList + [fl_fields[i], stuff, "and "]
+
+                                    # add to the official where clause list
+                                    wcList = wcList + [str(fl_fields[i]), stuff, "and "]
                                     i += 1
 
                                 #trim last "and " off where clause
                                 wcList.pop()
+
+                                # create the official string where clause statement
                                 wc = "".join(wcList)
-##                                wc = wc[0:-5]
 
                                 #find records with duplicates to get their unique ID's
                                 with SearchCursor(fl1, (id1), wc) as sRows:
@@ -707,11 +743,14 @@ def checkFrequency(fc, freq, fields, gdb, fullFreq):
                                             report = "Error: %s has duplicate field information" % (str(fID))
                                         else:
                                             report = "Notice: %s has duplicate address range information" % (str(fID))
-                                        val = (today, report, filename, "", fID, "Check " + filename + " Frequency")
+                                        val = (today, report, filename, "", str(fID), "Check " + filename + " Frequency")
                                         values.append(val)
 
                     else:
-                        userMessage(filename + ": Checked frequency. All records are unique.")
+                        if fullFreq == "true":
+                            userMessage(filename + ": Checked frequency. All records are unique.")
+                        elif fullFreq == "false":
+                            userMessage(filename + ": Checked dual carriageways. All records are unique.")
 
                 except Exception as e:
                     userMessage(str(e))
@@ -727,6 +766,8 @@ def checkFrequency(fc, freq, fields, gdb, fullFreq):
                 #clean up
                 try:
                     cleanUp([fl, fl1, freq])
+                    if Exists(dbf):
+                        Delete_management(dbf)
                 except:
                     userMessage("Issue deleting a feature layer or frequency table.")
             else:
@@ -906,8 +947,8 @@ def checkMsagLabelCombo(msag, label, overlaps, rd_fc, fields, msagList, name_fie
                     # deal with the left side first
                     for side_of_road in [[l_f_add, l_t_add, parity_l, msagco_l, "L"],[r_f_add, r_t_add, parity_r, msagco_r, "R"]]:
 
-                        # make sure the range isn't 0,0
-                        if [side_of_road[0], side_of_road[1]] != [0,0]:
+                        # make sure the range isn't 0,0 or null
+                        if [side_of_road[0], side_of_road[1]] != [0,0] and None not in [side_of_road[0], side_of_road[1]]:
                             if side_of_road[3] == msag:
                                 thisRange = launchRangeFinder(side_of_road[0], side_of_road[1], side_of_road[2])
                                 if thisRange != []:
@@ -992,7 +1033,7 @@ def FindOverlaps(working_gdb):
     # add the NAME_OVERLAP field
     if fieldExists(rd_fc, name_field):
         DeleteField_management(rd_fc, name_field)
-    AddField_management(rd_fc, name_field, "TEXT", "", "", 50)
+    AddField_management(rd_fc, name_field, "TEXT", "", "", 150)
 
     # calculate values for NAME_OVERLAP field
     field_list = rd_object.LABEL_FIELDS
@@ -1214,6 +1255,7 @@ def checkRCLMATCH(pathsInfoObject):
     ngsegid_doesnt_exist = []
     doesnt_match_range = []
     streets_or_msags_dont_match = []
+    null_values = []
 
     if count > 0:
         with SearchCursor(a, (a_ngaddid)) as rows:
@@ -1265,40 +1307,47 @@ def checkRCLMATCH(pathsInfoObject):
 
             with SearchCursor(a, flds, compare_ranges_wc) as rows:
                 for row in rows:
+                    if None not in [type(row[2]), type(row[3])]:
 
-                    # set the counter for the range, it'll usually be 2
-                    range_counter = 2
-                    if row[4] == "B": # if the range is B (both sides), the counter = 1
-                        range_counter = 1
+                        # set the counter for the range, it'll usually be 2
+                        range_counter = 2
+                        if row[4] == "B": # if the range is B (both sides), the counter = 1
+                            range_counter = 1
 
-                    # get the range by the specified count
-                    if row[3] > row[2]:
-                        sideRange = list(range(row[2], row[3] + 2, range_counter))
+                        # get the range by the specified count
+                        if row[3] > row[2]:
+                            sideRange = list(range(row[2], row[3] + 2, range_counter))
 
-                    # if the range was high to low, flip it
+                        # if the range was high to low, flip it
+                        else:
+                            sideRange = list(range(row[3], row[2] + 2, range_counter))
+
+                        # see if HNO is in the range
+                        if int(row[1]) not in sideRange:
+                            doesnt_match_range.append(row[0])
+    ##                        userMessage("HNO: " + str(row[1]))
+    ##                        userMessage("From: " + str(row[2]))
+    ##                        userMessage("To: " + str(row[3]))
+    ##                        userMessage("Range: " + str(sideRange))
+
                     else:
-                        sideRange = list(range(row[3], row[2] + 2, range_counter))
-
-                    # see if HNO is in the range
-                    if int(row[1]) not in sideRange:
-                        doesnt_match_range.append(row[0])
-##                        userMessage("HNO: " + str(row[1]))
-##                        userMessage("From: " + str(row[2]))
-##                        userMessage("To: " + str(row[3]))
-##                        userMessage("Range: " + str(sideRange))
-
+                        null_values.append(row[0])
                 del row, rows
 
     issueDict = {"Error: RCLMATCH is reporting an NGSEGID that does not exist in the road centerline": ngsegid_doesnt_exist,
                  "Error: RCLMATCH does not correspond to an NGSEGID that matches attributes": streets_or_msags_dont_match,
-                 "Error: HNO does not fit in range of corresponding RCLMATCH": doesnt_match_range}
+                 "Error: HNO does not fit in range of corresponding RCLMATCH": doesnt_match_range,
+                 "Error: Road segment address ranges include one or more null values": null_values}
 
     # this catches if the NGSEGID doesn't exist in the road centerline file
     for issue in issueDict:
         issueList = issueDict[issue]
         if issueList != []:
             for ngaddid in issueList:
-                val = (today, issue, "AddressPoints", "RCLMATCH", ngaddid, "Check RCLMATCH")
+                if "null values" not in issue:
+                    val = (today, issue, "AddressPoints", "RCLMATCH", ngaddid, "Check RCLMATCH")
+                else:
+                    val = (today, issue, "RoadCenterline", "RCLMATCH", ngaddid, "Check RCLMATCH")
                 values.append(val)
 
     # clean up
