@@ -147,7 +147,7 @@ def prepXLS(tnxls, gdb):
                             if fullNameList[i + 1] in streetSuffixDict:
                                 # include the middle street suffix as part of the road name
                                 rd.append(fullNameList[i])
-                            elif fullNameList[0] in ["COUNTY", "STATE", "US"]:
+                            elif fullNameList[0] in ["COUNTY", "STATE", "US", "KS"]:
                                 rd.append(fullNameList[i])
                             else:
                                 # if not, set it as the street suffix since the last part is probable

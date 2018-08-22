@@ -237,7 +237,7 @@ class NG911_Adddress_Object(object):
         fieldsWithDomains = {self.STEWARD: "STEWARD", self.STATE: "STATE", self.COUNTY: "COUNTY", self.MUNI: "MUNI", self.HNO: "HNO", self.PRD: "PRD",
                      self.STS: "STS", self.POD: "POD", self.POSTCO: "POSTCO", self.ZIP: "ZIP",
                     self.PLC: "PLC", self.LOCTYPE: "LOCTYPE", self.SUBMIT: "YN"}
-        frequencyFields = [self.MUNI,self.HNO,self.HNS,self.PRD,self.STP,self.RD,self.STS,self.POD,self.POM,self.ZIP,self.BLD,self.FLR,self.UNIT,self.ROOM,
+        frequencyFields = [self.HNO,self.HNS,self.PRD,self.STP,self.RD,self.STS,self.POD,self.POM,self.BLD,self.FLR,self.UNIT,self.ROOM,
                                     self.SEAT,self.LOC,self.LOCTYPE,self.MSAGCO]
 
         setList = [reqFields, fieldMap, frequencyFields]
@@ -465,34 +465,30 @@ def getDefaultNG911MunicipalBoundaryObject(gdb_version):
 
 class NG911_Hydrant_Object(object):
 
-    def __init__(self, u_STEWARD, u_L_UPDATE, u_EFF_DATE, u_EXP_DATE, u_HYDID, u_HYDTYPE, u_PROVIDER, u_STATUS, u_PRIVATE, u_UPDATEBY,
+    def __init__(self, u_STEWARD, u_HYDID, u_HYDTYPE, u_PROVIDER, u_STATUS, u_PRIVATE,
             u_SUBMIT, u_NOTES, u_gdb_version):
 
         self.STEWARD = u_STEWARD
-        self.L_UPDATE = u_L_UPDATE
-        self.EFF_DATE = u_EFF_DATE
-        self.EXP_DATE = u_EXP_DATE
         self.NGHYDID = u_HYDID
         self.UNIQUEID = self.NGHYDID
         self.HYDTYPE = u_HYDTYPE
         self.PROVIDER = u_PROVIDER
         self.STATUS = u_STATUS
-        self.UPDATEBY = u_UPDATEBY
         self.SUBMIT = u_SUBMIT
         self.NOTES = u_NOTES
         self.PRIVATE = u_PRIVATE
         self.GDB_VERSION = u_gdb_version
-        self.REQUIRED_FIELDS = [self.STEWARD, self.L_UPDATE, self.EFF_DATE, self.UNIQUEID, self.HYDTYPE, self.STATUS, self.PRIVATE, self.UPDATEBY]
+        self.REQUIRED_FIELDS = [self.STEWARD, self.UNIQUEID, self.HYDTYPE, self.STATUS, self.PRIVATE, self.SUBMIT]
         self.FIELDS_WITH_DOMAINS = {self.STEWARD: "STEWARD", self.SUBMIT: "YN", self.HYDTYPE: "HYDTYPE",
                                 self.STATUS: "HYDSTATUS", self.PRIVATE: "PRIVATE"}
-        self.FIELD_MAP = [self.STEWARD, self.L_UPDATE, self.EFF_DATE, self.EXP_DATE, self.UNIQUEID, self.HYDTYPE, self.PROVIDER, self.STATUS,
-                            self.UPDATEBY, self.SUBMIT, self.NOTES, self.PRIVATE]
+        self.FIELD_MAP = [self.STEWARD, self.UNIQUEID, self.HYDTYPE, self.PROVIDER, self.STATUS,
+                            self.SUBMIT, self.NOTES, self.PRIVATE]
 
 
 def getDefaultNG911HydrantObject(gdb_version):
 
-    NG911_Hydrant_Default = NG911_Hydrant_Object("STEWARD", "L_UPDATE", "EFF_DATE", "EXP_DATE", "NGHYDID", "HYDTYPE", "PROVIDER", "STATUS",
-                        "PRIVATE", "UPDATEBY", "SUBMIT", "NOTES", gdb_version)
+    NG911_Hydrant_Default = NG911_Hydrant_Object("STEWARD", "NGHYDID", "HYDTYPE", "PROVIDER", "HYDSTATUS",
+                        "PRIVATE", "SUBMIT", "NOTES", gdb_version)
 
     return NG911_Hydrant_Default
 

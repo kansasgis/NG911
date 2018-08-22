@@ -2,17 +2,10 @@
 # Name: NG911_DataCheck
 # Purpose: Collection of functions to check submitted NG911 data
 #
-# Author: Kristen Jordan, Kansas Data Access and Support Center
+# Author: Kristen Jordan Koenig, Kansas Data Access and Support Center
 # kristen@kgs.ku.edu
 #
 # Created: 19/09/2014
-# Modified: 31/10/2014 by dirktall04
-# Changes include: Adding the currentPathSettings variable from
-# NG911_Config as the default variable passed to several Data
-# Check functions, modifications to the functions to allow
-# them to use that variable as a data source.
-#Modified: 02/04/2014 by Kristen
-#Changes include: modifying format so the checks work with the 1.1 template
 #-------------------------------------------------------------------------------
 
 from arcpy import (AddField_management, AddMessage, CalculateField_management, CopyRows_management, Statistics_analysis,
@@ -20,7 +13,8 @@ from arcpy import (AddField_management, AddMessage, CalculateField_management, C
                    ListFields, MakeFeatureLayer_management, MakeTableView_management, SelectLayerByAttribute_management,
                    SelectLayerByLocation_management, DeleteRows_management, GetInstallInfo, env, ListDatasets,
                    AddJoin_management, RemoveJoin_management, AddWarning, CopyFeatures_management, Append_management,
-                   Dissolve_management, DeleteField_management, DisableEditorTracking_management, EnableEditorTracking_management)
+                   Dissolve_management, DeleteField_management, DisableEditorTracking_management, EnableEditorTracking_management,
+                   ExportTopologyErrors_management)
 from arcpy.da import Walk, InsertCursor, ListDomains, SearchCursor, UpdateCursor, Editor
 from os import path, remove
 from os.path import basename, dirname, join, exists
@@ -507,8 +501,6 @@ def checkUniqueIDFrequency(currentPathSettings):
     env.workspace = gdb
     table = "ESB_IDS"
 
-
-
     #create temp table of esbID's
     if len(esbList) > 1 and esbList[0] != esbList[1]:
         layerList = ["ESB_IDS"]
@@ -536,7 +528,7 @@ def checkUniqueIDFrequency(currentPathSettings):
         except:
             userMessage("objects cannot be deleted, they don't exist")
 
-
+    # make sure all the proper layers actually exist
     for fc in fcList:
         if Exists(fc):
             layerList.append(basename(fc))
@@ -547,57 +539,69 @@ def checkUniqueIDFrequency(currentPathSettings):
             values = [(today, msg)]
             RecordResults("DASCmessage", values, gdb)
 
-
-
-    #loop through layers in the gdb that aren't esb & ESB_IDS
+    # set up reporting
     values = []
     recordType = "fieldValues"
     today = strftime("%m/%d/%y")
 
-
+    #loop through layers in the gdb that aren't esb & ESB_IDS
     for layer in layerList:
         try:
-            freq_table = layer + "_freq"
-            deleteExisting(freq_table)
+            ids = []
             obj = NG911_GDB_Objects.getFCObject(layer)
-            Statistics_analysis(layer, freq_table, [[obj.UNIQUEID,"COUNT"]], obj.UNIQUEID)
-
-            #set parameters for the search cursor
-            where_clause = "FREQUENCY > 1"
-
-            fields = (obj.UNIQUEID, "FREQUENCY")
-
-            fl = "fl"
-
-            MakeTableView_management(freq_table, fl, where_clause)
-
-            if getFastCount(fl) > 0:
-
-                #set a search cursor with just the unique ID field
-                with SearchCursor(freq_table, fields, where_clause) as rows2:
-                    stringESBReport = ""
-                    for row2 in rows2:
-                        reportLayer = layer
-                        if layer == "ESB_IDS":
-                            reportLayer = "ESB"
-                            stringEsbInfo = []
-                            wc2List = [esb_uniqueid, " = '", str(row2[0]), "'"]
-##                            wc2 = esb_uniqueid + " = '" + str(row2[0]) + "'"
-                            wc2 = "".join(wc2List)
-                            with SearchCursor("ESB_IDS", ("ESB_LYR"), wc2) as esbRows:
-                                for esbRow in esbRows:
-                                    stringEsbInfo.append(esbRow[0])
-
-                            stringESBReport = " and ".join(stringEsbInfo)
-
+            with SearchCursor(layer, (obj.UNIQUEID)) as rows:
+                for row in rows:
+                    if row[0] not in ids:
+                        ids.append(row[0])
+                    else:
                         #report duplicate IDs
-                        report = "Error: %s is a duplicate ID" % (str(row2[0]))
-                        if stringESBReport != "":
-                            report = report + " in " + stringESBReport
-                        val = (today, report, reportLayer, esb_uniqueid, row2[0], "Check Unique IDs")
+                        report = "Error: %s is a duplicate ID" % (str(row[0]))
+##                        if stringESBReport != "":
+##                            report = report + " in " + stringESBReport
+                        val = (today, report, layer, obj.UNIQUEID, row[0], "Check Unique IDs")
                         values.append(val)
 
-            cleanUp([freq_table, fl])
+##            freq_table = layer + "_freq"
+##            deleteExisting(freq_table)
+##            obj = NG911_GDB_Objects.getFCObject(layer)
+##            Statistics_analysis(layer, freq_table, [[obj.UNIQUEID,"COUNT"]], obj.UNIQUEID)
+##
+##            #set parameters for the search cursor
+##            where_clause = "FREQUENCY > 1"
+##
+##            fields = (obj.UNIQUEID, "FREQUENCY")
+##
+##            fl = "fl"
+##
+##            MakeTableView_management(freq_table, fl, where_clause)
+##
+##            if getFastCount(fl) > 0:
+##
+##                #set a search cursor with just the unique ID field
+##                with SearchCursor(freq_table, fields, where_clause) as rows2:
+##                    stringESBReport = ""
+##                    for row2 in rows2:
+##                        reportLayer = layer
+##                        if layer == "ESB_IDS":
+##                            reportLayer = "ESB"
+##                            stringEsbInfo = []
+##                            wc2List = [esb_uniqueid, " = '", str(row2[0]), "'"]
+####                            wc2 = esb_uniqueid + " = '" + str(row2[0]) + "'"
+##                            wc2 = "".join(wc2List)
+##                            with SearchCursor("ESB_IDS", ("ESB_LYR"), wc2) as esbRows:
+##                                for esbRow in esbRows:
+##                                    stringEsbInfo.append(esbRow[0])
+##
+##                            stringESBReport = " and ".join(stringEsbInfo)
+##
+##                        #report duplicate IDs
+##                        report = "Error: %s is a duplicate ID" % (str(row2[0]))
+##                        if stringESBReport != "":
+##                            report = report + " in " + stringESBReport
+##                        val = (today, report, reportLayer, esb_uniqueid, row2[0], "Check Unique IDs")
+##                        values.append(val)
+##
+##            cleanUp([freq_table, fl])
 
         except Exception as e:
             userWarning(str(e))
@@ -1213,11 +1217,18 @@ def checkRCLMATCH(pathsInfoObject):
     road_field_list = ["NAME_COMPARE", "PRD", "STP", "RD", "STS", "POD", "POM"]
     addy_field_list = ["NAME_COMPARE", "PRD", "STP", "RD", "STS", "POD", "POM"]
 
+    # set holders for issues
+    ngsegid_doesnt_exist = []
+    doesnt_match_range = []
+    streets_or_msags_dont_match = []
+    null_values = []
+    no_rclside = []
+
     # prep roads & address points for comparison
 
     # copy the roads to a table for comparison
     rc_table_view = "rc_table_view"
-    rt = join(gdb, "rcTable")
+    rt = join("in_memory", "rcTable")
     if Exists(rt):
         Delete_management(rt)
     wc = r_obj.SUBMIT + " = 'Y'"
@@ -1227,10 +1238,9 @@ def checkRCLMATCH(pathsInfoObject):
 
     # copy address points to a table for comparison
     ap_table_view = "ap_table_view"
-    at = join(gdb, "apTable")
+    at = join("in_memory", "apTable")
     if Exists(at):
         Delete_management(at)
-##    wc = a_obj.SUBMIT + " = 'Y' AND " + a_obj.RCLMATCH + " <> 'NO_MATCH'"
     wcList = [a_obj.SUBMIT, " = 'Y' AND ", a_obj.RCLMATCH, " <> 'NO_MATCH'"]
     wc = "".join(wcList)
     MakeFeatureLayer_management(ap, ap_table_view, wc)
@@ -1238,10 +1248,29 @@ def checkRCLMATCH(pathsInfoObject):
 
     prep_roads_for_comparison(at, name_field, [code_field], [city_field], addy_field_list)
 
-    # join road & address table based on RCLMATCH & NGSEGID
-    r = "r"
+    # make address points into a table view
     a = "a"
     MakeTableView_management(at, a)
+
+    # check to see if any RCLSIDE values are null
+    wc_rclside = "RCLSIDE IS NULL and SUBMIT = 'Y' and LOCTYPE = 'PRIMARY'"
+    rcl = "rcl"
+    SelectLayerByAttribute_management(a, "NEW_SELECTION", wc_rclside)
+    rcl_count = getFastCount(a)
+
+    if rcl_count > 0:
+        with SearchCursor(a, ("NGADDID")) as rows:
+            for row in rows:
+                no_rclside.append(row[0])
+            del row, rows
+
+    # clean up and clear selection
+    Delete_management(rcl)
+    del rcl_count
+    SelectLayerByAttribute_management(a, "CLEAR_SELECTION")
+
+    # join road & address table based on RCLMATCH & NGSEGID
+    r = "r"
     MakeTableView_management(rt, r)
     AddJoin_management(a, a_obj.RCLMATCH, r, r_obj.UNIQUEID)
 
@@ -1252,11 +1281,6 @@ def checkRCLMATCH(pathsInfoObject):
     count = getFastCount(a)
 
     # get a list of all the NGADDIDs with the issue that the RCLMATCH doesn't exist in the road centerline
-    ngsegid_doesnt_exist = []
-    doesnt_match_range = []
-    streets_or_msags_dont_match = []
-    null_values = []
-
     if count > 0:
         with SearchCursor(a, (a_ngaddid)) as rows:
             for row in rows:
@@ -1269,8 +1293,6 @@ def checkRCLMATCH(pathsInfoObject):
     # jump into the records to see where things aren't matching
     # select records where code_compare doesn't match
     sides = ["L", "R"]
-
-    # set up reporting
 
     # split up points by side
     for side in sides:
@@ -1337,7 +1359,8 @@ def checkRCLMATCH(pathsInfoObject):
     issueDict = {"Error: RCLMATCH is reporting an NGSEGID that does not exist in the road centerline": ngsegid_doesnt_exist,
                  "Error: RCLMATCH does not correspond to an NGSEGID that matches attributes": streets_or_msags_dont_match,
                  "Error: HNO does not fit in range of corresponding RCLMATCH": doesnt_match_range,
-                 "Error: Road segment address ranges include one or more null values": null_values}
+                 "Error: Road segment address ranges include one or more null values": null_values,
+                 "Error: RCLSIDE is null": no_rclside}
 
     # this catches if the NGSEGID doesn't exist in the road centerline file
     for issue in issueDict:
@@ -1431,7 +1454,11 @@ def checkValuesAgainstDomain(pathsInfoObject):
             wc2 = "SUBMIT = 'Y'"
             try:
                 MakeTableView_management(fullPath, fullPathlyr, wc2)
-                worked = 1
+                count = getFastCount(fullPathlyr)
+                if count > 0:
+                    worked = 1
+                else:
+                    userMessage("No values are marked for submission. Please mark records for submission by placing Y in the SUBMIT field.")
             except:
                 userMessage("Cannot check required field values for " + fc)
 
@@ -1472,48 +1499,18 @@ def checkValuesAgainstDomain(pathsInfoObject):
                                         domainList.append(dl1)
                                         i += 1
 
-                                # compare row value to domain list by running statistics on the field
-                                output = join("in_memory", "domainStat")
-                                Statistics_analysis(fullPathlyr, output, [[fieldN, "COUNT"]], fieldN)
-
-                                listOfBadValues = []
-                                with SearchCursor(output, (fieldN)) as rows:
+                                with SearchCursor(fullPathlyr, (id1, fieldN)) as rows:
                                     for row in rows:
-                                        if row[0] not in domainList and row[0] is not None:
-                                            listOfBadValues.append(row[0])
-                                try:
-                                    del rows, row
-                                except:
-                                    pass
-                                Delete_management(output)
-                                del output
-
-                                # report bad values back to user by unique id
-                                if len(listOfBadValues) > 0:
-                                    for badun in listOfBadValues:
-
-                                        # set up the where clause to find all bad records
-                                        if badun is not None:
-                                            wcList = [str(fieldN), " = '", str(badun), "'"]
-##                                            wc = str(fieldN) + " = '" + str(badun) + "'"
-                                        else:
-                                            wcList = [fieldN, " is null"]
-
-                                        wc = "".join(wcList)
-                                        userMessage(wc)
-
-                                        # run a query to find all the offending unique ids
-                                        with SearchCursor(fullPathlyr, (id1, fieldN), wc) as rows:
-                                            for row in rows:
-                                                fID = row[0]
-                                                if row[1] is None:
-                                                    fieldVal = "Null"
-                                                else:
-                                                    fieldVal = row[1]
-                                                report = "Error: Value %s not in approved domain for field %s" % (str(row[1]), fieldN)
-                                                val = (today, report, fc, fieldN, fID, "Check Values Against Domains")
-                                                values.append(val)
-                                        del rows, row
+                                        # if the row is null, skip it
+                                        if row[1] is None or row[1] in ['',' ']:
+                                            pass
+                                        # see if the value is in the domain list
+                                        elif row[1] not in domainList:
+                                            fieldVal = row[1]
+                                            fID = row[0]
+                                            report = "Error: Value %s not in approved domain for field %s" % (str(row[1]), fieldN)
+                                            val = (today, report, fc, fieldN, fID, "Check Values Against Domains")
+                                            values.append(val)
 
                         else:
                             # check HNO field of address points to make sure all values are valid
@@ -1532,7 +1529,7 @@ def checkValuesAgainstDomain(pathsInfoObject):
             Delete_management(fullPathlyr)
 
             # make sure the parcel ID's go through testing for character length
-            if "PARCELS" in fullPath.upper():
+            if "PARCELS" in basename(fullPath).upper():
                 checkKSPID(fullPath, "NGKSPID")
 
         else:
@@ -1676,9 +1673,12 @@ def checkRequiredFields(pathsInfoObject):
             #list fields
             fields = ListFieldNames(fullPath)
 
-            #loop through required fields to make sure they exist in the geodatabase
-            for comparisonField in comparisonList:
-                if comparisonField.upper() not in fields:
+            missingFields = list(set(comparisonList) - set(fields))
+
+            if missingFields != []:
+
+                #loop through required fields to make sure they exist in the geodatabase
+                for comparisonField in missingFields:
                     report = "Error: %s does not have required field %s" % (filename, comparisonField)
                     userMessage(report)
                     #add issue to list of values
@@ -1722,15 +1722,9 @@ def checkSubmissionNumbers(pathsInfoObject):
         if Exists(fc):
             #count records that are for submission
             lyr2 = "lyr2"
-##            wc2 = "SUBMIT = 'Y'"
-            wc2List = ["SUBMIT = 'Y'"]
+            wc2 = "SUBMIT = 'Y'"
             if "AddressPoints" in fc:
-                a_obj = NG911_GDB_Objects.getFCObject(fc)
-##                wc2 = wc2 + " AND " + a_obj.LOCTYPE + " = 'PRIMARY'"
-                wc2List = wc2List + [" AND ", a_obj.LOCTYPE, " = 'PRIMARY'"]
-##            userMessage(fc)
-##            userMessage(wc2)
-            wc2 = "".join(wc2List)
+                wc2 = wc2 + " AND LOCTYPE = 'PRIMARY'"
             MakeTableView_management(fc, lyr2, wc2)
 
             #get count of the results
@@ -2051,6 +2045,8 @@ def checkKSPID(fc, field):
     # make sure the KSPID value is 19 characters long
     values = []
     kspid_wc = "%s is not null and CHAR_LENGTH(%s) <> 19" % (field, field)
+##    kspid_wc = "NGKSPID is not null and CHAR_LENGTH(NGKSPID) <> 19"
+    userMessage(fc + " " + field + " " + kspid_wc)
     kspid_fl = "kspid_fl"
     MakeFeatureLayer_management(fc, kspid_fl, kspid_wc)
 
@@ -2301,6 +2297,114 @@ def checkRoadAliases(pathsInfoObject):
             userWarning(road_alias + " does not exist")
 
 
+def checkPolygonTopology(gdbObject):
+
+    userMessage("Validating polygon topology...")
+
+    #set variables for working with the data
+    gdb = gdbObject.gdbPath
+    recordType = "fieldValues"
+    today = strftime("%m/%d/%y")
+    values = []
+    count = 0
+
+    #export topology errors as feature class
+    topology = gdbObject.Topology
+
+    if Exists(topology):
+        out_basename = "NG911"
+        polyErrors = "%s_poly" % out_basename
+        lineErrors = "%s_line" % out_basename
+        pointErrors = "%s_point" % out_basename
+
+        for topE in (lineErrors, pointErrors, polyErrors):
+            full = join(gdb, topE)
+            if Exists(full):
+                Delete_management(full)
+
+        # export topology
+        userMessage("Exporting topology errors...")
+        ExportTopologyErrors_management(topology, gdb, out_basename)
+
+
+        # query the polygon results for issues
+        polyFC = join(gdb, polyErrors)
+        fc_list = ['ESZ','ESB','ESB_EMS','ESB_LAW','ESB_FIRE']
+        for fc in fc_list:
+
+            # get the count of the issues with a given feature class
+            wc = "OriginObjectClassName = '%s'" % fc
+            lyr = "lyr"
+            MakeFeatureLayer_management(polyFC, lyr, wc)
+            k = getFastCount(lyr)
+
+            # if issues exist...
+            if k > 0 and Exists(join(gdb, "NG911", fc)):
+                fc_lyr = "fc_lyr"
+                fc_full = join(gdb, "NG911", fc)
+                MakeFeatureLayer_management(fc_full, fc_lyr)
+
+                #add join
+                AddJoin_management(fc_lyr, "OBJECTID", lyr, "OriginObjectID")
+
+                obj = NG911_GDB_Objects.getFCObject(fc_full)
+
+                #set query and field variables
+                qry = "%s.OriginObjectID IS NOT NULL" % polyErrors
+                fields = ("%s.%s" % (fc, obj.UNIQUEID), polyErrors + ".RuleDescription", polyErrors + ".isException")
+
+    ##            try:
+                if 1 == 1:
+                    #set up search cursor to loop through records
+                    with SearchCursor(fc_lyr, fields, qry) as rows:
+
+                        for row in rows:
+                            # make sure we're not reporting back an exception
+                            if row[2] not in (1, "1"):
+
+                                # report the issues back as notices
+                                msg = "Notice: Topology issue- %s" % row[1]
+                                val = (today, msg, fc, "", row[0], "Check Topology")
+                                values.append(val)
+
+                        del row, rows
+
+    ##            except:
+    ##                userMessage("Error attempting topology validation.")
+
+                #clean up & reset
+                RemoveJoin_management(fc_lyr)
+                Delete_management(fc_lyr)
+
+            Delete_management(lyr)
+
+    else:
+        msg = "Notice: Topology does not exist"
+        val = (today, msg, "", "", "", "Check Topology")
+        values.append(val)
+
+    #report records
+    count = 0
+    if values != []:
+        count = len(values)
+        RecordResults(recordType, values, gdb)
+
+
+    #give the user some feedback
+    messageList = ["Topology check complete.", str(count), "issues found."]
+    if count > 0:
+        messageList.append("Results in FieldValuesCheckResults.")
+    elif count == 0:
+        #clean up topology export if there were no errors
+        for topE in (lineErrors, pointErrors, polyErrors):
+            full = join(gdb, topE)
+            if Exists(full):
+                Delete_management(full)
+
+    message = " ".join(messageList)
+    userMessage(message)
+
+
 def checkToolboxVersionFinal():
     versionResult = checkToolboxVersion()
     if versionResult == "Your NG911 toolbox version is up-to-date.":
@@ -2309,7 +2413,6 @@ def checkToolboxVersionFinal():
         userWarning(versionResult)
 
 def sanityCheck(currentPathSettings):
-
     # fcList will contain all layers in GDB so everything will be checked
 
     # clear out template check results & field check results
@@ -2328,6 +2431,7 @@ def sanityCheck(currentPathSettings):
     # common layer checks
     checkValuesAgainstDomain(currentPathSettings)
     checkFeatureLocations(currentPathSettings)
+    checkPolygonTopology(gdbObject)
     checkUniqueIDFrequency(currentPathSettings)
 
     # check address points
@@ -2337,6 +2441,7 @@ def sanityCheck(currentPathSettings):
     checkMSAGCOspaces(addressPoints, gdb)
     if fieldExists(addressPoints, "RCLMATCH"):
         checkRCLMATCH(currentPathSettings)
+    addy_time = time.time()
     AP_freq = gdbObject.AddressPointFrequency
     a_obj = NG911_GDB_Objects.getFCObject(addressPoints)
     AP_fields = a_obj.FREQUENCY_FIELDS_STRING
@@ -2348,6 +2453,7 @@ def sanityCheck(currentPathSettings):
 
 
     # check roads
+    road_time = time.time()
     roads = gdbObject.RoadCenterline
     road_freq = gdbObject.RoadCenterlineFrequency
     rc_obj = NG911_GDB_Objects.getFCObject(roads)
@@ -2511,6 +2617,7 @@ def main_check(checkType, currentPathSettings):
 
         if checkList[1] == "true":
             checkFeatureLocations(currentPathSettings)
+            checkPolygonTopology(gdbObject)
 
         if checkList[2] == "true":
             checkUniqueIDFrequency(currentPathSettings)

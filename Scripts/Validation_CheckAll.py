@@ -42,8 +42,13 @@ def validateAllPrep(gdb, zipFlag, zipPath):
         userMessage("Several issues with the data need to be addressed prior to submission. Data will not be zipped.")
 
 def main():
+    import time
+
+    startTime = time.time()
     gdb = GetParameterAsText(0)
     validateAllPrep(gdb, "false", "")
+    endTime = time.time()
+    print("Running time was %g minutes\n" % round(((endTime - startTime)/60.0),1))
 
 if __name__ == '__main__':
     main()

@@ -45,20 +45,22 @@ def prep_roads_for_comparison(rd_fc, name_field, code_fields, city_fields, field
 
 ##    AddMessage("Query field list:" + ", ".join(field_list))
 
-    # start edit session
-    working_gdb = dirname(rd_fc)
-    if working_gdb[-3:] not in ("gdb"):
-        working_gdb = dirname(dirname(rd_fc))
-    if r"Database Servers\GISS01_SQLEXPRESSGIS.gds" in working_gdb:
-        working_gdb =  r"Database Servers\GISS01_SQLEXPRESSGIS.gds\KSNG911S(VERSION:dbo.DEFAULT)"
+    if "in_memory" not in rd_fc:
 
-    # made some changes to account for Butler Co's SDE gdb
-##    AddMessage(working_gdb)
-    edit = Editor(working_gdb)
-    if "dbo.DEFAULT" not in working_gdb:
-        edit.startEditing(False, False)
-    else:
-        edit.startEditing(False, True)
+        # start edit session
+        working_gdb = dirname(rd_fc)
+        if working_gdb[-3:] not in ("gdb"):
+            working_gdb = dirname(dirname(rd_fc))
+        if r"Database Servers\GISS01_SQLEXPRESSGIS.gds" in working_gdb:
+            working_gdb =  r"Database Servers\GISS01_SQLEXPRESSGIS.gds\KSNG911S(VERSION:dbo.DEFAULT)"
+
+        # made some changes to account for Butler Co's SDE gdb
+    ##    AddMessage(working_gdb)
+        edit = Editor(working_gdb)
+        if "dbo.DEFAULT" not in working_gdb:
+            edit.startEditing(False, False)
+        else:
+            edit.startEditing(False, True)
 
     # run update cursor
     with UpdateCursor(rd_fc, fields1) as rows:
@@ -80,7 +82,8 @@ def prep_roads_for_comparison(rd_fc, name_field, code_fields, city_fields, field
             except:
                 AddMessage("Error with " + rd_fc + field_list[i] + row[i])
 
-    edit.stopEditing(True)
+    if "in_memory" not in rd_fc:
+        edit.stopEditing(True)
 
     # clean up all labels
     trim_expression = '" ".join(!' + name_field + '!.split())'
@@ -161,7 +164,8 @@ def ap_compare(hno, hno_code, ap_fc):
 
     segid_list = []
 
-    wc = "CODE_COMPARE = " + str(hno_code) + " AND HNO = " + str(hno)
+    wc = "CODE_COMPARE = %s AND HNO = %s AND LOCTYPE = 'PRIMARY'" % (str(hno_code), str(hno))
+##    wc = "CODE_COMPARE = " + str(hno_code) + " AND HNO = " + str(hno)
 
     a = "a"
     MakeFeatureLayer_management(ap_fc, a, wc)
@@ -289,6 +293,10 @@ def launch_compare(gdb, output_table, HNO, addy_city_field, addy_field_list, que
     rd_object = getFCObject(rd_fc)
     ap_object = getFCObject(ap_fc)
 
+    # flip switch for gdb instead of in_memory
+    storage = "in_memory"
+    #storage = gdb
+
     # prep address points with concatenated label field
 
     prep_roads_for_comparison(output_table, name_field, [code_field], [addy_city_field], addy_field_list)
@@ -300,10 +308,8 @@ def launch_compare(gdb, output_table, HNO, addy_city_field, addy_field_list, que
 
     # copy the roads to a table for comparison
     rc_table_view = "rc_table_view"
-    if "TN_List" in output_table:
-        rt = join(dirname(output_table), "rcTable" + version)
-    else:
-        rt = join(gdb, "rcTable" + version)
+
+    rt = join(storage, "rcTable" + version)
     if Exists(rt):
         Delete_management(rt)
     wc = "SUBMIT = 'Y'"
@@ -381,53 +387,61 @@ def launch_compare(gdb, output_table, HNO, addy_city_field, addy_field_list, que
     side_lists = [[rd_object.PARITY_L, rd_object.L_F_ADD, rd_object.L_T_ADD, rd_object.UNIQUEID,  code_field + "_L", "RoadCenterline_Layer", l_field_info],
                   [rd_object.PARITY_R, rd_object.R_F_ADD, rd_object.R_T_ADD, rd_object.UNIQUEID, code_field + "_R", "RoadCenterline_Layer2", r_field_info]]
 
-    wanted_fields = ["PARITY", "FROM_ADD", "TO_ADD", "CODE_COMPARE"]
-
-    if version == "21":
-        wanted_fields.append("AUTH")
 
     # create a temp table of road segments
     # do not include 0-0 ranges or records not for submission
     for side in side_lists:
+        # get the side
         side_x = side[4][-1]
+
+        # set up field equivalences
+        wanted_fields_dict = {"PARITY": side[0], "FROM_ADD": side[1], "TO_ADD": side[2],
+                        "CODE_COMPARE": side[4]}
+
+        if version == "21":
+            wanted_fields_dict["AUTH"] = "AUTH_" + side_x
+
+        # set up where clause
         wc = "(" + side[1] + " <> 0 or " + side[2] + " <> 0)"
         lyr = "lyr"
         # include- high, low, code field, parity, and NGSEGID_L or _R
         MakeTableView_management(rt, lyr, wc, "", side[6])
-        if Exists(join(gdb, side[5])):
-            Delete_management(join(gdb, side[5]))
-        CopyRows_management(lyr, join(gdb, side[5]))
+
+        holder = join(storage, side[5])
+        if Exists(holder):
+            Delete_management(holder)
+        CopyRows_management(lyr, holder)
         Delete_management(lyr)
 
         # made sure the table has a column for what side of the street it is
-        if not fieldExists(join(gdb, side[5]), "RCLSIDE"):
-            AddField_management(join(gdb, side[5]), "RCLSIDE", "TEXT", "", "", 1)
-        CalculateField_management(join(gdb, side[5]), "RCLSIDE", '"' + side_x + '"', "PYTHON_9.3", "")
-
-        fields = [side[0], side[1], side[2], side[4], "RCLSIDE"]
+        if not fieldExists(holder, "RCLSIDE"):
+            AddField_management(holder, "RCLSIDE", "TEXT", "", "", 1)
+        CalculateField_management(holder, "RCLSIDE", '"' + side_x + '"', "PYTHON_9.3", "")
 
         # make sure that the side-neutral field names get added for comparison
-        for w_f in wanted_fields:
-            if not fieldExists(join(gdb, side[5]), w_f):
+        for w_f in wanted_fields_dict.keys():
+            if not fieldExists(holder, w_f):
                 if "PARITY" in w_f or "AUTH" in w_f:
-                    if not fieldExists(join(gdb, side[5]), w_f):
-                        AddField_management(join(gdb, side[5]), w_f, "TEXT", "", "", 1)
-                    CalculateField_management(join(gdb, side[5]), w_f, "!" + fields[wanted_fields.index(w_f)] + "!", "PYTHON", "")
+                    if not fieldExists(holder, w_f):
+                        AddField_management(holder, w_f, "TEXT", "", "", 1)
+                    CalculateField_management(holder, w_f, "!" + wanted_fields_dict[w_f] + "!", "PYTHON", "")
+
                 else:
-                    if not fieldExists(join(gdb, side[5]), w_f):
-                        AddField_management(join(gdb, side[5]), w_f, "LONG")
-                    CalculateField_management(join(gdb, side[5]), w_f, "!" + fields[wanted_fields.index(w_f)] + "!", "PYTHON", "")
+                    if not fieldExists(holder, w_f):
+                        AddField_management(holder, w_f, "LONG")
+                    CalculateField_management(holder, w_f, "!" + wanted_fields_dict[w_f] + "!", "PYTHON", "")
 
 
     #create a temporary table of side-specific ranges
     if "TN_List" in output_table:
         tempTable = join(dirname(output_table), "RoadList_" + time.strftime('%Y%m%d'))
     else:
-        tempTable = join(gdb, "RoadsTemp")
+        tempTable = join(storage, "RoadsTemp")
     if Exists(tempTable):
         Delete_management(tempTable)
-    rc_1 = join(gdb, "RoadCenterline_Layer")
-    rc_2 = join(gdb, "RoadCenterline_Layer2")
+
+    rc_1 = join(storage, "RoadCenterline_Layer")
+    rc_2 = join(storage, "RoadCenterline_Layer2")
     Merge_management([rc_1, rc_2], tempTable)
 
     Delete_management(rc_1)

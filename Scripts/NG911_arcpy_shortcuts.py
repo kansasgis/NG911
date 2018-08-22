@@ -123,7 +123,7 @@ def hasIndex(fc):
 
 def ListIndexNames(fc):
     from arcpy import ListIndexes
-    names = map(lambda x: x.name, ListIndexes(lyr))
+    names = map(lambda x: x.name, ListIndexes(fc))
     return names
 
 def MakeLayer(item, lyrName, wc):
