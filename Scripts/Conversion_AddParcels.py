@@ -4,15 +4,16 @@
 #
 # Author:      kristen
 #
-# Created:      October 19, 2016
+# Created:      October 19, 2016, edited August 29, 2018
 # Copyright:   (c) kristen 2016
 #-------------------------------------------------------------------------------
 from arcpy import (GetParameterAsText, CalculateField_management, Append_management,
                     AddField_management, DeleteField_management, Dissolve_management,
-                    DeleteFeatures_management)
+                    DeleteFeatures_management, Exists, CreateFeatureclass_management,
+                    Delete_management)
 from arcpy.da import UpdateCursor, SearchCursor
-from NG911_GDB_Objects import getFCObject
-from os.path import join, dirname, abspath
+from NG911_GDB_Objects import getFCObject, getGDBObject
+from os.path import join, dirname, abspath, basename
 from inspect import getsourcefile
 from NG911_arcpy_shortcuts import fieldExists
 from NG911_DataCheck import userMessage
@@ -83,8 +84,18 @@ def main():
     county = GetParameterAsText(2).upper().replace("COUNTY", "").strip()
     targetGDB = GetParameterAsText(3)
 
+    gdb_object = getGDBObject(targetGDB)
+
     #set target path
-    target = join(targetGDB, "PARCELS")
+    target = gdb_object.PARCELS
+
+    if not Exists(target):
+        CreateFeatureclass_management(dirname(target), basename(target), "POLYGON")
+        fieldDict = {"STEWARD": [75, "Stewards"], "NGKSPID": [19, ""], "SUBMIT": [1, "Submit"], "NOTES": [255, ""]}
+        for field in fieldDict:
+            length = fieldDict[field][0]
+            domain = fieldDict[field][1]
+            AddField_management(target, field, "TEXT", "", "", length, field, "", "", domain)
 
     #delete existing features in the parcels so everything can be updated quickly
     DeleteFeatures_management(target)
@@ -108,6 +119,8 @@ def main():
     field_mapping= """STEWARD "STEWARD" true true false 50 Text 0 0 ,First,#;NGKSPID"NGKSPID" true true false 19 Text 0 0 ,First,#;SUBMIT "SUBMIT" true true false 1 Text 0 0 ,First,#;NOTES "NOTES" true true false 50 Text 0 0 ,First,#;tempPID "tempPID" true true false 19 Text 0 0 ,First,#,""" + tempOutput + "," + pidField + """,-1,-1;SHAPE_Length "SHAPE_Length" false true true 8 Double 0 0 ,First,#;SHAPE_Area "SHAPE_Area" false true true 8 Double 0 0 ,First,#"""
     Append_management(tempOutput, target, schema_type, field_mapping, "")
 
+    Delete_management(tempOutput)
+
     #get values for the steward and county code
     steward = getCountyInfo(county, "steward")
     countyCode = getCountyInfo(county, "countycode")
@@ -129,6 +142,8 @@ def main():
 
     #delete tempPID field
     DeleteField_management(target, "tempPID")
+
+    userMessage("Conversion completed successfully.")
 
 if __name__ == '__main__':
     main()

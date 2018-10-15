@@ -490,13 +490,13 @@ def launch_compare(gdb, output_table, HNO, addy_city_field, addy_field_list, que
             # start testing out addresses
             hno, hno_code = row[0], row[1]
             if hno not in (None, "", " "):
-##                try:
+                try:
                     hno = int(hno)
                     match_combo = db_compare(hno, hno_code, tempTable, addid, txt, idField)
                     segid = match_combo[0]
                     side = match_combo[1]
-##                except:
-##                    pass
+                except:
+                    hno = ""
 
             match = "M"
             layer = "RoadCenterline"

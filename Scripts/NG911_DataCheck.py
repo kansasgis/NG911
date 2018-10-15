@@ -1035,9 +1035,9 @@ def FindOverlaps(working_gdb):
         Delete_management(final_fc)
 
     # add the NAME_OVERLAP field
-    if fieldExists(rd_fc, name_field):
-        DeleteField_management(rd_fc, name_field)
-    AddField_management(rd_fc, name_field, "TEXT", "", "", 150)
+    if not fieldExists(rd_fc, name_field):
+##        DeleteField_management(rd_fc, name_field)
+        AddField_management(rd_fc, name_field, "TEXT", "", "", 150)
 
     # calculate values for NAME_OVERLAP field
     field_list = rd_object.LABEL_FIELDS
@@ -2311,11 +2311,20 @@ def checkPolygonTopology(gdbObject):
     #export topology errors as feature class
     topology = gdbObject.Topology
 
+    # 10/11/2018- found that just plain ESB layers don't have a gaps rule, so add it
+    esb = join(gdb, "NG911", "ESB")
+    if Exists(esb):
+        from arcpy import AddRuleToTopology_management
+        AddRuleToTopology_management(topology, "Must Not Have Gaps (Area)", esb)
+
     if Exists(topology):
+        from arcpy import ValidateTopology_management
         out_basename = "NG911"
         polyErrors = "%s_poly" % out_basename
         lineErrors = "%s_line" % out_basename
         pointErrors = "%s_point" % out_basename
+
+        ValidateTopology_management(topology)
 
         for topE in (lineErrors, pointErrors, polyErrors):
             full = join(gdb, topE)
@@ -2329,54 +2338,73 @@ def checkPolygonTopology(gdbObject):
 
         # query the polygon results for issues
         polyFC = join(gdb, polyErrors)
-        fc_list = ['ESZ','ESB','ESB_EMS','ESB_LAW','ESB_FIRE']
-        for fc in fc_list:
+        lineFC = join(gdb, lineErrors)
 
-            # get the count of the issues with a given feature class
-            wc = "OriginObjectClassName = '%s'" % fc
-            lyr = "lyr"
-            MakeFeatureLayer_management(polyFC, lyr, wc)
-            k = getFastCount(lyr)
+        # loop through polygon and line errors
+        for errorFC in [polyFC, lineFC]:
+            fc_list = ['ESZ','ESB','ESB_EMS','ESB_LAW','ESB_FIRE']
+            for fc in fc_list:
 
-            # if issues exist...
-            if k > 0 and Exists(join(gdb, "NG911", fc)):
-                fc_lyr = "fc_lyr"
-                fc_full = join(gdb, "NG911", fc)
-                MakeFeatureLayer_management(fc_full, fc_lyr)
+                # get the count of the issues with a given feature class
+                wc = "OriginObjectClassName = '%s'" % fc
+                lyr = "lyr"
+                MakeFeatureLayer_management(errorFC, lyr, wc)
+                k = getFastCount(lyr)
 
-                #add join
-                AddJoin_management(fc_lyr, "OBJECTID", lyr, "OriginObjectID")
+                # if issues exist...
+                if k > 0 and Exists(join(gdb, "NG911", fc)):
+                    if basename(errorFC) == "NG911_poly":
+                        fc_lyr = "fc_lyr"
+                        fc_full = join(gdb, "NG911", fc)
+                        MakeFeatureLayer_management(fc_full, fc_lyr)
 
-                obj = NG911_GDB_Objects.getFCObject(fc_full)
+                        #add join
+                        AddJoin_management(fc_lyr, "OBJECTID", lyr, "OriginObjectID")
 
-                #set query and field variables
-                qry = "%s.OriginObjectID IS NOT NULL" % polyErrors
-                fields = ("%s.%s" % (fc, obj.UNIQUEID), polyErrors + ".RuleDescription", polyErrors + ".isException")
+                        obj = NG911_GDB_Objects.getFCObject(fc_full)
 
-    ##            try:
-                if 1 == 1:
-                    #set up search cursor to loop through records
-                    with SearchCursor(fc_lyr, fields, qry) as rows:
+                        #set query and field variables
+                        qry = "%s.OriginObjectID IS NOT NULL" % basename(errorFC)
+                        fields = ("%s.%s" % (fc, obj.UNIQUEID), basename(errorFC) + ".RuleDescription", basename(errorFC) + ".isException")
 
-                        for row in rows:
-                            # make sure we're not reporting back an exception
-                            if row[2] not in (1, "1"):
+            ##            try:
+                        if 1 == 1:
+                            #set up search cursor to loop through records
+                            with SearchCursor(fc_lyr, fields, qry) as rows:
 
+                                for row in rows:
+                                    # make sure we're not reporting back an exception
+                                    if row[2] not in (1, "1"):
+
+                                        # report the issues back as notices
+                                        msg = "Notice: Topology issue- %s" % row[1]
+                                        val = (today, msg, fc, "", row[0], "Check Topology")
+                                        values.append(val)
+                                try:
+                                    del row, rows
+                                except:
+                                    pass
+
+            ##            except:
+            ##                userMessage("Error attempting topology validation.")
+
+                        #clean up & reset
+                        RemoveJoin_management(fc_lyr)
+                        Delete_management(fc_lyr)
+
+                    elif basename(errorFC) == "NG911_line":
+                        with SearchCursor(lyr, ("RuleDescription")) as rows:
+                            for row in rows:
                                 # report the issues back as notices
-                                msg = "Notice: Topology issue- %s" % row[1]
-                                val = (today, msg, fc, "", row[0], "Check Topology")
+                                msg = "Notice: Topology issue- %s" % row[0]
+                                val = (today, msg, fc, "", "", "Check Topology")
                                 values.append(val)
+                            try:
+                                del row, rows
+                            except:
+                                pass
 
-                        del row, rows
-
-    ##            except:
-    ##                userMessage("Error attempting topology validation.")
-
-                #clean up & reset
-                RemoveJoin_management(fc_lyr)
-                Delete_management(fc_lyr)
-
-            Delete_management(lyr)
+                    Delete_management(lyr)
 
     else:
         msg = "Notice: Topology does not exist"
@@ -2458,6 +2486,14 @@ def sanityCheck(currentPathSettings):
     road_freq = gdbObject.RoadCenterlineFrequency
     rc_obj = NG911_GDB_Objects.getFCObject(roads)
     road_fields = rc_obj.FREQUENCY_FIELDS_STRING
+
+    # make sure editor tracking is turned on for the roads
+    try:
+        EnableEditorTracking_management(roads, "", "", "UPDATEBY", "L_UPDATE", "NO_ADD_FIELDS", "UTC")
+    except:
+        userWarning("Hit that PASS")
+        pass
+
     checkMSAGCOspaces(roads, gdb)
     checkFrequency(roads, road_freq, road_fields, gdb, "true")
     checkCutbacks(currentPathSettings)
