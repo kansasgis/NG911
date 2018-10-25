@@ -9,22 +9,25 @@
 # Edited:       April 13, 2016 by Kristen Jordan-Koenig: had project access address point object for field names & convert X & Y coordinates as well
 # Licence:     Subject to Creative Commons Attribution-ShareAlike 4.0 International Public License
 #-------------------------------------------------------------------------------
+import CoordConvertor
+from arcpy import GetParameterAsText, AddMessage, Describe, SpatialReference, PointGeometry, Point, MakeFeatureLayer_management
+from arcpy.da import Editor, UpdateCursor
+from os.path import dirname
+from NG911_GDB_Objects import getFCObject
+from NG911_arcpy_shortcuts import fieldExists
 
 def main():
-
-    import CoordConvertor
-    from arcpy import GetParameterAsText, AddMessage, Describe, SpatialReference, PointGeometry, Point, MakeFeatureLayer_management
-    from arcpy.da import Editor, UpdateCursor
-    from os.path import dirname
-    from NG911_GDB_Objects import getFCObject
-    from NG911_arcpy_shortcuts import fieldExists
-
-    ct = CoordConvertor.CoordTranslator()
 
     #declare parameter variables for feature class and
     #X and Y fields and the National Grid field
     fc = GetParameterAsText(0)
     updateOnlyBlank = GetParameterAsText(1)
+
+    calc_coordinates(fc, updateOnlyBlank)
+
+def calc_coordinates(fc, updateOnlyBlank):
+
+    ct = CoordConvertor.CoordTranslator()
 
     AddMessage("Calculating coordinates. For large datasets, this process can a while.")
 
@@ -83,7 +86,7 @@ def main():
         with UpdateCursor(fl, fields) as cursor:
             for row in cursor:
                 #see if the x/y fields are blank or are populated
-                if row[0] is None:
+                if row[0] is None or row[0] == 0:
                     #create new point object
                     point = Point()
                     point.X = row[3]

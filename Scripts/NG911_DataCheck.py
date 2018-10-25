@@ -21,7 +21,7 @@ from os.path import basename, dirname, join, exists
 from time import strftime
 from Validation_ClearOldResults import ClearOldResults
 import NG911_GDB_Objects
-from NG911_arcpy_shortcuts import deleteExisting, getFastCount, cleanUp, ListFieldNames, fieldExists
+from NG911_arcpy_shortcuts import deleteExisting, getFastCount, cleanUp, ListFieldNames, fieldExists, hasRecords
 from MSAG_DBComparison import prep_roads_for_comparison
 import time
 
@@ -2298,7 +2298,7 @@ def checkRoadAliases(pathsInfoObject):
 
 
 def checkPolygonTopology(gdbObject):
-
+    from arcpy import AddRuleToTopology_management, AddFeatureClassToTopology_management
     userMessage("Validating polygon topology...")
 
     #set variables for working with the data
@@ -2313,9 +2313,34 @@ def checkPolygonTopology(gdbObject):
 
     # 10/11/2018- found that just plain ESB layers don't have a gaps rule, so add it
     esb = join(gdb, "NG911", "ESB")
-    if Exists(esb):
-        from arcpy import AddRuleToTopology_management
-        AddRuleToTopology_management(topology, "Must Not Have Gaps (Area)", esb)
+    ems = join(gdb, "NG911", "ESB_EMS")
+    law = join(gdb, "NG911", "ESB_LAW")
+    fire = join(gdb, "NG911", "ESB_FIRE")
+    if Exists(esb) and hasRecords(esb):
+        try:
+            AddFeatureClassToTopology_management(topology, esb, 2)
+        except:
+            pass
+        try:
+            AddRuleToTopology_management(topology, "Must Not Have Gaps (Area)", esb)
+        except:
+            pass
+
+    elif Exists(ems) and Exists(law) and Exists(fire):
+        for e in [ems, law, fire]:
+            try:
+                AddFeatureClassToTopology_management(topology, e, 2)
+            except:
+                pass
+            try:
+                AddRuleToTopology_management(topology, "Must Not Have Gaps (Area)", e)
+            except:
+                pass
+            try:
+                AddRuleToTopology_management(topology, "Must Not Overlap (Area)", e)
+            except:
+                pass
+
 
     if Exists(topology):
         from arcpy import ValidateTopology_management
@@ -2364,7 +2389,7 @@ def checkPolygonTopology(gdbObject):
                         obj = NG911_GDB_Objects.getFCObject(fc_full)
 
                         #set query and field variables
-                        qry = "%s.OriginObjectID IS NOT NULL" % basename(errorFC)
+                        qry = "%s.OriginObjectID IS NOT NULL and %s.isException = 0" % (basename(errorFC), basename(errorFC))
                         fields = ("%s.%s" % (fc, obj.UNIQUEID), basename(errorFC) + ".RuleDescription", basename(errorFC) + ".isException")
 
             ##            try:
@@ -2393,7 +2418,8 @@ def checkPolygonTopology(gdbObject):
                         Delete_management(fc_lyr)
 
                     elif basename(errorFC) == "NG911_line":
-                        with SearchCursor(lyr, ("RuleDescription")) as rows:
+                        qry = "isException = 0"
+                        with SearchCursor(lyr, ("RuleDescription"), qry) as rows:
                             for row in rows:
                                 # report the issues back as notices
                                 msg = "Notice: Topology issue- %s" % row[0]
@@ -2404,7 +2430,7 @@ def checkPolygonTopology(gdbObject):
                             except:
                                 pass
 
-                    Delete_management(lyr)
+                Delete_management(lyr)
 
     else:
         msg = "Notice: Topology does not exist"
