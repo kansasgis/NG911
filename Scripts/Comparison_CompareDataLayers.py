@@ -65,7 +65,7 @@ def CompareThatData(fc1, fc2, resultsTable, data_obj):
 
         #see where they don't match
         wc = basename(fc1) + ".compare1 <> " + basename(fc2) + ".compare2"
-        lyr_compare = MakeLayer(lyr1, "lyr", wc)
+        lyr_compare = MakeLayer(lyr1, "lyr5", wc)
 
         #set up list for reporting various edits
         attributeEdits = []

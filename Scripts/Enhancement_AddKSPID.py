@@ -28,7 +28,8 @@ def PIDreplace(pid, ch):
 def makeKSPID(tPID, countycode):
     #copy the ORKA function here to create a 19 digit PID
 
-    if tPID != '':
+    if tPID != '' or tPID is not None:
+        tPID = tPID.strip()
         tPID = PIDreplace(tPID, "-")
         tPID = PIDreplace(tPID, ".")
         tPID = PIDreplace(tPID, " ")
@@ -42,14 +43,18 @@ def makeKSPID(tPID, countycode):
         elif lenPID == 21:
             tPID = tPID[0:19]
         else:
-            if tPID is None:
-                tPID = " "
             try:
-                userMessage("Error updating KSPID for " + tPID)
+                if " " not in tPID:
+                    userMessage("Error updating KSPID for " + tPID)
+                else:
+                    userMessage("Error updating KSPID for a blank PID")
             except:
                 userMessage("Error updating KSPID for a null value")
             finally:
                 tPID = ""
+    else:
+        userMessage("Error updating KSPID for a null or blank value")
+        tPID = ""
 
     return tPID
 
@@ -96,12 +101,14 @@ def main():
     MakeFeatureLayer_management(addy_pts, a_lyr)
 
     #run a spatial join between the address points and parcels
-    workingFile = join(gdb, "AddyKSPID_Working")
+    workingFile = join("in_memory", "AddyKSPID_Working")
     if Exists(workingFile):
         Delete_management(workingFile)
     userMessage("Executing spatial join...")
     SpatialJoin_analysis(a_lyr, p_lyr, workingFile)
     AddField_management(workingFile, "KSPID19", "TEXT", "", "", 19)
+    Delete_management(p_lyr)
+    Delete_management(a_lyr)
 
     #try deleting all fields except the necessary ones
     userMessage("Cleaning up columns...")
@@ -111,24 +118,39 @@ def main():
             if "OBJECTID" not in sj_field:
                 DeleteField_management(workingFile, sj_field)
 
+    null_kspid = False
+
     #make sure the KSPID column is populated with a properly formatted KSPID
     userMessage("Calculating KSPID values...")
-    with UpdateCursor(workingFile, ("KSPID19", pid_column)) as w_rows:
+    with UpdateCursor(workingFile, ("KSPID19", pid_column, "NGADDID")) as w_rows:
         for w_row in w_rows:
             #get the value of the parcel ID
             pid = w_row[1]
 
-            #turn the parcel ID into a KSPID
-            kspid = makeKSPID(pid, countycode)
-            w_row[0] = kspid
-            w_rows.updateRow(w_row)
+            if pid is not None:
+
+                #turn the parcel ID into a KSPID
+                kspid = makeKSPID(pid, countycode)
+                w_row[0] = kspid
+                w_rows.updateRow(w_row)
+            else:
+                ngaddid = w_row[2]
+                userMessage("Null KSPID for NGADDID " + str(ngaddid))
+                null_kspid = True
+
+    if null_kspid == True:
+        userMessage("The address points listed above may not intersect a parcel.")
+
+    # convert address points to a layer again
+    ap = "ap"
+    MakeFeatureLayer_management(addy_pts, ap)
 
     #convert the working file to a layer
     w_lyr = "w_lyr"
     MakeFeatureLayer_management(workingFile, w_lyr)
 
     #join the working file to the original address point file to copy over the KSPIDs
-    AddJoin_management(a_lyr, a.UNIQUEID, w_lyr, a.UNIQUEID)
+    AddJoin_management(ap, a.UNIQUEID, w_lyr, a.UNIQUEID)
 
     userMessage("Copying KSPID values...")
 
@@ -136,13 +158,13 @@ def main():
     #KJ edit: 07/26/2016 end of day notes: this still isn't working. What else can I do to make this work?
     j_lyr = "j_lyr"
     j_wc = "ADDYKSPID_WORKING.KSPID19 not in ('', ' ')"
-    MakeFeatureLayer_management(a_lyr, j_lyr, j_wc)
+    MakeFeatureLayer_management(ap, j_lyr, j_wc)
 
     #import the KSPID over to the address file
-    CalculateField_management(j_lyr, "ADDRESSPOINTS." + a.KSPID, "!ADDYKSPID_WORKING.KSPID19!", "PYTHON")
+    CalculateField_management(j_lyr, "ADDRESSPOINTS." + a.KSPID, "!ADDYKSPID_WORKING.KSPID19!", "PYTHON_9.3")
 
     #clean up
-    cleanUp([w_lyr, a_lyr, p_lyr, j_lyr, workingFile])
+    cleanUp([w_lyr, ap, j_lyr, workingFile])
 
 
 if __name__ == '__main__':

@@ -51,7 +51,11 @@ def FixDomainCase(gdb, domainFolder):
                 #make sure the field name is not blank
                 if fieldName not in ('',' '):
                     #test if the value in upper case is in the domain
-                    domainDict = getFieldDomain(fieldName, domainFolder)
+                    if fieldName[-2:] in ["_L", "_R"]:
+                        fieldNameForDict = fieldName.strip("_L").strip("_R")
+                    else:
+                        fieldNameForDict = fieldName
+                    domainDict = getFieldDomain(fieldNameForDict, domainFolder)
                     domainList = []
 
                     for val in domainDict:

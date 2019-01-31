@@ -14,7 +14,7 @@ from arcpy import (AddField_management, AddMessage, CalculateField_management, C
                    SelectLayerByLocation_management, DeleteRows_management, GetInstallInfo, env, ListDatasets,
                    AddJoin_management, RemoveJoin_management, AddWarning, CopyFeatures_management, Append_management,
                    Dissolve_management, DeleteField_management, DisableEditorTracking_management, EnableEditorTracking_management,
-                   ExportTopologyErrors_management)
+                   ExportTopologyErrors_management, ProductInfo, Buffer_analysis, Intersect_analysis, Point, ListFeatureClasses)
 from arcpy.da import Walk, InsertCursor, ListDomains, SearchCursor, UpdateCursor, Editor
 from os import path, remove
 from os.path import basename, dirname, join, exists
@@ -24,6 +24,7 @@ import NG911_GDB_Objects
 from NG911_arcpy_shortcuts import deleteExisting, getFastCount, cleanUp, ListFieldNames, fieldExists, hasRecords
 from MSAG_DBComparison import prep_roads_for_comparison
 import time
+from math import sin, cos, atan2, sqrt, asin, pi
 
 def checkToolboxVersion():
     import json, urllib, sys
@@ -316,6 +317,296 @@ def checkParities(currentPathSettings):
         userMessage("Completed parity check. No issues found.")
 
 
+def checkRoadESN(currentPathSettings):
+    userMessage("Checking road ESN values...")
+    gdb = currentPathSettings.gdbPath
+    esz = currentPathSettings.gdbObject.ESZ
+    rc = currentPathSettings.gdbObject.RoadCenterline
+
+    esz_obj = NG911_GDB_Objects.getFCObject(esz)
+    rc_obj = NG911_GDB_Objects.getFCObject(rc)
+
+    if Exists(rc) and Exists(esz):
+        #set variables
+        values = []
+        recordType = "fieldValues"
+        today = strftime("%m/%d/%y")
+        filename = "RoadCenterline"
+        wc_submit = rc_obj.SUBMIT + " = 'Y'"
+
+        followup_roads = []
+
+        # define ESZ fields to examine
+        esz_fields = (esz_obj.UNIQUEID, esz_obj.ESN, "SHAPE@XY")
+
+        # define road fields to examine
+        road_fields = [rc_obj.UNIQUEID, rc_obj.ESN_R, rc_obj.ESN_L, "OBJECTID", rc_obj.AUTH_L, rc_obj.AUTH_R, "SHAPE@", "SHAPE@XY"]
+
+        # make feature layer from roads
+        rd_lyr = "rd_lyr"
+        MakeFeatureLayer_management(rc, rd_lyr, wc_submit)
+
+        # make feature layer from ESZ
+        esz_lyr = "esz_lyr"
+        MakeFeatureLayer_management(esz, esz_lyr, wc_submit)
+
+        i = True
+
+        if Exists(rc) and Exists(esz):
+            #set variables
+            values = []
+            recordType = "fieldValues"
+            today = strftime("%m/%d/%y")
+            filename = "RoadCenterline"
+            wc_submit = rc_obj.SUBMIT + " = 'Y'"
+
+            # go through esz by esz
+            with SearchCursor(esz_lyr, esz_fields, wc_submit) as rows:
+                for row in rows:
+                    # get ESZ variables & make a where clause
+                    wc_esz = esz_obj.UNIQUEID + " = '" + row[0] + "' AND " + wc_submit
+
+                    # single out this ESZ with a feature layer
+                    eszf = "eszf"
+                    MakeFeatureLayer_management(esz_lyr, eszf, wc_esz)
+
+                    # select road features inside the current esz feature
+                    SelectLayerByLocation_management(rd_lyr, "HAVE_THEIR_CENTER_IN", eszf)
+
+                    # loop through the selected road features
+                    with SearchCursor(rd_lyr, road_fields) as r_rows:
+                        for r_row in r_rows:
+
+                            # get the road variables
+                            segid = r_row[0]
+                            esn_r = r_row[1]
+                            esn_l = r_row[2]
+                            auth_l = r_row[4]
+                            auth_r = r_row[5]
+##                            print("%s: Right side- %s, %s Left side- %s %s" % (segid, esn_r, auth_r, esn_l, auth_l))
+
+                            # see if the sides really don't match and one side isn't 0
+                            if esn_r != esn_l and esn_r != '0' and esn_l != '0':
+                                esn_list = [esn_l, esn_r]
+
+                                # get A & B points of the road segment
+                                A = r_row[6].firstPoint
+                                B = r_row[6].lastPoint
+
+                                # make a feature layer of the road
+                                road_wc = rc_obj.UNIQUEID + " = '" + segid + "'"
+                                rd_buff_lyr = "rd_buff_lyr"
+                                MakeFeatureLayer_management(rd_lyr, rd_buff_lyr, road_wc)
+
+                                # make a second feature layer from ESZ
+                                esz_lyr_select = "esz_lyr_select"
+                                MakeFeatureLayer_management(esz_lyr, esz_lyr_select)
+
+                                # select which ESZ zones are close
+                                SelectLayerByLocation_management(esz_lyr_select, "INTERSECT", rd_buff_lyr)
+
+                                esz_esn_list = []
+
+                                # see which eszs intersect the road segment
+                                with SearchCursor(esz_lyr_select, (esz_obj.ESN)) as ez_rows:
+                                    for ez_row in ez_rows:
+                                        # put the intersecting esns in a list
+                                        esz_esn_list.append(ez_row[0])
+
+                                # clean up esz selection layer
+                                Delete_management(esz_lyr_select)
+
+                                # set up scoring system
+                                esn_score = 0
+                                l_score = 0
+                                r_score = 0
+
+                                # loop through the intersecting esz list, add points to the score
+                                for ez_esn in esz_esn_list:
+                                    if ez_esn in esn_list:
+                                        esn_score += 1
+
+                                # max esn_score here is 2
+
+                                # create buffer of the line segment
+                                temp_buffer = join("in_memory", "temp_buffer")
+                                if Exists(temp_buffer):
+                                    Delete_management(temp_buffer)
+
+                                # buffer the road piece
+                                Buffer_analysis(rd_buff_lyr, temp_buffer, "30 feet")
+
+                                # intersect road buffer and esz boundaries
+                                temp_buffer_intersect = join("in_memory", "temp_buffer_intersect")
+                                if Exists(temp_buffer_intersect):
+                                    Delete_management(temp_buffer_intersect)
+
+                                Intersect_analysis([temp_buffer, esz], temp_buffer_intersect)
+
+                                # run a search cursor on the intersection, weed out areas less than area 500
+                                intersect_fields = [esz_obj.ESN, "SHAPE@TRUECENTROID", "SHAPE@AREA", "SHAPE@"]
+
+                                esz_count = 0
+
+                                with SearchCursor(temp_buffer_intersect, intersect_fields) as i_rows:
+                                    for i_row in i_rows:
+
+                                        if i_row[2] > 1500.0:
+                                            esz_count += 1
+
+                                            # get esn value
+                                            esn_value_buff = i_row[0]
+
+                                            # add points to the esn score if the esn is in the esn list
+                                            if esn_value_buff in esn_list:
+                                                esn_score += 1
+
+                                            # perfect score here is 4+
+
+                                            # get the centroid of that particular feature
+                                            p_list = list(i_row[1])
+                                            P = Point(p_list[0], p_list[1])
+
+                                            # see if it's on the left or right
+                                            # see what side of the road the esz is on
+                                            direction = directionOfPoint(A, B, P)
+                                            side_phrase = "ESN_" + direction
+
+                                            # set variables based on that side of the road
+                                            if direction == "R":
+                                                # run a quick check
+                                                if esn_value_buff == esn_r:
+                                                    r_score += 1
+                                            elif direction == "L":
+                                                # run a quick check
+                                                if esn_value_buff == esn_l:
+                                                    l_score += 1
+
+                                            esn_value_buff = ""
+
+                                # work on generating proper reporting
+                                reportStatus = False
+
+                                # check scores
+                                if esn_score == 0: # nothing matches
+                                    reportStatus = True
+                                    report = 'Notice: Segment ESN values %s and %s do not match ESNs of physical locations' % (esn_l, esn_r)
+                                elif esn_score > 0 and esn_score <= 2:
+                                    reportStatus = True
+                                    if l_score == 0: # problem is maybe with the left side
+                                        if r_score > 1: # problem might be on the right side actually
+                                            report = 'Notice: One or both segment values does not match ESN of physical location'
+                                        else:
+                                            report = 'Notice: Segment ESN_L value %s does not match ESN of physical location' % (esn_l)
+                                    elif r_score == 0: # problem is maybe with the right side
+                                        if l_score > 1: # problem might be on the left side actually
+                                            report = 'Notice: One or both segment values does not match ESN of physical location'
+                                        else:
+                                            report = 'Notice: Segment ESN_R value %s does not match ESN of physical location' % (esn_r)
+
+                                    if l_score == 0 and r_score == 0:
+                                        if esz_count > 1:
+                                            report = 'Notice: Segment ESN values %s and %s may not match ESNs of physical locations' % (esn_l, esn_r)
+                                        elif esz_count == 1:
+                                            report = 'Notice: One or both segment values does not match ESN of physical location'
+                                elif esn_score > 2:
+                                    pass
+                                    # this means things are probably fine
+
+                                if reportStatus == True:
+                                    val = (today, report, filename, side_phrase, segid, "Check Road ESN Values")
+                                    values.append(val)
+
+                                # clean up
+                                Delete_management(rd_buff_lyr)
+                                Delete_management(temp_buffer)
+                                Delete_management(temp_buffer_intersect)
+
+                            else:
+                                esn_value = row[1]
+
+                                # set issues to false to start with
+                                L_issue = False
+                                R_issue = False
+
+                                # evaluate left side of the road considering authority
+                                # the value is zero, skip it
+                                if auth_l == 'Y' and str(esn_l) != "0" and esn_value != esn_l:
+                                    L_issue = True
+
+                                # evaluate right side of the road considering authority
+                                # the value is zero, skip it
+                                if auth_r == 'Y' and str(esn_r) != "0" and esn_value != esn_r:
+                                    R_issue = True
+
+                                # see which sides need to be reported (probably both)
+                                sides = []
+
+                                if L_issue == True:
+                                    sides.append(rc_obj.ESN_L)
+                                    esn_side = esn_l
+                                if R_issue == True:
+                                    sides.append(rc_obj.ESN_R)
+                                    esn_side = esn_r
+
+                                # report any issues that exist
+                                if sides != []:
+                                    side_phrase = "| ".join(sides)
+
+                                    report = 'Notice: Segment %s value %s does not match ESN of physical location %s' % (side_phrase, esn_side, esn_value)
+                                    val = (today, report, filename, side_phrase, segid, "Check Road ESN Values")
+                                    values.append(val)
+
+                                esn_side, esn_value, esn_l, esn_r, auth = "", "", "", "", ""
+
+                    # clean up feature class to repeat
+                    Delete_management(eszf)
+
+                del row, rows
+
+        # clean up in memory esz
+        Delete_management(esz_lyr)
+        Delete_management(rd_lyr)
+
+        #report records
+        if values != []:
+            RecordResults(recordType, values, gdb)
+            userWarning("Completed road ESN check. There were %s issues. Results are in table FieldValuesCheckResults" % (str(len(values))))
+        else:
+            userMessage("Completed road ESN check. No issues found.")
+
+
+def directionOfPoint(A, B, P):
+    # code translated from https://www.geeksforgeeks.org/direction-point-line-segment/
+    # subtracting co-ordinates of point A from
+    # B and P, to make A as origin
+
+    B.X -= A.X
+    B.Y -= A.Y
+    P.X -= A.X
+    P.Y -= A.Y
+
+    # Determining cross Product
+    cross_product = B.X * P.Y - B.Y * P.X;
+
+##    print(str(cross_product))
+
+    # return RIGHT if cross product is positive
+    if cross_product > 0:
+        direction = "L"
+
+    # return LEFT if cross product is negative
+    elif cross_product < 0:
+        direction = "R"
+
+    # else, return zero
+    else:
+        direction = "Z"
+
+    # return ZERO if cross product is zero.
+    return direction
+
+
 def checkDirectionality(fc, gdb):
     userMessage("Checking road directionality...")
     rc_obj = NG911_GDB_Objects.getFCObject(fc)
@@ -488,6 +779,71 @@ def checkESNandMuniAttribute(currentPathSettings):
         userWarning("Address point ESN/Municipality check complete. %s issues found. Results are in the FieldValuesCheckResults table." % (str(len(values))))
     else:
         userMessage("Address point ESN/Municipality check complete. No issues found.")
+
+
+def checkAddressPointGEOMSAG(currentPathSettings):
+	# get address point & road centerline path & object
+    userMessage("Checking address point GEOMSAG values...")
+    gdb = currentPathSettings.gdbPath
+    rc = currentPathSettings.gdbObject.RoadCenterline
+    ap = currentPathSettings.gdbObject.AddressPoints
+
+    rc_obj = NG911_GDB_Objects.getFCObject(rc)
+    ap_obj = NG911_GDB_Objects.getFCObject(ap)
+
+    # prep for error reporting
+    values = []
+    recordType = "fieldValues"
+    today = strftime("%m/%d/%y")
+    filename = "AddressPoints"
+
+	# set where clause to just get address points where GEOMSAG = 'Y' and SUBMIT = 'Y'
+    ap_wc = "%s = 'Y' AND %s = 'Y' AND %s <> 'NO_MATCH'" % (ap_obj.SUBMIT, ap_obj.GEOMSAG, ap_obj.RCLMATCH)
+
+	# get feature layer of those address points
+    fl_ap = "fl_ap"
+    MakeFeatureLayer_management(ap, fl_ap, ap_wc)
+
+    # see if any of these exist
+    count = getFastCount(fl_ap)
+
+    if count > 0:
+
+        # fields should include NGADDID, RCLMATCH, & RCLSIDE
+        ap_fields = [ap_obj.UNIQUEID, ap_obj.RCLMATCH, ap_obj.RCLSIDE]
+
+    	# set up a search cursor on those address points
+        with SearchCursor(fl_ap, ap_fields) as rows:
+            for row in rows:
+                # set variables
+                addid, segid, rclside = row[0], row[1], row[2]
+
+                # set up road centerline where clause
+                rc_wc_list = [rc_obj.UNIQUEID, " = '", segid, "'"]
+                rc_wc = "".join(rc_wc_list)
+
+                # set up road centerline
+                rc_fields = [rc_obj.SUBMIT, "GEOMSAG" + rclside]
+
+            	# set up a search cursor on the RCLMATCH road segment
+                with SearchCursor(rc, rc_fields, rc_wc) as r_rows:
+                    for r_row in r_rows:
+
+                        # if GEOMSAG on the proper road side is "Y", mark that address point as an error
+                        if r_row[0] == 'Y' and r_row[1] == 'Y':
+                            report = "Error: Point duplicates GEOMSAG with RCLMATCH record %s on %s side" % (str(segid), rclside)
+                            val = (today, report, filename, "GEOMSAG", addid, "Check Address Point GEOMSAG")
+                            values.append(val)
+
+    #report records
+    if values != []:
+        RecordResults(recordType, values, gdb)
+        userWarning("Address point GEOMSAG check complete. %s issues found. Results are in the FieldValuesCheckResults table." % (str(len(values))))
+    else:
+        userMessage("Address point GEOMSAG check complete. No issues found.")
+
+    # clean up
+    cleanUp([fl_ap])
 
 
 def checkUniqueIDFrequency(currentPathSettings):
@@ -813,6 +1169,17 @@ def checkLayerList(pathsInfoObject):
             val = (today, report, "Layer", "Check Layer List")
             values.append(val)
 
+    # make sure ESB layers have the right names
+    env.workspace = join(gdb, "NG911")
+    fcs = ListFeatureClasses()
+    for fc in fcs:
+        for esb in ["EMS", "LAW", "FIRE"]:
+            if esb in fc and "ESB_" + esb not in fc:
+                report = "Error: ESB layer %s is not named correctly in geodatabase." % (esb)
+                userMessage(report)
+                val = (today, report, "Layer", "Check Layer List")
+                values.append(val)
+
     #record issues if any exist
     if values != []:
         RecordResults("template", values, gdb)
@@ -1045,27 +1412,27 @@ def FindOverlaps(working_gdb):
     fields1 = tuple(field_list)
 
     # start edit session
-    edit = Editor(working_gdb)
-    edit.startEditing(False, False)
+    with Editor(working_gdb) as edit:
+##        edit.startEditing(False, False)
 
-    # run update cursor
-    with UpdateCursor(rd_fc, fields1) as rows:
-        for row in rows:
-            field_count = len(fields1)
-            start_int = 1
-            label = ""
+        # run update cursor
+        with UpdateCursor(rd_fc, fields1) as rows:
+            for row in rows:
+                field_count = len(fields1)
+                start_int = 1
+                label = ""
 
-            # loop through the fields to see what's null & skip it
-            while start_int < field_count:
-                if row[start_int] is not None:
-                    if row[start_int] not in ("", " "):
-                        label = label + " " + str(row[start_int])
-                start_int = start_int + 1
+                # loop through the fields to see what's null & skip it
+                while start_int < field_count:
+                    if row[start_int] is not None:
+                        if row[start_int] not in ("", " "):
+                            label = label + " " + str(row[start_int])
+                    start_int = start_int + 1
 
-            row[0] = label
-            rows.updateRow(row)
+                row[0] = label
+                rows.updateRow(row)
 
-    edit.stopEditing(True)
+##        edit.stopEditing(True)
 
     # clean up all labels
     trim_expression = '" ".join(!' + name_field + '!.split())'
@@ -2063,8 +2430,15 @@ def checkKSPID(fc, field):
 
         with SearchCursor(kspid_fl, fields, kspid_wc) as rows:
             for row in rows:
-                # try to make sure we're not getting any blanks reported
-                if row[0] not in ('', ' '):
+                if layer == "AddressPoints":
+                    # try to make sure we're not getting any blanks reported in Address Points
+                    if row[0] not in ('', ' '):
+                        fid = row[ID_index]
+                        report = "Error: %s value is not the required 19 characters." % (field)
+                        val = (today, report, layer, field, fid, "Check " + field)
+                        values.append(val)
+
+                else:
                     fid = row[ID_index]
                     report = "Error: %s value is not the required 19 characters." % (field)
                     val = (today, report, layer, field, fid, "Check " + field)
@@ -2485,7 +2859,10 @@ def sanityCheck(currentPathSettings):
     # common layer checks
     checkValuesAgainstDomain(currentPathSettings)
     checkFeatureLocations(currentPathSettings)
-    checkPolygonTopology(gdbObject)
+    try:
+        checkPolygonTopology(gdbObject)
+    except Exception as e:
+        userWarning(str(e))
     checkUniqueIDFrequency(currentPathSettings)
 
     # check address points
@@ -2495,6 +2872,7 @@ def sanityCheck(currentPathSettings):
     checkMSAGCOspaces(addressPoints, gdb)
     if fieldExists(addressPoints, "RCLMATCH"):
         checkRCLMATCH(currentPathSettings)
+        checkAddressPointGEOMSAG(currentPathSettings)
     addy_time = time.time()
     AP_freq = gdbObject.AddressPointFrequency
     a_obj = NG911_GDB_Objects.getFCObject(addressPoints)
@@ -2609,6 +2987,7 @@ def main_check(checkType, currentPathSettings):
             checkKSPID(addressPoints, "KSPID")
             if fieldExists(addressPoints, "RCLMATCH"):
                 checkRCLMATCH(currentPathSettings)
+                checkAddressPointGEOMSAG(currentPathSettings)
 
         if checkList[1] == "true":
             checkFeatureLocations(currentPathSettings)
