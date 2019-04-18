@@ -6,20 +6,17 @@
 #
 # Created:     03/09/2015
 #-------------------------------------------------------------------------------
-from arcpy import (CopyRows_management, Delete_management, AddField_management,
-            CalculateField_management, GetParameterAsText, Exists, env,
-            CreateTable_management,
-            MakeFeatureLayer_management, AddMessage, CreateFileGDB_management,
+from arcpy import (Delete_management, AddField_management,
+            CalculateField_management, GetParameterAsText, Exists, 
+            CreateTable_management, CreateFileGDB_management,
             MakeTableView_management, DisableEditorTracking_management,
             EnableEditorTracking_management)
-from arcpy.da import InsertCursor, SearchCursor, UpdateCursor
+from arcpy.da import InsertCursor, UpdateCursor
 from NG911_DataCheck import userMessage, getFieldDomain
 from os.path import join, dirname, basename, exists, realpath
 from os import mkdir
-from NG911_GDB_Objects import getFCObject, getTNObject, getGDBObject
+from NG911_GDB_Objects import getFCObject, getTNObject
 from NG911_arcpy_shortcuts import getFastCount, fieldExists
-from time import strftime
-from sys import exit
 from MSAG_DBComparison import launch_compare
 
 
@@ -61,7 +58,6 @@ def prepXLS(tnxls, gdb):
     #read xls spreadsheet
     xl_workbook = xlrd.open_workbook(tnxls)
     xl_sheet = xl_workbook.sheet_by_index(0)
-    header_row = xl_sheet.row(0)
 
     #start at row 1 (maybe? depends on indexing, skip the headers is the goal)
     rowIdx = 1
@@ -193,7 +189,6 @@ def geocodeTable(gdb):
     tn_object = getTNObject(gdb)
     tname = tn_object.TN_List
     uniqueFieldID = tn_object.UNIQUEID
-    tn_gdb = tn_object.tn_gdb
 
     #add unique ID to TN List table
     AddUniqueIDField(tname, uniqueFieldID)

@@ -6,9 +6,8 @@
 #
 # Created:     13/05/2016
 #-------------------------------------------------------------------------------
-from arcpy import (GetParameterAsText, AddJoin_management, MakeTableView_management,
-            Exists, ListFields, CopyFeatures_management, Delete_management,
-            MakeFeatureLayer_management, CalculateField_management, AddField_management,
+from arcpy import (GetParameterAsText, AddJoin_management, Delete_management,
+            CalculateField_management, AddField_management,
             Describe, AddIndex_management, DeleteField_management, RemoveJoin_management,
             Exists, CreateTable_management)
 from arcpy.da import SearchCursor, InsertCursor
@@ -235,14 +234,6 @@ def LaunchDataCompare(fc1, fc2, resultsTable):
 ##        userMessage(str(e))
 
 def CompareAllData(gdb1, gdb2, resultsTable):
-    from arcpy import ListFeatureClasses, env
-    #compare all the data in a geodatabase to another geodatabase
-
-    fds = join(gdb1, "NG911") #gdb1 feature dataset
-    env.workspace = fds
-
-    #loop through layers in gdb1
-    fcs = ListFeatureClasses()
 
     gdbObject = getGDBObject(gdb1)
 

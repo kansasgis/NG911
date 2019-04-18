@@ -9,10 +9,10 @@
 from arcpy import (GetParameterAsText, MakeFeatureLayer_management,
 Delete_management, CalculateField_management, SpatialJoin_analysis,
 AddJoin_management, AddField_management, DeleteField_management,
-Exists)
+Exists, AddWarning)
 from arcpy.da import UpdateCursor, SearchCursor
 from inspect import getsourcefile
-from os.path import abspath, dirname, join, exists
+from os.path import abspath, dirname, join
 from NG911_DataCheck import userMessage
 from NG911_arcpy_shortcuts import ListFieldNames, cleanUp
 from NG911_GDB_Objects import getFCObject
@@ -69,8 +69,7 @@ def main():
     #get column of PID from parcel layer
     pid_column = GetParameterAsText(3)
 
-    #set geodatabase
-    gdb = dirname(dirname(addy_pts))
+    # get object
     a = getFCObject(addy_pts)
 
     #see if pid_column is already set to KSPID, and if so, edit accordingly

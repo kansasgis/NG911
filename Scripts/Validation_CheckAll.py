@@ -10,7 +10,7 @@ from NG911_DataCheck import sanityCheck, userMessage
 from arcpy import GetParameterAsText, Exists
 from Conversion_ZipNG911Geodatabase import createNG911Zip
 from NG911_GDB_Objects import NG911_Session
-from os.path import dirname, realpath, join, basename
+from os.path import basename
 from NG911_arcpy_shortcuts import hasRecords
 
 def validateAllPrep(gdb, zipFlag, zipPath):

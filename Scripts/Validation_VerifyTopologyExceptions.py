@@ -7,7 +7,7 @@
 # Created:     03/09/2015
 #-------------------------------------------------------------------------------
 from arcpy import (ExportTopologyErrors_management, AddJoin_management, GetParameterAsText,
-MakeFeatureLayer_management, MakeTableView_management, RemoveJoin_management, Delete_management, Exists, ListFields)
+                   MakeFeatureLayer_management, RemoveJoin_management, Delete_management, Exists)
 from arcpy.da import SearchCursor
 from NG911_DataCheck import RecordResults, userMessage
 from os.path import join, basename

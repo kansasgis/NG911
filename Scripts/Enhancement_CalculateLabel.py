@@ -8,12 +8,11 @@
 #-------------------------------------------------------------------------------
 
 #import modules
-from arcpy import GetParameterAsText, Exists, CalculateField_management, MakeFeatureLayer_management, SelectLayerByAttribute_management, GetCount_management
+from arcpy import GetParameterAsText, CalculateField_management, MakeFeatureLayer_management, SelectLayerByAttribute_management, GetCount_management
 from arcpy.da import UpdateCursor, Editor
 from os.path import basename, dirname
 from NG911_DataCheck import userMessage
 from NG911_GDB_Objects import getFCObject
-from NG911_arcpy_shortcuts import fieldExists
 
 def main():
     layer = GetParameterAsText(0)

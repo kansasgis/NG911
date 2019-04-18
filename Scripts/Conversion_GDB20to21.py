@@ -19,6 +19,7 @@ from os import remove
 from NG911_GDB_Objects import getGDBObject, getFCObject
 from NG911_arcpy_shortcuts import ListFieldNames, fieldExists, hasRecords
 from NG911_DataCheck import userMessage
+from Enhancement_AddTopology import add_topology
 import xml.etree.ElementTree as etree
 from xml.etree.ElementTree import parse
 from xml.dom import minidom

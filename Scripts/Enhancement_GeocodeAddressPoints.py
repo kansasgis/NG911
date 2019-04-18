@@ -9,10 +9,10 @@
 #-------------------------------------------------------------------------------
 from arcpy import (GetParameterAsText, Exists, CopyFeatures_management, DisableEditorTracking_management,
             EnableEditorTracking_management, AddJoin_management, RemoveJoin_management, CalculateField_management,
-            Delete_management, MakeFeatureLayer_management, AddIndex_management, ListFields, AddMessage, ListIndexes)
+            Delete_management, MakeFeatureLayer_management, AddIndex_management, ListFields, ListIndexes)
 from MSAG_DBComparison import launch_compare
 from NG911_GDB_Objects import getFCObject
-from NG911_arcpy_shortcuts import fieldExists, ListFieldNames
+from NG911_arcpy_shortcuts import fieldExists
 from os.path import join
 
 
@@ -25,7 +25,6 @@ def geocompare(gdb, version, emptyOnly):
     addy_fc = join(gdb, "NG911", "AddressPoints")
     rd_fc = join(gdb, "NG911", "RoadCenterline")
     addy_object = getFCObject(addy_fc)
-    rd_object = getFCObject(rd_fc)
     addy_field_list = ["NAME_COMPARE", "PRD", "STP", "RD", "STS", "POD", "POM"]
 
     a_id = addy_object.UNIQUEID

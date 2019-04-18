@@ -11,13 +11,13 @@ from arcpy import (ExcelToTable_conversion, AddJoin_management, RemoveJoin_manag
                 MakeTableView_management, MakeFeatureLayer_management,
                 AddField_management, CalculateField_management, GetParameterAsText,
                 Exists, CopyFeatures_management, CreateFileGDB_management,
-                SelectLayerByAttribute_management, Delete_management, Dissolve_management,
+                SelectLayerByAttribute_management, Delete_management, 
                 CreateTable_management, Statistics_analysis, Merge_management, AddMessage)
-from arcpy.da import UpdateCursor, SearchCursor, InsertCursor
+from arcpy.da import SearchCursor, InsertCursor
 from os import mkdir
 from os.path import exists, dirname, basename, join
 from time import strftime
-import csv
+
 
 
 class MSAG_Object(object):
@@ -394,7 +394,6 @@ def compareMSAGnames(msag_object):
 def compareMSAGranges(msag_object):
     #loop through road centerline names
     userMessage("Comparing MSAG ranges...")
-    rc_names = msag_object.rc_names
     rc_merged_msag = msag_object.rc_merged_msag
     msag_merged_msag = msag_object.msag_merged_msag
     rc_mm_freq = msag_object.rc_mm_freq

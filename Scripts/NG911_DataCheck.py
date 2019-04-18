@@ -9,22 +9,23 @@
 #-------------------------------------------------------------------------------
 
 from arcpy import (AddField_management, AddMessage, CalculateField_management, CopyRows_management, Statistics_analysis,
-                   CreateTable_management, Delete_management, Exists, GetCount_management, FieldInfo,
+                   CreateTable_management, Delete_management, Exists,
                    ListFields, MakeFeatureLayer_management, MakeTableView_management, SelectLayerByAttribute_management,
-                   SelectLayerByLocation_management, DeleteRows_management, GetInstallInfo, env, ListDatasets,
-                   AddJoin_management, RemoveJoin_management, AddWarning, CopyFeatures_management, Append_management,
+                   SelectLayerByLocation_management, env, ListDatasets,
+                   AddJoin_management, RemoveJoin_management, AddWarning, CopyFeatures_management,
                    Dissolve_management, DeleteField_management, DisableEditorTracking_management, EnableEditorTracking_management,
-                   ExportTopologyErrors_management, ProductInfo, Buffer_analysis, Intersect_analysis, Point, ListFeatureClasses)
-from arcpy.da import Walk, InsertCursor, ListDomains, SearchCursor, UpdateCursor, Editor
+                   ExportTopologyErrors_management, Buffer_analysis, Intersect_analysis, Point, ListFeatureClasses)
+from arcpy.da import InsertCursor, SearchCursor, UpdateCursor, Editor
 from os import path, remove
 from os.path import basename, dirname, join, exists
 from time import strftime
 from Validation_ClearOldResults import ClearOldResults
+from Enhancement_AddTopology import add_topology
 import NG911_GDB_Objects
 from NG911_arcpy_shortcuts import deleteExisting, getFastCount, cleanUp, ListFieldNames, fieldExists, hasRecords
 from MSAG_DBComparison import prep_roads_for_comparison
-import time
-from math import sin, cos, atan2, sqrt, asin, pi
+#import time
+#from math import sin, cos, atan2, sqrt, asin, pi
 
 def checkToolboxVersion():
     import json, urllib, sys
@@ -334,8 +335,6 @@ def checkRoadESN(currentPathSettings):
         filename = "RoadCenterline"
         wc_submit = rc_obj.SUBMIT + " = 'Y'"
 
-        followup_roads = []
-
         # define ESZ fields to examine
         esz_fields = (esz_obj.UNIQUEID, esz_obj.ESN, "SHAPE@XY")
 
@@ -349,8 +348,6 @@ def checkRoadESN(currentPathSettings):
         # make feature layer from ESZ
         esz_lyr = "esz_lyr"
         MakeFeatureLayer_management(esz, esz_lyr, wc_submit)
-
-        i = True
 
         if Exists(rc) and Exists(esz):
             #set variables
@@ -557,7 +554,7 @@ def checkRoadESN(currentPathSettings):
                                     val = (today, report, filename, side_phrase, segid, "Check Road ESN Values")
                                     values.append(val)
 
-                                esn_side, esn_value, esn_l, esn_r, auth = "", "", "", "", ""
+                                esn_side, esn_value, esn_l, esn_r = "", "", "", ""
 
                     # clean up feature class to repeat
                     Delete_management(eszf)
@@ -818,22 +815,27 @@ def checkAddressPointGEOMSAG(currentPathSettings):
                 # set variables
                 addid, segid, rclside = row[0], row[1], row[2]
 
-                # set up road centerline where clause
-                rc_wc_list = [rc_obj.UNIQUEID, " = '", segid, "'"]
-                rc_wc = "".join(rc_wc_list)
+                if rclside == "N":
+                    report = "Error: RCLSIDE set to N while RCLMATCH has a valid NGSEGID. RCLSIDE should be R or L."
+                    val = (today, report, filename, "GEOMSAG", addid, "Check Address Point GEOMSAG")
+                    values.append(val)
+                else:
+                    # set up road centerline where clause
+                    rc_wc_list = [rc_obj.UNIQUEID, " = '", segid, "'"]
+                    rc_wc = "".join(rc_wc_list)
 
-                # set up road centerline
-                rc_fields = [rc_obj.SUBMIT, "GEOMSAG" + rclside]
+                    # set up road centerline
+                    rc_fields = [rc_obj.SUBMIT, "GEOMSAG" + rclside]
+                	# set up a search cursor on the RCLMATCH road segment
+                    with SearchCursor(rc, rc_fields, rc_wc) as r_rows:
+                        for r_row in r_rows:
 
-            	# set up a search cursor on the RCLMATCH road segment
-                with SearchCursor(rc, rc_fields, rc_wc) as r_rows:
-                    for r_row in r_rows:
+                            # if GEOMSAG on the proper road side is "Y", mark that address point as an error
+                            if r_row[0] == 'Y' and r_row[1] == 'Y':
+                                report = "Error: Point duplicates GEOMSAG with RCLMATCH record %s on %s side" % (str(segid), rclside)
+                                val = (today, report, filename, "GEOMSAG", addid, "Check Address Point GEOMSAG")
+                                values.append(val)
 
-                        # if GEOMSAG on the proper road side is "Y", mark that address point as an error
-                        if r_row[0] == 'Y' and r_row[1] == 'Y':
-                            report = "Error: Point duplicates GEOMSAG with RCLMATCH record %s on %s side" % (str(segid), rclside)
-                            val = (today, report, filename, "GEOMSAG", addid, "Check Address Point GEOMSAG")
-                            values.append(val)
 
     #report records
     if values != []:
@@ -1172,13 +1174,22 @@ def checkLayerList(pathsInfoObject):
     # make sure ESB layers have the right names
     env.workspace = join(gdb, "NG911")
     fcs = ListFeatureClasses()
-    for fc in fcs:
-        for esb in ["EMS", "LAW", "FIRE"]:
-            if esb in fc and "ESB_" + esb not in fc:
-                report = "Error: ESB layer %s is not named correctly in geodatabase." % (esb)
-                userMessage(report)
-                val = (today, report, "Layer", "Check Layer List")
-                values.append(val)
+    esb_count = 0
+    for esb in ["ESB_EMS", "ESB_LAW", "ESB_FIRE"]:
+        if esb in fcs:
+            esb_count += 1
+
+    if esb_count == 0 and "ESB" not in fcs:
+        report = "Error: No ESB layers are present in geodatabase." % (esb)
+        userMessage(report)
+        val = (today, report, "Layer", "Check Layer List")
+        values.append(val)
+
+    if 0 < esb_count < 3:
+        report = "Error: ESB layers %s may not be named correctly in geodatabase." % (esb)
+        userMessage(report)
+        val = (today, report, "Layer", "Check Layer List")
+        values.append(val)
 
     #record issues if any exist
     if values != []:
@@ -1202,15 +1213,6 @@ def getRequiredFields(folder):
     #make sure file path exists
     if path.exists(path1):
         fieldDefDoc = open(path1, "r")
-
-        #get the header information
-        headerLine = fieldDefDoc.readline()
-        valueList = headerLine.split("|")
-        ## print valueList
-
-        #get field indexes
-        fcIndex = valueList.index("FeatureClass")
-        fieldIndex = valueList.index("Field\n")
 
         #parse the text to populate the field definition dictionary
         for line in fieldDefDoc.readlines():
@@ -1245,12 +1247,6 @@ def getFieldDomain(domain, folder):
     #make sure path exists
     if path.exists(docPath):
         doc = open(docPath, "r")
-
-        headerLine = doc.readline()
-        valueList = headerLine.split("|")
-
-        valueIndex = valueList.index("Values")
-        defIndex = valueList.index("Definition\n")
 
         #parse the text to population the field definition dictionary
         for line in doc.readlines():
@@ -1366,7 +1362,6 @@ def FindOverlaps(working_gdb):
     rd_fc = gdb_object.RoadCenterline         # Our street centerline feature class
     final_fc = join(gdb_object.gdbPath, "AddressRange_Overlap")
     rd_object = NG911_GDB_Objects.getFCObject(rd_fc)
-    pre_dir = rd_object.PRD
     name_field = "NAME_OVERLAP"
     parity_l = rd_object.PARITY_L
     parity_r = rd_object.PARITY_R
@@ -1392,7 +1387,6 @@ def FindOverlaps(working_gdb):
     values = []
     resultType = "fieldValues"
     today = strftime("%m/%d/%y")
-    filename = ""
 
     # turn off editor tracking
     DisableEditorTracking_management(rd_fc, "DISABLE_CREATOR", "DISABLE_CREATION_DATE", "DISABLE_LAST_EDITOR", "DISABLE_LAST_EDIT_DATE")
@@ -1412,7 +1406,7 @@ def FindOverlaps(working_gdb):
     fields1 = tuple(field_list)
 
     # start edit session
-    with Editor(working_gdb) as edit:
+    with Editor(working_gdb):
 ##        edit.startEditing(False, False)
 
         # run update cursor
@@ -1574,13 +1568,11 @@ def checkRCLMATCH(pathsInfoObject):
     values = []
     resultType = "fieldValues"
     today = strftime("%m/%d/%y")
-    filename = ""
 
     # set variables for comparison
     name_field = "NAME_COMPARE"
     code_field = "CODE_COMPARE"
     city_field = a_obj.MSAGCO
-    version = r_obj.GDB_VERSION
     road_field_list = ["NAME_COMPARE", "PRD", "STP", "RD", "STS", "POD", "POM"]
     addy_field_list = ["NAME_COMPARE", "PRD", "STP", "RD", "STS", "POD", "POM"]
 
@@ -1805,7 +1797,6 @@ def checkValuesAgainstDomain(pathsInfoObject):
     values = []
     resultType = "fieldValues"
     today = strftime("%m/%d/%y")
-    filename = ""
 
     #set environment
     env.workspace = gdb
@@ -1873,7 +1864,6 @@ def checkValuesAgainstDomain(pathsInfoObject):
                                             pass
                                         # see if the value is in the domain list
                                         elif row[1] not in domainList:
-                                            fieldVal = row[1]
                                             fID = row[0]
                                             report = "Error: Value %s not in approved domain for field %s" % (str(row[1]), fieldN)
                                             val = (today, report, fc, fieldN, fID, "Check Values Against Domains")
@@ -2481,15 +2471,6 @@ def VerifyRoadAlias(gdb, domainFolder):
         if exists(hwy_text):
             fieldDefDoc = open(hwy_text, "r")
 
-            #get the header information
-            headerLine = fieldDefDoc.readline()
-            valueList = headerLine.split("|")
-            ## print valueList
-
-            #get field indexes
-            rNameIndex = valueList.index("ROUTENAME")
-            rNumIndex = valueList.index("ROUTENUM\n")
-
             #parse the text to populate the field definition dictionary
             for line in fieldDefDoc.readlines():
                 stuffList = line.split("|")
@@ -2671,9 +2652,42 @@ def checkRoadAliases(pathsInfoObject):
             userWarning(road_alias + " does not exist")
 
 
-def checkPolygonTopology(gdbObject):
-    from arcpy import AddRuleToTopology_management, AddFeatureClassToTopology_management
-    userMessage("Validating polygon topology...")
+def checkESBDisplayLength(pathsInfoObject):
+    userMessage("Checking ESB DISPLAY field length...")
+    esbList = pathsInfoObject.gdbObject.esbList
+
+    #set variables for working with the data
+    gdb = pathsInfoObject.gdbObject.gdbPath
+    recordType = "fieldValues"
+    field = "DISPLAY"
+    today = strftime("%m/%d/%y")
+    values = []
+
+    for esb in esbList:
+        fc = basename(esb)
+        if fieldExists(esb, "DISPLAY"):
+            e = "e"
+            wc = "CHAR_LENGTH(DISPLAY) > 32"
+            MakeFeatureLayer_management(esb, e, wc)
+
+            if getFastCount(e) > 0:
+                with SearchCursor(e, ("NGESBID")) as rows:
+                    for row in rows:
+                        msg = "Notice: DISPLAY length longer than 32 characters, value will be truncated"
+                        val = (today, msg, fc, field, row[0], "Check ESB DISPLAY length")
+                        values.append(val)
+            Delete_management(e)
+
+    if values != []:
+        RecordResults(recordType, values, gdb)
+        userWarning("Checked ESB DISPLAY length. There were %s issues." % str(len(values)))
+    else:
+        userMessage("Checked ESB DISPLAY length. No issues found.")
+
+
+def checkTopology(gdbObject, check_polygons, check_roads):
+
+    userMessage("Validating topology...")
 
     #set variables for working with the data
     gdb = gdbObject.gdbPath
@@ -2685,45 +2699,14 @@ def checkPolygonTopology(gdbObject):
     #export topology errors as feature class
     topology = gdbObject.Topology
 
-    # 10/11/2018- found that just plain ESB layers don't have a gaps rule, so add it
-    esb = join(gdb, "NG911", "ESB")
-    ems = join(gdb, "NG911", "ESB_EMS")
-    law = join(gdb, "NG911", "ESB_LAW")
-    fire = join(gdb, "NG911", "ESB_FIRE")
-    if Exists(esb) and hasRecords(esb):
-        try:
-            AddFeatureClassToTopology_management(topology, esb, 2)
-        except:
-            pass
-        try:
-            AddRuleToTopology_management(topology, "Must Not Have Gaps (Area)", esb)
-        except:
-            pass
-
-    elif Exists(ems) and Exists(law) and Exists(fire):
-        for e in [ems, law, fire]:
-            try:
-                AddFeatureClassToTopology_management(topology, e, 2)
-            except:
-                pass
-            try:
-                AddRuleToTopology_management(topology, "Must Not Have Gaps (Area)", e)
-            except:
-                pass
-            try:
-                AddRuleToTopology_management(topology, "Must Not Overlap (Area)", e)
-            except:
-                pass
-
+    # make sure topology is all set up correctly & validate
+    add_topology(gdb, "true")
 
     if Exists(topology):
-        from arcpy import ValidateTopology_management
         out_basename = "NG911"
         polyErrors = "%s_poly" % out_basename
         lineErrors = "%s_line" % out_basename
         pointErrors = "%s_point" % out_basename
-
-        ValidateTopology_management(topology)
 
         for topE in (lineErrors, pointErrors, polyErrors):
             full = join(gdb, topE)
@@ -2738,10 +2721,11 @@ def checkPolygonTopology(gdbObject):
         # query the polygon results for issues
         polyFC = join(gdb, polyErrors)
         lineFC = join(gdb, lineErrors)
+        pointFC = join(gdb, pointErrors)
 
         # loop through polygon and line errors
-        for errorFC in [polyFC, lineFC]:
-            fc_list = ['ESZ','ESB','ESB_EMS','ESB_LAW','ESB_FIRE']
+        for errorFC in [polyFC, lineFC, pointFC]:
+            fc_list = ['ESZ','ESB','ESB_EMS','ESB_LAW','ESB_FIRE',"RoadCenterline"]
             for fc in fc_list:
 
                 # get the count of the issues with a given feature class
@@ -2752,7 +2736,7 @@ def checkPolygonTopology(gdbObject):
 
                 # if issues exist...
                 if k > 0 and Exists(join(gdb, "NG911", fc)):
-                    if basename(errorFC) == "NG911_poly":
+                    if basename(errorFC) == "NG911_poly" and check_polygons == True:
                         fc_lyr = "fc_lyr"
                         fc_full = join(gdb, "NG911", fc)
                         MakeFeatureLayer_management(fc_full, fc_lyr)
@@ -2776,7 +2760,7 @@ def checkPolygonTopology(gdbObject):
                                     if row[2] not in (1, "1"):
 
                                         # report the issues back as notices
-                                        msg = "Notice: Topology issue- %s" % row[1]
+                                        msg = "Error: Topology issue- %s" % row[1]
                                         val = (today, msg, fc, "", row[0], "Check Topology")
                                         values.append(val)
                                 try:
@@ -2791,12 +2775,12 @@ def checkPolygonTopology(gdbObject):
                         RemoveJoin_management(fc_lyr)
                         Delete_management(fc_lyr)
 
-                    elif basename(errorFC) == "NG911_line":
+                    elif basename(errorFC) == "NG911_line" and check_roads == True:
                         qry = "isException = 0"
                         with SearchCursor(lyr, ("RuleDescription"), qry) as rows:
                             for row in rows:
                                 # report the issues back as notices
-                                msg = "Notice: Topology issue- %s" % row[0]
+                                msg = "Error: Topology issue- %s" % row[0]
                                 val = (today, msg, fc, "", "", "Check Topology")
                                 values.append(val)
                             try:
@@ -2807,7 +2791,7 @@ def checkPolygonTopology(gdbObject):
                 Delete_management(lyr)
 
     else:
-        msg = "Notice: Topology does not exist"
+        msg = "Error: Topology does not exist"
         val = (today, msg, "", "", "", "Check Topology")
         values.append(val)
 
@@ -2858,11 +2842,13 @@ def sanityCheck(currentPathSettings):
 
     # common layer checks
     checkValuesAgainstDomain(currentPathSettings)
+    checkESBDisplayLength(currentPathSettings)
     checkFeatureLocations(currentPathSettings)
     try:
-        checkPolygonTopology(gdbObject)
+        checkTopology(gdbObject, True, True) # check everything
     except Exception as e:
         userWarning(str(e))
+        RecordResults("template", [strftime("%m/%d/%y"), "Error: Could not validate topology", "Topology"], gdb)
     checkUniqueIDFrequency(currentPathSettings)
 
     # check address points
@@ -2873,7 +2859,6 @@ def sanityCheck(currentPathSettings):
     if fieldExists(addressPoints, "RCLMATCH"):
         checkRCLMATCH(currentPathSettings)
         checkAddressPointGEOMSAG(currentPathSettings)
-    addy_time = time.time()
     AP_freq = gdbObject.AddressPointFrequency
     a_obj = NG911_GDB_Objects.getFCObject(addressPoints)
     AP_fields = a_obj.FREQUENCY_FIELDS_STRING
@@ -2885,7 +2870,6 @@ def sanityCheck(currentPathSettings):
 
 
     # check roads
-    road_time = time.time()
     roads = gdbObject.RoadCenterline
     road_freq = gdbObject.RoadCenterlineFrequency
     rc_obj = NG911_GDB_Objects.getFCObject(roads)
@@ -3038,6 +3022,7 @@ def main_check(checkType, currentPathSettings):
 
         if checkList[4] == "true":
             checkCutbacks(currentPathSettings)
+            checkTopology(gdbObject, False, True) # just check roads
 
         if checkList[5] == "true":
             checkDirectionality(roads, gdb)
@@ -3055,10 +3040,15 @@ def main_check(checkType, currentPathSettings):
 
         if checkList[0] == "true":
             checkValuesAgainstDomain(currentPathSettings)
+            checkESBDisplayLength(currentPathSettings)
 
         if checkList[1] == "true":
             checkFeatureLocations(currentPathSettings)
-            checkPolygonTopology(gdbObject)
+            try:
+                checkTopology(gdbObject, True, False) # just check polygons
+            except Exception as e:
+                userWarning(str(e))
+                RecordResults("template", [strftime("%m/%d/%y"), "Error: Could not validate topology", "Topology"], gdb)
 
         if checkList[2] == "true":
             checkUniqueIDFrequency(currentPathSettings)
@@ -3085,6 +3075,3 @@ def main_check(checkType, currentPathSettings):
         userWarning(BigMessage)
 
     checkToolboxVersionFinal()
-
-if __name__ == '__main__':
-    main()

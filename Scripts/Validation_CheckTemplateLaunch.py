@@ -7,9 +7,8 @@
 # Created:     24/11/2014
 #-------------------------------------------------------------------------------
 from NG911_GDB_Objects import NG911_Session
-from arcpy import GetParameterAsText, Exists
-from os.path import basename
-from NG911_DataCheck import main_check, userMessage
+from arcpy import GetParameterAsText
+from NG911_DataCheck import main_check
 
 def main():
 
@@ -22,10 +21,9 @@ def main():
     findInvalidGeometry = GetParameterAsText(5)
 
     session_object = NG911_Session(gdb)
-    gdbObject = session_object.gdbObject
 
     #create check list
-    checkList = [checkLayerList,checkRequiredFields,checkRequiredFieldValues, checkSubmissionNumbers, findInvalidGeometry]
+    checkList = [checkLayerList, checkRequiredFields, checkRequiredFieldValues, checkSubmissionNumbers, findInvalidGeometry]
 
     #set object parameters
     checkType = "template"

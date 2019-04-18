@@ -10,20 +10,15 @@ from NG911_GDB_Objects import getFCObject
 from os import remove
 from os.path import join, dirname, exists
 from arcpy.da import SearchCursor, UpdateCursor, Editor
-from arcpy import (Copy_management, AddField_management, AddMessage,
+from arcpy import (AddField_management, AddMessage,
                     MakeFeatureLayer_management, Delete_management,
                     CalculateField_management, Exists, Merge_management,
                     MakeTableView_management, CopyRows_management,
-                    DeleteField_management, SelectLayerByAttribute_management,
-                    ListFields, AddWarning)
+                    DeleteField_management, AddWarning)
 from NG911_arcpy_shortcuts import getFastCount, fieldExists
 import time
 
 def prep_roads_for_comparison(rd_fc, name_field, code_fields, city_fields, field_list):
-
-    rd_object = getFCObject(rd_fc)
-##    AddMessage(rd_fc)
-##    AddMessage("Initial field list:" + ", ".join(field_list))
 
     # calculate values for NAME_OVLERAP field
     fields1 = tuple(field_list)
@@ -291,7 +286,6 @@ def launch_compare(gdb, output_table, HNO, addy_city_field, addy_field_list, que
     code_field = "CODE_COMPARE"
     city_field = "MSAGCO"
     rd_object = getFCObject(rd_fc)
-    ap_object = getFCObject(ap_fc)
 
     # flip switch for gdb instead of in_memory
     storage = "in_memory"
@@ -303,7 +297,6 @@ def launch_compare(gdb, output_table, HNO, addy_city_field, addy_field_list, que
 
     # prep road centerline with concatenated label field
     road_field_list = ["NAME_COMPARE", "PRD", "STP", "RD", "STS", "POD", "POM"]
-    segid_field = rd_object.UNIQUEID
     version = rd_object.GDB_VERSION
 
     # copy the roads to a table for comparison

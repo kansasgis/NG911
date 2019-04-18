@@ -117,7 +117,7 @@ def indexExists(fc, indexName):
 def hasIndex(fc):
     exists = False
     indexes = ListIndexNames
-    if index != []:
+    if indexes != []:
         exists = True
     return exists
 

@@ -10,12 +10,12 @@
 # Creates a composite locator from the address points and road centerlines based on the MSAG field information
 
 from os import mkdir
-from os.path import exists, dirname, join, basename
+from os.path import exists, dirname, basename
 from arcpy import (CreateFileGDB_management, Exists,
 CreateAddressLocator_geocoding,
 CreateCompositeAddressLocator_geocoding)
 from arcpy import GetParameterAsText
-from NG911_GDB_Objects import getGDBObject, getFCObject
+from NG911_GDB_Objects import getGDBObject, getFCObject, getTNObject
 from NG911_DataCheck import userMessage
 
 def createLocators(gdb_object):

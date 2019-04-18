@@ -16,13 +16,12 @@ def getApprovedDomains():
     return dList
 
 def main():
-    from arcpy import GetParameterAsText
     try:
         from urllib import urlretrieve
     except:
         from urllib.request import urlretrieve
     from os import listdir
-    from os.path import basename, join, dirname, realpath
+    from os.path import join, dirname, realpath
 
     #get domain folder
     domainFolder = join(dirname(dirname(realpath(__file__))), "Domains")

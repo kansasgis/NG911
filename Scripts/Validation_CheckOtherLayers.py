@@ -9,7 +9,7 @@
 
 def main():
     from arcpy import GetParameterAsText, Exists
-    from os.path import join, basename
+    from os.path import basename
     from NG911_DataCheck import main_check, userMessage
     from NG911_GDB_Objects import NG911_Session
     from NG911_arcpy_shortcuts import hasRecords

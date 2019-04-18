@@ -10,7 +10,7 @@
 from arcpy import (GetParameterAsText, CalculateField_management, Append_management,
                     AddField_management, DeleteField_management, Dissolve_management,
                     DeleteFeatures_management, Exists, CreateFeatureclass_management,
-                    Delete_management)
+                    Delete_management, AddWarning)
 from arcpy.da import UpdateCursor, SearchCursor
 from NG911_GDB_Objects import getFCObject, getGDBObject
 from os.path import join, dirname, abspath, basename
@@ -25,7 +25,6 @@ def getCountyInfo(county, info):
     county_dbf = join(domains_folder, "CountyCodes.dbf")
 
     #from county name, query out the state prefix
-    countycode = ""
     county_wc = '"COUNTY" = ' + "'" + county + "'"
 
     if info == "countycode":

@@ -6,9 +6,10 @@
 #
 # Created:     21/04/2016
 #-------------------------------------------------------------------------------
-from arcpy import GetParameterAsText, CalculateField_management, MakeFeatureLayer_management, AddMessage, AddWarning
+from arcpy import GetParameterAsText, AddMessage, AddWarning
 from arcpy.da import InsertCursor, SearchCursor
 from NG911_GDB_Objects import getFCObject, getGDBObject
+import time
 
 def uniqueID():
     x = str(int(time.time()))

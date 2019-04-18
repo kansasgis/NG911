@@ -9,14 +9,13 @@
 #-------------------------------------------------------------------------------
 from arcpy import (Exists, AddJoin_management, RemoveJoin_management,
                     MakeTableView_management, SelectLayerByAttribute_management,
-                    GetParameterAsText, CopyRows_management, CalculateField_management,
-                    Dissolve_management, AddField_management, CopyFeatures_management,
-                    MakeFeatureLayer_management, Delete_management)
+                    GetParameterAsText, Dissolve_management, AddField_management, 
+                    CopyFeatures_management, MakeFeatureLayer_management, Delete_management)
 from arcpy.da import SearchCursor, Editor, UpdateCursor
 from NG911_GDB_Objects import getFCObject, getGDBObject
 from NG911_DataCheck import userMessage, RecordResults
-from NG911_arcpy_shortcuts import getFastCount, fieldExists
-from os.path import join, basename
+from NG911_arcpy_shortcuts import getFastCount
+from os.path import join
 from time import strftime
 
 def prepLayer(fc, copy_table, unique, rc_obj, gdb):
@@ -66,7 +65,6 @@ def main():
     roads = gdb_object.RoadCenterline
 
     #get address point and road objects
-    a_obj = getFCObject(addressPoints)
     rc_obj = getFCObject(roads)
 
     #define working layers & tables

@@ -8,8 +8,7 @@
 #-------------------------------------------------------------------------------
 
 def main():
-    from arcpy import GetParameterAsText, Exists, AddMessage
-    from os.path import join
+    from arcpy import GetParameterAsText, Exists
     from NG911_DataCheck import main_check
     from NG911_GDB_Objects import NG911_Session
 

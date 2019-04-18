@@ -9,11 +9,11 @@
 #-------------------------------------------------------------------------------
 from NG911_DataCheck import userMessage
 from arcpy import (CopyFeatures_management, MakeFeatureLayer_management, GetParameterAsText, Exists,
-        CalculateField_management, Dissolve_management, Project_management, Delete_management, env,
+        CalculateField_management, Dissolve_management, Delete_management, env,
         AddField_management, Statistics_analysis)
 from arcpy.da import SearchCursor
-from os.path import dirname, join
-from NG911_GDB_Objects import getFCObject, getGDBObject
+from os.path import join
+from NG911_GDB_Objects import getFCObject
 from NG911_arcpy_shortcuts import fieldExists
 from datetime import datetime
 
@@ -26,7 +26,6 @@ def splitESB(inputESB, output_workspace):
     esb_obj = getFCObject(inputESB)
 
     working_dir = output_workspace
-    outputFolder = output_workspace
 
     env.workspace = working_dir
     env.overwriteOutput = True
@@ -57,7 +56,6 @@ def splitESB(inputESB, output_workspace):
     stats_eff_date = join("in_memory", "eff_date")
     Statistics_analysis(lyrESB, stats_eff_date, [["EFF_DATE", "COUNT"]], "EFF_DATE")
 
-    eff_date_dict = {}
     eff_date = ""
     high_count = 0
     with SearchCursor(stats_eff_date, ("EFF_DATE", "COUNT_EFF_DATE")) as rows:

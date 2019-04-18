@@ -19,6 +19,9 @@ def userMessage(msg):
 def main():
     gdb = GetParameterAsText(0)
     validate_topology = GetParameterAsText(1)
+    add_topology(gdb, validate_topology)
+
+def add_topology(gdb, validate_topology):
 
     ds = join(gdb, "NG911")
     topology_name ="NG911_Topology"
@@ -38,9 +41,9 @@ def main():
 
     # list of feature classes to be added to the topology
     fc_list= ["RoadCenterline", "AddressPoints", "ESB", "ESB_LAW", "ESB_EMS", "ESB_FIRE", "AuthoritativeBoundary",
-                "ESZ", "ESB_PSAP"]
+                "ESZ", "ESB_PSAP", "ESB_RESCUE", "ESB_FIREAUTOAID"]
 
-    esb_list = ["ESB", "ESB_EMS", "ESB_FIRE", "ESB_LAW", "ESB_PSAP", "ESZ"]
+    esb_list = ["ESB", "ESB_EMS", "ESB_FIRE", "ESB_LAW", "ESB_PSAP", "ESZ", "ESB_RESCUE", "ESB_FIREAUTOAID"]
 
     # add all feature classes that exist to the topology
     for fc in fc_list:

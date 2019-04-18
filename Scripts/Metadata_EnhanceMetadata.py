@@ -82,9 +82,6 @@ def getDomainSource(domain):
 
     return domSource
 
-def getRoadFieldDefinition(fieldName):
-
-    fieldDef = ""
 
 def listmetadatafiles(folder):
     from os import listdir
@@ -100,7 +97,6 @@ def cleanUp(gdb):
     from os import listdir, remove
 
     folder = dirname(gdb)
-    mList = []
     list = listdir(folder)
     for names in list:
         if names.endswith(".log"):
@@ -124,12 +120,6 @@ def getFieldDomain(field, folder):
 
     doc = open(docPath, "r")
 
-    headerLine = doc.readline()
-    valueList = headerLine.split("|")
-
-    valueIndex = valueList.index("Values")
-    defIndex = valueList.index("Definition\n")
-
     domainDict = {}
 
     #parse the text to population the field definition dictionary
@@ -145,16 +135,6 @@ def parseFieldDefs(keyword, folder):
 
     path = join(folder, "NG911_FieldDefinitions.txt")
     fieldDefDoc = open(path, "r")
-
-    #get the header information
-    headerLine = fieldDefDoc.readline()
-    valueList = headerLine.split("|")
-##    print valueList
-
-    #get field indexes
-    fcIndex = valueList.index("FeatureClass")
-    fieldIndex = valueList.index("Field")
-    defIndex = valueList.index("Definition\n")
 
     #create a field definition dictionary
     defDict = {}

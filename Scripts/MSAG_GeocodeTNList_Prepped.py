@@ -6,19 +6,15 @@
 #
 # Created:     01/08/2016
 #-------------------------------------------------------------------------------
-from arcpy import (CopyRows_management, Delete_management, AddField_management,
-            CalculateField_management, GetParameterAsText, Exists, env,
-            CreateTable_management,
-            MakeFeatureLayer_management, AddMessage, CreateFileGDB_management,
-            MakeTableView_management, DisableEditorTracking_management,
+from arcpy import (Delete_management, AddField_management,
+            GetParameterAsText, Exists, CreateTable_management,
+            CreateFileGDB_management, DisableEditorTracking_management,
             EnableEditorTracking_management)
 from arcpy.da import InsertCursor, UpdateCursor
 from NG911_DataCheck import userMessage, getFieldDomain
 from os.path import join, dirname, basename, exists, realpath
 from os import mkdir
-from NG911_GDB_Objects import getFCObject, getTNObject, getGDBObject
-from NG911_arcpy_shortcuts import getFastCount, fieldExists
-from sys import exit
+from NG911_GDB_Objects import getFCObject, getTNObject
 from MSAG_CheckTNList import geocodeTable
 
 def prepXLS(tnxls_sheet, gdb, xls_fields):
@@ -146,7 +142,6 @@ def main():
     post = GetParameterAsText(7)
     msagco = GetParameterAsText(8)
     tn = GetParameterAsText(9)
-    gdb_object = getGDBObject(gdb)
 
     addy_fc = join(gdb, "NG911", "AddressPoints")
     rd_fc = join(gdb, "NG911", "RoadCenterline")

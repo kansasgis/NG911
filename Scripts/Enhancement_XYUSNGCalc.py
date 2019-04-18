@@ -14,7 +14,6 @@ from arcpy import GetParameterAsText, AddMessage, Describe, SpatialReference, Po
 from arcpy.da import Editor, UpdateCursor
 from os.path import dirname
 from NG911_GDB_Objects import getFCObject
-from NG911_arcpy_shortcuts import fieldExists
 
 def main():
 

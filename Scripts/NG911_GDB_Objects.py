@@ -8,7 +8,6 @@
 #-------------------------------------------------------------------------------
 # This is a class used represent the NG911 geodatabase
 from os.path import join, basename
-from NG911_arcpy_shortcuts import fieldExists
 from arcpy import Exists
 
 class NG911_RoadCenterline_Object(object):
@@ -724,8 +723,6 @@ def getProjectionFile():
     return prj
 
 def NG911_Session(gdb):
-    from arcpy import Exists
-    from NG911_arcpy_shortcuts import fieldExists
     from os.path import dirname, join, realpath
 
     folder = join(dirname(dirname(realpath(__file__))), "Domains")
@@ -756,17 +753,15 @@ def getGDBObject(gdb):
     LAW = join(gdb, featureDataset, "ESB_LAW")
     PSAP = join(gdb, featureDataset, "ESB_PSAP")
     RESCUE = join(gdb, featureDataset, "ESB_RESCUE")
+    FIREAUTOAID = join(gdb, featureDataset, "ESB_FIREAUTOAID")
 
     # test to see what should be included in the for-real ESB list
     esbList = []
-    for e in [ESB, EMS, FIRE, LAW, PSAP, RESCUE]:
+    for e in [ESB, EMS, FIRE, LAW, PSAP, RESCUE, FIREAUTOAID]:
         if Exists(e): # make sure the layer exists
             if hasRecords(e): # make sure the layer has records
                 if e not in esbList:
                     esbList.append(e)
-
-    # set utList just in case
-    utList = []
 
     # get the path to the projection file
     prj = getProjectionFile()
