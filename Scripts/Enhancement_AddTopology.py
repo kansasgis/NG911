@@ -51,16 +51,19 @@ def add_topology(gdb, validate_topology):
 
         if Exists(fc_full):
 
+            present = False
             # if the feature class isn't in the topology, add it
             if fc not in fc_topology:
                 AddFeatureClassToTopology_management(topology, fc_full)
+            else:
+                present = True
 
             # if it's a polygon, add the no overlap rule
             if fc not in ["RoadCenterline", "AddressPoints"]:
                 AddRuleToTopology_management(topology, "Must Not Overlap (Area)", fc_full)
 
             # add no gaps rule to ESB layers
-            if "ESB" in fc:
+            if "ESB" in fc and present == False:
                 AddRuleToTopology_management(topology, "Must Not Have Gaps (Area)", fc_full)
 
     userMessage("All feature classes present in or added to topology")
@@ -80,11 +83,11 @@ def add_topology(gdb, validate_topology):
         for road_rule in road_rules:
             AddRuleToTopology_management(topology, road_rule, road)
 
-        # make sure roads are inside all ESB & ESZ layers
-        for esb in esb_list:
-            esb_full = join(ds, esb)
-            if Exists(esb_full):
-                AddRuleToTopology_management(topology, "Must Be Inside (Line-Area)", road, "", esb_full)
+##        # make sure roads are inside all ESB & ESZ layers
+##        for esb in esb_list:
+##            esb_full = join(ds, esb)
+##            if Exists(esb_full):
+##                AddRuleToTopology_management(topology, "Must Be Inside (Line-Area)", road, "", esb_full)
 
     # make sure authoritative boundary covers everything
     auth_bnd = join(ds, "AuthoritativeBoundary")
@@ -111,6 +114,8 @@ def add_topology(gdb, validate_topology):
         userMessage("Validating topology...")
         ValidateTopology_management(topology)
         userMessage("Topology validated")
+
+    return "Done"
 
 
 if __name__ == '__main__':

@@ -94,12 +94,8 @@ def main():
 
                             #if an error was generated, add it to the error list
                             if msg != "":
-                                val = (today, msg, filename, "", segID)
+                                val = (today, msg, filename, "", segID, "VerifyTopology")
                                 values.append(val)
-
-
-
-
 
                 except:
                     userMessage("Error attempting topology validation.")

@@ -2356,7 +2356,7 @@ def checkCutbacks(pathsInfoObject):
                                     pc = [pnt.X, pnt.Y]
                                     part_coords.append(pc)
                                 else:
-                                    print("interior ring")
+                                    pass
 
                             #loop through coordinate list
                             if part_coords != []:
@@ -2582,7 +2582,8 @@ def checkJoin(gdb, inputTable, joinTable, where_clause, errorMessage, field):
             for row in rows:
                 if row[1] is not None:
                     if " TO " in row[1] or "RAMP" in row[1] or "OLD" in row[1]:
-                        print("this is probably an exception")
+                        #print("this is probably an exception")
+                        pass
                     else:
                         val = (today, errorMessage, layer, "", row[0], "Check Road Alias")
                         values.append(val)
@@ -2717,78 +2718,176 @@ def checkTopology(gdbObject, check_polygons, check_roads):
         userMessage("Exporting topology errors...")
         ExportTopologyErrors_management(topology, gdb, out_basename)
 
-
         # query the polygon results for issues
         polyFC = join(gdb, polyErrors)
         lineFC = join(gdb, lineErrors)
         pointFC = join(gdb, pointErrors)
 
+        # create a dictionary of the counts
+        fcIssueDict = {}
+
+        top_fields = ["OriginObjectClassName", "OriginObjectID", "RuleDescription"]
+        top_fields_line = ["OriginObjectClassName", "OriginObjectID", "RuleDescription", "SHAPE@LENGTH"]
+
+        top_dict = {polyFC: top_fields, lineFC: top_fields_line, pointFC: top_fields}
+
+        # make a list of all of the exceptions in road attributes sp these aren't reported
+        roads = gdbObject.RoadCenterline
+        rd_object = rd_object = NG911_GDB_Objects.getFCObject(roads)
+        wc = rd_object.EXCEPTION + " <> 'NOT EXCEPTION'"
+        exceptions = {}
+        with SearchCursor(roads, ("OBJECTID", rd_object.EXCEPTION), wc) as rows:
+            for row in rows:
+                exceptions[row[0]] = row[1]
+
+        # set up exception definition dictionary
+        exc_dict = {"EXCEPTION INSIDE": ["Must Be Inside"],
+                    "EXCEPTION DANGLES": ["Must Not Have Dangles"],
+                    "EXCEPTION BOTH": ["Must Be Inside", "Must Not Have Dangles"]}
+
         # loop through polygon and line errors
-        for errorFC in [polyFC, lineFC, pointFC]:
-            fc_list = ['ESZ','ESB','ESB_EMS','ESB_LAW','ESB_FIRE',"RoadCenterline"]
-            for fc in fc_list:
+        for errorFC in top_dict:
+            fields = top_dict[errorFC]
 
-                # get the count of the issues with a given feature class
-                wc = "OriginObjectClassName = '%s'" % fc
-                lyr = "lyr"
-                MakeFeatureLayer_management(errorFC, lyr, wc)
-                k = getFastCount(lyr)
+            # start a search cursor to report issues
+            wc = "isException = 0"
+            lyr = "lyr"
+            MakeFeatureLayer_management(errorFC, lyr, wc)
+            k = getFastCount(lyr)
 
-                # if issues exist...
-                if k > 0 and Exists(join(gdb, "NG911", fc)):
-                    if basename(errorFC) == "NG911_poly" and check_polygons == True:
-                        fc_lyr = "fc_lyr"
-                        fc_full = join(gdb, "NG911", fc)
-                        MakeFeatureLayer_management(fc_full, fc_lyr)
+            if k > 0:
 
-                        #add join
-                        AddJoin_management(fc_lyr, "OBJECTID", lyr, "OriginObjectID")
+                # set up ESB tracking
+                esb_list = []
+                esb_lengths = []
+                reportESB = False
+                esb_dict = {}
 
-                        obj = NG911_GDB_Objects.getFCObject(fc_full)
+                with SearchCursor(lyr, fields) as rows:
+                    for row in rows:
 
-                        #set query and field variables
-                        qry = "%s.OriginObjectID IS NOT NULL and %s.isException = 0" % (basename(errorFC), basename(errorFC))
-                        fields = ("%s.%s" % (fc, obj.UNIQUEID), basename(errorFC) + ".RuleDescription", basename(errorFC) + ".isException")
+                        fc = row[0]
+                        objectID = row[1]
+                        ruleDesc = row[2]
 
-            ##            try:
-                        if 1 == 1:
+                        # get the issues
+                        if basename(errorFC) == "NG911_poly" and check_polygons == True:
+                            fc_lyr = "fc_lyr"
+                            fc_full = join(gdb, "NG911", fc)
+                            MakeFeatureLayer_management(fc_full, fc_lyr)
+
+                            #add join
+                            AddJoin_management(fc_lyr, "OBJECTID", lyr, "OriginObjectID")
+
+                            obj = NG911_GDB_Objects.getFCObject(fc_full)
+
+                            #set query and field variables
+                            qry = "%s.OriginObjectID IS NOT NULL and %s.isException = 0" % (basename(errorFC), basename(errorFC))
+                            fields2 = ("%s.%s" % (fc, obj.UNIQUEID), basename(errorFC) + ".RuleDescription", basename(errorFC) + ".isException")
+
                             #set up search cursor to loop through records
-                            with SearchCursor(fc_lyr, fields, qry) as rows:
+                            with SearchCursor(fc_lyr, fields2, qry) as rows2:
 
-                                for row in rows:
+                                for row2 in rows2:
                                     # make sure we're not reporting back an exception
-                                    if row[2] not in (1, "1"):
+                                    if row2[2] not in (1, "1"):
 
                                         # report the issues back as notices
-                                        msg = "Error: Topology issue- %s" % row[1]
-                                        val = (today, msg, fc, "", row[0], "Check Topology")
+                                        msg = "Error: Topology issue- %s" % row2[1]
+                                        val = (today, msg, fc, "", row2[0], "Check Topology")
                                         values.append(val)
                                 try:
-                                    del row, rows
+                                    del row2, rows2
                                 except:
                                     pass
 
-            ##            except:
-            ##                userMessage("Error attempting topology validation.")
+                            #clean up & reset
+                            RemoveJoin_management(fc_lyr)
+                            Delete_management(fc_lyr)
 
-                        #clean up & reset
-                        RemoveJoin_management(fc_lyr)
-                        Delete_management(fc_lyr)
+                        elif basename(errorFC) == "NG911_line":
+                            if check_polygons == True and "ESB" in fc:
+                                # get some stats to analyze after the loop
 
-                    elif basename(errorFC) == "NG911_line" and check_roads == True:
-                        qry = "isException = 0"
-                        with SearchCursor(lyr, ("RuleDescription"), qry) as rows:
-                            for row in rows:
-                                # report the issues back as notices
-                                msg = "Error: Topology issue- %s" % row[0]
-                                val = (today, msg, fc, "", "", "Check Topology")
-                                values.append(val)
-                            try:
-                                del row, rows
-                            except:
-                                pass
+                                # ESB layer must be unique
+                                if fc not in esb_list:
+                                    esb_list.append(fc)
+                                else:
+                                    reportESB = True
 
-                Delete_management(lyr)
+                                # rules must be "Must Not Have Gaps"
+                                if ruleDesc != "Must Not Have Gaps":
+                                    reportESB = True
+
+                                # shape must all be the same
+                                esb_length = row[3]
+                                if esb_lengths == []:
+                                    esb_lengths.append(esb_length)
+                                elif esb_length not in esb_lengths:
+                                    reportESB = True
+
+                                # collect ESB issue details in case we have to report
+                                if fc not in esb_dict:
+                                    esb_dict[fc] = [ruleDesc]
+                                else:
+                                    rules = esb_dict[fc]
+                                    rules.append(ruleDesc)
+                                    esb_dict[fc] = rules
+
+                            if check_roads == True and "Road" in fc:
+
+                                # see if the road is marked as an exception or not
+                                wc = "OBJECTID = " + str(objectID)
+                                with SearchCursor(roads, (rd_object.UNIQUEID, rd_object.EXCEPTION), wc) as j_rows:
+                                    for j_row in j_rows:
+                                        # get the NGSEGID & the exception
+                                        ngsegid = j_row[0]
+                                        rd_exc = j_row[1]
+
+                                        # check to see if the exception has been marked
+                                        if rd_exc in exc_dict:
+
+                                            # get the list of plausible exceptions
+                                            plausibleException = exc_dict[rd_exc]
+
+                                            # if the reported issue isn't in acceptable exceptions,
+                                            # then report it
+                                            if ruleDesc not in plausibleException:
+                                                userMessage("In attributes: " + ", ".join(plausibleException))
+                                                userMessage("In topology: " + ruleDesc)
+                                                # then report the issue
+                                                msg = "Error: Topology issue- %s" % ruleDesc
+                                                val = (today, msg, fc, "", ngsegid, "Check Topology")
+                                                values.append(val)
+
+                                            # the else implying that the marked exception and the
+                                            # found issue match, so it should not be marked
+
+                                        # this means it isn't marked, so report the topology issue
+                                        elif rd_exc == "NOT EXCEPTION":
+                                            # then report the issue
+                                            msg = "Error: Topology issue- %s" % ruleDesc
+                                            val = (today, msg, fc, "", ngsegid, "Check Topology")
+                                            values.append(val)
+
+                                    try:
+                                        del j_row, j_rows
+                                    except:
+                                        pass
+
+
+                # report back polygon issues
+                if reportESB == True:
+                    for esb in esb_dict:
+                        rules = esb_dict[esb]
+                        for rule in rules:
+                            # report the issues back as notices
+                            msg = "Error: Topology issue- %s" % rule
+                            val = (today, msg, esb, "", "", "Check Topology")
+                            values.append(val)
+            Delete_management(lyr)
+
+
 
     else:
         msg = "Error: Topology does not exist"
