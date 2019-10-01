@@ -30,6 +30,8 @@ features with “NO_MATCH”.
 [*Add/Update Parcel Layer*](#parcels): converts a county's parcel layer to NG911
 template standards and loads data into the geodatabase
 
+[*Address Points to NENA*](#NENA): exports NG911 address points to NENA format
+
 [*GDB to Shapefiles*](#gdb2shp): converts all feature classes in the NG911 dataset
 of a NG911 geodatabase into shapefiles and converts the road alias table
 to a DBF.
@@ -65,6 +67,18 @@ dashes or be straight digits.
 you’d like to import the parcels.
 
 7.	Run the tool.
+
+<a name="NENA"></a>
+Running *Address Points to NENA*:
+1.	Open ArcCatalog and navigate to the toolbox called “Kansas NG911 GIS Tools”, expand the toolbox, then expand the toolset called “Conversion Tools.”
+
+2.	Double click the script titled “Address Points to NENA”.
+
+3.	In the “NG911 Address Points” parameter, add in the full path to the address points to be exported.
+
+4.	In the “Output NENA Address Points” parameter, enter the full path of the output NENA address points. This can be a geodatabase feature class or a shapefile.
+
+5.	Run the tool.
 
 <a name="gdb2shp"></a>
 Running *GDB to Shapefile*:
