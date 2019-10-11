@@ -2543,10 +2543,17 @@ def checkLineSelfIntersections(roads):
             gdb = dirname(roads)
             
         RecordResults("fieldValues", values, gdb)
+        try:
+            del values, today, layer
+        except:
+            pass
     else:
         userMessage("No self-intersecting roads found.")
         
-    del intersections, values, today, layer, ngsegid, report, val, gdb
+    try:
+        del intersections, ngsegid, report, val, gdb
+    except:
+        pass
 
 
 def getNumbers():
