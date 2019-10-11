@@ -9,20 +9,20 @@
 #-------------------------------------------------------------------------------
 
 from arcpy import (AddField_management, AddMessage, CalculateField_management, CopyRows_management, Statistics_analysis,
-                   CreateTable_management, Delete_management, Exists,
+                   CreateTable_management, Delete_management, Exists, 
                    ListFields, MakeFeatureLayer_management, MakeTableView_management, SelectLayerByAttribute_management,
                    SelectLayerByLocation_management, env, ListDatasets,
                    AddJoin_management, RemoveJoin_management, AddWarning, CopyFeatures_management,
                    Dissolve_management, DeleteField_management, DisableEditorTracking_management, EnableEditorTracking_management,
                    ExportTopologyErrors_management, Buffer_analysis, Intersect_analysis, Point, ListFeatureClasses)
-from arcpy.da import InsertCursor, SearchCursor, UpdateCursor, Editor
+from arcpy.da import InsertCursor, SearchCursor
 from os import path, remove
 from os.path import basename, dirname, join, exists
 from time import strftime
 from Validation_ClearOldResults import ClearOldResults
 from Enhancement_AddTopology import add_topology
 import NG911_GDB_Objects
-from NG911_arcpy_shortcuts import deleteExisting, getFastCount, cleanUp, ListFieldNames, fieldExists, hasRecords
+from NG911_arcpy_shortcuts import deleteExisting, getFastCount, cleanUp, ListFieldNames, fieldExists
 from MSAG_DBComparison import prep_roads_for_comparison
 #import time
 #from math import sin, cos, atan2, sqrt, asin, pi
@@ -202,6 +202,98 @@ def RecordResults(resultType, values, gdb): # Guessed on whitespace formatting h
         except:
             userMessage(row)
     del cursor
+
+
+def checkStewards(pathsInfoObject):
+
+    gdb = pathsInfoObject.gdbPath
+
+    userMessage("Checking data stewards...")
+
+    #get current required layer list
+    layerList = pathsInfoObject.gdbObject.requiredLayers
+
+    # set reporting variables
+    values = []
+    today = strftime("%m/%d/%y")
+
+    for fc in layerList:
+        output = r"in_memory\Summary"
+        field = "STEWARD"
+
+        if Exists(output):
+            Delete_management(output)
+
+        wc_submit = "SUBMIT = 'Y'"
+        fl_submit = "fl_submit"
+        MakeTableView_management(fc, fl_submit, wc_submit)
+
+        #run frequency to get unique list in "STEWARD" field
+        Statistics_analysis(fl_submit, output, [["STEWARD","COUNT"]], "STEWARD")
+
+        # run a count to see if the output is more than one record long
+        stewardCount = getFastCount(output)
+
+        # if it's a bigger list, get the list of stewards
+        if stewardCount > 1:
+
+            #set up empty variables to hold list of stewards in the data
+            stewardList = []
+
+            #run search cursor to get list of stewards
+            with SearchCursor(output, (field)) as rows:
+                for row in rows:
+                    if row[0] is not None:
+                        stewardList.append(row[0])
+
+            if len(stewardList) > 1:
+
+                # only three PSAPs submit data for multiple STEWARDs
+                multiStewardDict = {"Crawford": ['484988', '485643'], "Leavenworth": ['485016', '485610'], "Montgomery": ['485556', '485598']}
+
+                # set variables
+                good = False
+                county = ""
+
+                # loop through the dictionary
+                for co in multiStewardDict.keys():
+                    coList = multiStewardDict[co]
+                    diff = list(set(stewardList) - set(coList))
+
+                    # test to see if there are more stewards listed than are approved
+                    if diff == []:
+                        good = True
+                        county = co
+
+                if not good:
+                    # report that an unapproved steward exists in the feature class
+                    dataset_report = "Error: STEWARD contains values not approved for this PSAP in " + basename(fc)
+                    val = (today, dataset_report, basename(fc), "STEWARD", "", "Check STEWARD")
+                    values.append(val)
+                    userWarning(dataset_report)
+
+                else:
+                    # report that approved stewards exist
+                    userMessage("All stewards approved for %s %s" % (county, basename(fc)))
+
+        else:
+            userMessage("Stewards good for " + basename(fc))
+
+        # clean up
+        Delete_management(output)
+        Delete_management(fl_submit)
+
+    #record issues if any exist
+    if values != []:
+        RecordResults("fieldValues", values, gdb)
+        userWarning("STEWARD contains values not approved for this PSAP. See FieldValuesCheckResults.")
+    else:
+        userMessage("Checked stewards.")
+
+    try:
+        del stewardList, wc_submit
+    except:
+        pass
 
 
 def getParityReport(phrase):
@@ -817,7 +909,7 @@ def checkAddressPointGEOMSAG(currentPathSettings):
 
                 if rclside == "N":
                     report = "Error: RCLSIDE set to N while RCLMATCH has a valid NGSEGID. RCLSIDE should be R or L."
-                    val = (today, report, filename, "GEOMSAG", addid, "Check Address Point GEOMSAG")
+                    val = (today, report, filename, "RCLSIDE", addid, "Check Address Point GEOMSAG")
                     values.append(val)
                 else:
                     # set up road centerline where clause
@@ -1289,7 +1381,7 @@ def launchRangeFinder(f_add, t_add, parity):
     return sideRange
 
 
-def checkMsagLabelCombo(msag, label, overlaps, rd_fc, fields, msagList, name_field, txt, v21):
+def checkMsagLabelCombo(msag, label, overlaps, rd_fc, fields, msagList, name_field, txt):
     address_list = []
     checked_segids = []
     dict_ranges = {}
@@ -1298,13 +1390,10 @@ def checkMsagLabelCombo(msag, label, overlaps, rd_fc, fields, msagList, name_fie
 
         if "'" in label:
             label = label.replace("'", "''")
-
-        wcList = [msagfield, " = '", msag, "' AND ", name_field, " = '", label, "' AND SUBMIT = 'Y'"]
-
-        if v21 == 1:
-            wcList = wcList + [" AND AUTH_", side, " = 'Y' AND GEOMSAG", side, " = 'Y'"]
-
-        wc = "".join(wcList)
+        
+        wc = "%s = '%s' AND %s = '%s' AND SUBMIT = 'Y' AND AUTH_%s = 'Y' and GEOMSAG%s = 'Y'" % (msagfield, msag, 
+                                                                                                 name_field, label,
+                                                                                                 side, side)
 
         with SearchCursor(rd_fc, fields, wc) as rows:
             for row in rows:
@@ -1372,7 +1461,6 @@ def FindOverlaps(working_gdb):
     msagco_l = rd_object.MSAGCO_L
     msagco_r = rd_object.MSAGCO_R
     segid = rd_object.UNIQUEID
-    version = rd_object.GDB_VERSION
     auth_l = rd_object.AUTH_L
     auth_r = rd_object.AUTH_R
     geomsag_l = rd_object.GEOMSAGL
@@ -1397,43 +1485,22 @@ def FindOverlaps(working_gdb):
 
     # add the NAME_OVERLAP field
     if not fieldExists(rd_fc, name_field):
-##        DeleteField_management(rd_fc, name_field)
         AddField_management(rd_fc, name_field, "TEXT", "", "", 150)
+    
+    # calculate the label field
+    code_block = """def calc_name(prd, stp, rd, sts, pod, pom):
+    row = [prd, stp, rd, sts, pod, pom]
+    field_count = len(row)
+    start_int = 0
+    lstLabel = []
 
-    # calculate values for NAME_OVERLAP field
-    field_list = rd_object.LABEL_FIELDS
-    field_list[0] = name_field
-    fields1 = tuple(field_list)
-
-    # start edit session
-    with Editor(working_gdb):
-##        edit.startEditing(False, False)
-
-        # run update cursor
-        with UpdateCursor(rd_fc, fields1) as rows:
-            for row in rows:
-                field_count = len(fields1)
-                start_int = 1
-                label = ""
-
-                # loop through the fields to see what's null & skip it
-                while start_int < field_count:
-                    if row[start_int] is not None:
-                        if row[start_int] not in ("", " "):
-                            label = label + " " + str(row[start_int])
-                    start_int = start_int + 1
-
-                row[0] = label
-                rows.updateRow(row)
-
-##        edit.stopEditing(True)
-
-    # clean up all labels
-    trim_expression = '" ".join(!' + name_field + '!.split())'
-    CalculateField_management(rd_fc, name_field, trim_expression, "PYTHON_9.3")
-
-##    now_time = time.time()
-##    print("Marker: done processing feature class. Elapsed time was %g seconds" % (now_time - start_time))
+    while start_int < field_count:
+        if row[start_int] is not None and row[start_int] not in ("", " "):
+            lstLabel.append(str(row[start_int]))
+        start_int += 1
+    return " ".join(lstLabel)"""
+    expression = "calc_name(!PRD!, !STP!, !RD!, !STS!, !POD!, !POM!)"
+    CalculateField_management(rd_fc, name_field, expression, "PYTHON_9.3", code_block)
 
     # make sure the text file notification only shows up if there's an overlap problem
     overlap_error_flag = 0
@@ -1441,11 +1508,7 @@ def FindOverlaps(working_gdb):
 ##    try:
     if 1 == 1:
         already_checked = []
-        rd_fields = [msagco_l, msagco_r, name_field, segid]
-        v21 = 0
-        if version == "21":
-            v21 = 1
-            rd_fields = rd_fields + [auth_l, auth_r, geomsag_l, geomsag_r]
+        rd_fields = [msagco_l, msagco_r, name_field, segid, auth_l, auth_r, geomsag_l, geomsag_r]
 
         overlaps = []
 
@@ -1454,13 +1517,10 @@ def FindOverlaps(working_gdb):
 
                 # in the 2.1 geodatabase, make sure only authoritative sides are checked
                 checkL, checkR = 0,0
-                if version == "21":
-                    if all_row[4] == "Y" and all_row[6] == "Y":
-                        checkL = 1
-                    if all_row[5] == "Y" and all_row[7] == "Y":
-                        checkR = 1
-                elif version == "20":
-                    checkL, checkR = 1,1
+                if all_row[4] == "Y" and all_row[6] == "Y":
+                    checkL = 1
+                if all_row[5] == "Y" and all_row[7] == "Y":
+                    checkR = 1
 
                 # make sure each MSAGCO_X is populated with a value
                 i = 0
@@ -1482,12 +1542,21 @@ def FindOverlaps(working_gdb):
 
                 if checkL == 1 and all_row[0] + "|" + all_row[2] not in already_checked:
                     # check the left side MSAGCO & LABEL combo
-                    overlaps = checkMsagLabelCombo(all_row[0], all_row[2], overlaps, rd_fc, fields, msagList, name_field, txt, v21)
+                    overlaps = checkMsagLabelCombo(all_row[0], all_row[2], overlaps, rd_fc, fields, msagList, name_field, txt)
                     already_checked.append(all_row[0] + "|" + all_row[2])
+                    
+                runRight = False
+                    
+                # add some logic in cases where the right side would need to be checked
+                if checkL == 0 and checkR == 1:
+                    runRight = True
+                    
+                if all_row[0] != all_row[1]:
+                    runRight = True
 
                 # if the r & l msagco are different, run the right side
-                if checkR == 1 and all_row[0] != all_row[1] and all_row[1] + "|" + all_row[2] not in already_checked:
-                    overlaps = checkMsagLabelCombo(all_row[1], all_row[2], overlaps, rd_fc, fields, msagList, name_field, txt, v21)
+                if checkR == 1 and runRight and all_row[1] + "|" + all_row[2] not in already_checked:
+                    overlaps = checkMsagLabelCombo(all_row[1], all_row[2], overlaps, rd_fc, fields, msagList, name_field, txt)
                     already_checked.append(all_row[1] + "|" + all_row[2])
 
 ##        now_time = time.time()
@@ -2391,6 +2460,93 @@ def checkCutbacks(pathsInfoObject):
 
     if k != 0:
         userMessage("Could not complete cutback check on %s segments." % (str(k)))
+        
+        
+def checkLineSelfIntersections(roads):
+    
+    userMessage("Checking lines for self-intersections...")
+    
+    intersections = []
+    
+    wc = "SUBMIT = 'Y'"
+    
+    with SearchCursor(roads, ("SHAPE@", "NGSEGID"), wc) as rows:
+        for row in rows:
+            ngsegid = row[1]
+            
+            touche = row[0].crosses(row[0])
+        
+            if touche:
+                intersections.append(ngsegid)
+
+            # loop through parts of the line geometry            
+            for part in row[0]:
+                
+                # check to see if first and last part are the same
+                if [part[0].X, part[0].Y] == [part[-1].X, part[-1].Y]:
+                    pass
+                    
+                # else, check for self intersections
+                else:
+                
+                    # create a list of all the points
+                    lstPoints = []
+                    for pt in part:
+                        lstPoints.append([pt.X, pt.Y])
+                        
+                    # get a count of how many times each point happens
+                    for pt in lstPoints:
+                        count = lstPoints.count(pt)
+                        
+                        # if the count is greater than 1...
+                        if count > 1:
+                            
+                            # get the index of the first time the point happens
+                            index = lstPoints.index(pt)
+                            
+                            # if the next time it happens is the index + 1, then ignore
+                            if lstPoints[index + 1] == pt:
+                                pass
+                            else:
+                                # this is a real duplicate point
+                                if ngsegid not in intersections:
+                                    intersections.append(ngsegid)
+                                 
+                            try:
+                                del index
+                            except:
+                                pass
+                                    
+                    del lstPoints, pt, count
+                    
+            del part
+            
+    del row, rows, wc
+            
+    if intersections != []:                
+        userWarning("Total self-looping roads: %s. See FieldValuesCheckResults for specifics." % str(len(intersections)))
+        
+        # do reporting
+        values = []
+        today = strftime("%m/%d/%y")
+        layer = basename(roads)
+        
+        # populate values
+        for ngsegid in intersections:
+            report = "Notice: %s road geometry loops back on itself" % ngsegid
+            val = (today, report, layer, "GEOMETRY", ngsegid, "Self-intersections")
+            values.append(val)
+            
+        if dirname(roads)[-3:] != 'gdb':
+            gdb = dirname(dirname(roads))
+        else:
+            gdb = dirname(roads)
+            
+        RecordResults("fieldValues", values, gdb)
+    else:
+        userMessage("No self-intersecting roads found.")
+        
+    del intersections, values, today, layer, ngsegid, report, val, gdb
 
 
 def getNumbers():
@@ -2724,8 +2880,6 @@ def checkTopology(gdbObject, check_polygons, check_roads):
         pointFC = join(gdb, pointErrors)
 
         # create a dictionary of the counts
-        fcIssueDict = {}
-
         top_fields = ["OriginObjectClassName", "OriginObjectID", "RuleDescription"]
         top_fields_line = ["OriginObjectClassName", "OriginObjectID", "RuleDescription", "SHAPE@LENGTH"]
 
@@ -2936,6 +3090,7 @@ def sanityCheck(currentPathSettings):
     checkLayerList(currentPathSettings)
     checkRequiredFields(currentPathSettings)
     checkRequiredFieldValues(currentPathSettings)
+    checkStewards(currentPathSettings)
     checkSubmissionNumbers(currentPathSettings)
     findInvalidGeometry(currentPathSettings)
 
@@ -2984,6 +3139,7 @@ def sanityCheck(currentPathSettings):
     checkMSAGCOspaces(roads, gdb)
     checkFrequency(roads, road_freq, road_fields, gdb, "true")
     checkCutbacks(currentPathSettings)
+    checkLineSelfIntersections(roads)
     checkDirectionality(roads, gdb)
     checkRoadAliases(currentPathSettings)
     # complete check for duplicate address ranges on dual carriageways
@@ -3054,6 +3210,7 @@ def main_check(checkType, currentPathSettings):
 
         if checkList[2] == "true":
             checkRequiredFieldValues(currentPathSettings)
+            checkStewards(currentPathSettings)
 
         if checkList[3] == "true":
             checkSubmissionNumbers(currentPathSettings)
@@ -3122,6 +3279,7 @@ def main_check(checkType, currentPathSettings):
         if checkList[4] == "true":
             checkCutbacks(currentPathSettings)
             checkTopology(gdbObject, False, True) # just check roads
+            checkLineSelfIntersections(roads)
 
         if checkList[5] == "true":
             checkDirectionality(roads, gdb)

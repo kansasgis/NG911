@@ -1,0 +1,4 @@
+Values|Definition
+PRIMARY|Structure
+ACCESS|Property Access
+OTHER|Unknown

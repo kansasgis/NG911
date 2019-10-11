@@ -1,0 +1,4 @@
+Values|Definition
+PRIMARY|Structure - Rooftop
+ACCESS|Property Access Point
+OTHER|Other

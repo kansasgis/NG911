@@ -17,7 +17,7 @@ from NG911_GDB_Objects import getFCObject
 from NG911_arcpy_shortcuts import fieldExists
 from datetime import datetime
 
-def splitESB(inputESB, output_workspace):
+def splitESB(inputESB, working_dir):
 
     #completely prepares a single-input ESB layer
     #splits up ESB layers
@@ -25,22 +25,25 @@ def splitESB(inputESB, output_workspace):
 
     esb_obj = getFCObject(inputESB)
 
-    working_dir = output_workspace
-
     env.workspace = working_dir
     env.overwriteOutput = True
+    
+    if working_dir[-3:] == "gdb":
+        ending = ""
+    else:
+        ending = ".shp"
 
     #if copies already exists, archive them
-    EMSOutput = join(working_dir, "ESB_EMS")
-    FireOutput = join(working_dir, "ESB_FIRE")
-    LawOutput = join(working_dir, "ESB_LAW")
+    EMSOutput = join(working_dir, "ESB_EMS" + ending)
+    FireOutput = join(working_dir, "ESB_FIRE" + ending)
+    LawOutput = join(working_dir, "ESB_LAW" + ending)
 
     outputDict = {"FIRE":FireOutput, "EMS":EMSOutput, "LAW": LawOutput}
 
     #create working paths
-    fire = join(working_dir, "ESB_FIRE_wk")
-    ems = join(working_dir, "ESB_EMS_wk")
-    law = join(working_dir, "ESB_Law_wk")
+    fire = join(working_dir, "ESB_FIRE_wk" + ending)
+    ems = join(working_dir, "ESB_EMS_wk" + ending)
+    law = join(working_dir, "ESB_Law_wk" + ending)
 
     esbworkDict = {"FIRE":fire, "EMS":ems, "LAW":law}
 
@@ -49,7 +52,7 @@ def splitESB(inputESB, output_workspace):
     if not fieldExists(inputESB, "SUBMIT"):
         MakeFeatureLayer_management(inputESB, lyrESB)
     else:
-        wc = esb_obj.SUBMIT + " NOT IN ('N')"
+        wc = esb_obj.SUBMIT + " = 'Y'"
         MakeFeatureLayer_management(inputESB, lyrESB, wc)
 
     #get the most common eff_date
@@ -93,19 +96,19 @@ def splitESB(inputESB, output_workspace):
             letter = "L"
 
         #edit other features
-        CalculateField_management(layer, other1, '""', "VB", "")
-        CalculateField_management(layer, other2, '""', "VB", "")
-        CalculateField_management(layer, esb_obj.DISPLAY, "[" + key + "]", "VB", "")
-        CalculateField_management(layer, esb_obj.UNIQUEID, '""', "VB", "")
-        CalculateField_management(layer, esb_obj.ESB_TYPE, '"' + key + '"', "VB", "")
+        CalculateField_management(layer, other1, '""', "PYTHON", "")
+        CalculateField_management(layer, other2, '""', "PYTHON", "")
+        CalculateField_management(layer, esb_obj.DISPLAY, "!" + key + "!", "PYTHON", "")
+        CalculateField_management(layer, esb_obj.UNIQUEID, '""', "PYTHON", "")
+        CalculateField_management(layer, esb_obj.ESB_TYPE, '"' + key + '"', "PYTHON", "")
 
         #get final output
         output = outputDict[key]
 
         #dissolve features into final output
         Dissolve_management(layer, output, [esb_obj.STEWARD, esb_obj.UNIQUEID, esb_obj.STATE, esb_obj.AGENCYID,
-                                                esb_obj.SERV_NUM, esb_obj.DISPLAY, esb_obj.ESB_TYPE, esb_obj.LAW, esb_obj.FIRE, esb_obj.EMS,
-                                                esb_obj.PSAP], "", "MULTI_PART", "DISSOLVE_LINES")
+                                            esb_obj.SERV_NUM, esb_obj.DISPLAY, esb_obj.ESB_TYPE, esb_obj.LAW, 
+                                            esb_obj.FIRE, esb_obj.EMS, esb_obj.PSAP], "", "MULTI_PART", "DISSOLVE_LINES")
 
         #calculate new ESBID
         fld = ""
@@ -113,7 +116,7 @@ def splitESB(inputESB, output_workspace):
             fld = "OBJECTID"
         elif fieldExists(output, "FID"):
             fld = "FID"
-        CalculateField_management(output, esb_obj.UNIQUEID, '"' + letter + '" & [' + fld + ']', "VB", "")
+        CalculateField_management(output, esb_obj.UNIQUEID, '"' + letter + '" + !' + fld + '!', "PYTHON_9.3", "")
 
         #add and calculate other required fields
         fieldsDict = {"L_UPDATE": ["DATE"], "EFF_DATE": ["DATE"], "EXP_DATE": ["DATE"], "UPDATEBY": ["TEXT", 50], "SUBMIT": ["TEXT", 1, "SUBMIT"], "NOTES": ["TEXT", 255]}
