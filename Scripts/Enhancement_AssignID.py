@@ -4,37 +4,44 @@
 # Author:  Sherry Massey, Dickinson County GIS
 # Created: May 14, 2014
 # Subject to Creative Commons Attribution-ShareAlike 4.0 International Public License
-# Updated 09/22/2014 to test for geodatabase type
 # ---------------------------------------------------------------------------
 
 # Import arcpy module
-from arcpy import GetParameterAsText, MakeFeatureLayer_management, SelectLayerByAttribute_management, CalculateField_management
+from arcpy import (GetParameterAsText, MakeTableView_management, 
+                   CalculateField_management, Delete_management)
 
-# Set the parameters and variables
-FC = GetParameterAsText(0)
-Field_Name = GetParameterAsText(1)
+def main():
 
-# The first expression is formatted for use with file geodatabases
-# The second is formatted for use with SDE and personal geodatabaser
+    # Set the parameters and variables
+    FC = GetParameterAsText(0)
+    
+    Field_Name = GetParameterAsText(1)
+    
+    
+    # The expression below is formatted for use in file geodatabases
+    # If it will be used in personal or SDE geodatabases, CHAR_LENGTH should be changed to LEN
+    # and the placeholder {0} will need to be surrounded by brackets or double quotes
+    # depending on your system
+    
+    Expression = "{0} is NULL or CHAR_LENGTH({0}) = 0".format(Field_Name)
+    
+    Layer ="temp_lyr"
+    
+    
+    # Make a temp table
+    MakeTableView_management(FC, Layer, Expression)
+    
+    # Calculate the value of the Unique ID field for the selected records
+    # ID value is based on system time in seconds since the new epoch converted to a string and concatenated with record's ObjectID
+    code_block = """def uniqueID():
+        x = '%d' % time.time()
+        str(x)
+        return x"""
+    CalculateField_management(Layer, Field_Name, "uniqueID() + str(!OBJECTID!)", "PYTHON", code_block)
 
-if ".gdb" in FC :
-	Expression = "{0} is NULL or CHAR_LENGTH({0}) = 0".format(Field_Name)
-else:
-	Expression = "{0} is NULL or LEN([{0}]) = 0".format(Field_Name)
+    # clean up
+    Delete_management(Layer)
 
-Layer ="temp_lyr"
-
-
-# Make a temp feature layer
-MakeFeatureLayer_management(FC, Layer)
-
-# Select from the feature layer any records with null or blank value in the Unique ID field
-SelectLayerByAttribute_management(Layer, "NEW_SELECTION", Expression)
-
-# Calculate the value of the Unique ID field for the selected records
-# ID value is based on system time in seconds since the new epoch converted to a string and concatenated with record's ObjectID
-CalculateField_management(Layer, Field_Name, "uniqueID() + str(!OBJECTID!)", "PYTHON", "def uniqueID():\\n  x = '%d' % time.time()\\n  str(x)\\n  return x")
-
-
-
+if __name__ == '__main__':
+    main()
 

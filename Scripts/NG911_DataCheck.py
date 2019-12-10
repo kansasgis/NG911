@@ -9,7 +9,7 @@
 #-------------------------------------------------------------------------------
 
 from arcpy import (AddField_management, AddMessage, CalculateField_management, CopyRows_management, Statistics_analysis,
-                   CreateTable_management, Delete_management, Exists, 
+                   CreateTable_management, Delete_management, Exists, Describe,
                    ListFields, MakeFeatureLayer_management, MakeTableView_management, SelectLayerByAttribute_management,
                    SelectLayerByLocation_management, env, ListDatasets,
                    AddJoin_management, RemoveJoin_management, AddWarning, CopyFeatures_management,
@@ -17,20 +17,23 @@ from arcpy import (AddField_management, AddMessage, CalculateField_management, C
                    ExportTopologyErrors_management, Buffer_analysis, Intersect_analysis, Point, ListFeatureClasses)
 from arcpy.da import InsertCursor, SearchCursor
 from os import path, remove
-from os.path import basename, dirname, join, exists
+from os.path import basename, dirname, join, exists, abspath
 from time import strftime
 from Validation_ClearOldResults import ClearOldResults
 from Enhancement_AddTopology import add_topology
 import NG911_GDB_Objects
 from NG911_arcpy_shortcuts import deleteExisting, getFastCount, cleanUp, ListFieldNames, fieldExists
 from MSAG_DBComparison import prep_roads_for_comparison
+from inspect import getsourcefile
+from ESB_ImportPSAP import getStewardWC
+from Enhancement_AddFVCRNotes import addFVCRNotes
+    
+    
 #import time
 #from math import sin, cos, atan2, sqrt, asin, pi
 
 def checkToolboxVersion():
     import json, urllib, sys
-    from inspect import getsourcefile
-    from os.path import abspath
 
     v = sys.version_info.major
     if v != 2:
@@ -202,6 +205,102 @@ def RecordResults(resultType, values, gdb): # Guessed on whitespace formatting h
         except:
             userMessage(row)
     del cursor
+    
+    
+def verifyESBAlignment(pathsInfoObject):
+    
+    gdb = pathsInfoObject.gdbPath
+    
+    userMessage("Checking if geodatabase has been aligned with seamless statewide data...")
+    
+    # set reporting variables
+    values = []
+    today = strftime("%m/%d/%y")
+    
+    # set up variables for authoritative boundary
+    ab = join(gdb, "NG911", "AuthoritativeBoundary")
+
+    a = "a"
+    MakeFeatureLayer_management(ab, a)
+    
+    # verify the authoritative boundary is the same as the PSAP boundary sent out
+    # get spatial reference of address points
+    desc = Describe(ab)
+    sr = desc.spatialReference
+    factoryCode = str(sr.factoryCode)
+    
+    # use factoryCode to get the correct psap
+    # get the ng911 folder, then navigate to the psap folder
+    ng911_folder = dirname(dirname(abspath(getsourcefile(lambda:0))))
+    psap_gdb = join(ng911_folder, "PSAP_Data", "PSAP_Data.gdb")
+    psap_big = join(psap_gdb, "PSAP_%s" % factoryCode)
+    
+    # make sure the psap data exists
+    if Exists(psap_big):
+
+        # get stewards from address points
+        steward_wc = getStewardWC(ab)
+    
+        # make psap feature layer
+        p = "p"
+        MakeFeatureLayer_management(psap_big, p, steward_wc)
+    
+        SelectLayerByLocation_management(a, "ARE_IDENTICAL_TO", p)
+        
+        count = getFastCount(a)
+        
+        if count != 1:
+            dataset_report = "Notice: Authoritative boundary does not represent statewide seamless layer."
+            val = (today, dataset_report, "AuthoritativeBoundary", "GEOMETRY", "", "Verify ESB Alignment")
+            values.append(val)
+            userWarning(dataset_report)
+        else:
+    
+            # check to make sure ESBs are adjusted
+            
+            fds = join(gdb, "NG911")
+            
+            env.workspace = fds
+            
+            esb_list = ListFeatureClasses("ESB*")
+            
+            for esb in esb_list:
+                full_path = join(fds, esb)
+                # get initial feature count
+                init_count = getFastCount(full_path)
+                
+                # make a feature layer
+                b = "b"
+                MakeFeatureLayer_management(full_path, b)
+                
+                SelectLayerByLocation_management(b, "WITHIN", a)
+                
+                sel_count = getFastCount(b)
+                
+                # check counts
+                if init_count > sel_count:
+                    dataset_report = "Notice: %s has not been adjusted to statewide seamless layer." % esb
+                    val = (today, dataset_report, esb, "GEOMETRY", "", "Verify ESB Alignment")
+                    values.append(val)
+                    userWarning(dataset_report)
+                else:
+                    userMessage(esb + " has been adjusted to statewide seamless layer.")
+                    
+                # clean up
+                Delete_management(b)
+                
+            # clean up
+            Delete_management(p)
+    
+    # clean up
+    Delete_management(a)
+    
+    #record issues if any exist
+    if values != []:
+        RecordResults("fieldValues", values, gdb)
+        userWarning("This geodatabase has not been adjusted to the statewide seamless layer. See FieldValuesCheckResults.")
+    else:
+        userMessage("This geodatabase has been adjusted to the statewide seamless layer.")
 
 
 def checkStewards(pathsInfoObject):
@@ -249,7 +348,7 @@ def checkStewards(pathsInfoObject):
             if len(stewardList) > 1:
 
                 # only three PSAPs submit data for multiple STEWARDs
-                multiStewardDict = {"Crawford": ['484988', '485643'], "Leavenworth": ['485016', '485610'], "Montgomery": ['485556', '485598']}
+                multiStewardDict = {"Crawford": ['484988', '485643'], "Leavenworth": ['485016', '485610', '2512205'], "Montgomery": ['485556', '485598']}
 
                 # set variables
                 good = False
@@ -2027,18 +2126,20 @@ def checkRequiredFieldValues(pathsInfoObject):
                         wc = "".join(wcList)
 
                         #make table view using where clause
-                        lyr = "lyr"
-                        MakeTableView_management(lyr2, lyr, wc)
+#                        lyr = "lyr"
+#                        MakeTableView_management(lyr2, lyr, wc)
+
+                        SelectLayerByAttribute_management(lyr2, "NEW_SELECTION", wc)
 
                         #if count is greater than 0, it means a required value somewhere isn't filled in
-                        if getFastCount(lyr) > 0:
+                        if getFastCount(lyr2) > 0:
                             #make sure the objectID gets included in the search for reporting
                             if id1 not in matchingFields:
                                 matchingFields.append(id1)
 
                             try:
                                 #run a search cursor to get any/all records where a required field value is null
-                                with SearchCursor(lyr, (matchingFields), wc) as rows:
+                                with SearchCursor(lyr2, (matchingFields), wc) as rows:
                                     for row in rows:
                                         k = 0
                                         #get object ID of the field
@@ -2061,8 +2162,8 @@ def checkRequiredFieldValues(pathsInfoObject):
                         else:
                             userMessage( "All required values present for " + layer)
 
-                        Delete_management(lyr)
-                        del lyr
+#                        Delete_management(lyr)
+#                        del lyr
 
                     else:
                         userMessage(layer + " has no records marked for submission. Data will not be verified.")
@@ -3105,6 +3206,7 @@ def sanityCheck(currentPathSettings):
     checkValuesAgainstDomain(currentPathSettings)
     checkESBDisplayLength(currentPathSettings)
     checkFeatureLocations(currentPathSettings)
+    verifyESBAlignment(currentPathSettings)
     try:
         checkTopology(gdbObject, True, True) # check everything
     except Exception as e:
@@ -3158,6 +3260,9 @@ def sanityCheck(currentPathSettings):
     FindOverlaps(gdb)
     # check parities
     checkParities(currentPathSettings)
+    
+    # add NOTES to FVCR
+    addFVCRNotes(gdb)
 
     # verify that the check resulted in 0 issues
     sanity = 0 # flag to return at end
@@ -3307,6 +3412,7 @@ def main_check(checkType, currentPathSettings):
             checkESBDisplayLength(currentPathSettings)
 
         if checkList[1] == "true":
+            verifyESBAlignment(currentPathSettings)
             checkFeatureLocations(currentPathSettings)
             try:
                 checkTopology(gdbObject, True, False) # just check polygons
@@ -3316,7 +3422,11 @@ def main_check(checkType, currentPathSettings):
 
         if checkList[2] == "true":
             checkUniqueIDFrequency(currentPathSettings)
+            
+    # add NOTES to FVCR
+    addFVCRNotes(gdb)
 
+    # work on reporting
     fieldCheckResults = gdbObject.FieldValuesCheckResults
     templateResults = gdbObject.TemplateCheckResults
     numErrors = 0
