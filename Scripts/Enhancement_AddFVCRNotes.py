@@ -86,6 +86,7 @@ def addFVCRNotes(gdb):
             
             with UpdateCursor(fvcr, (fvcr_obj.FEATUREID, "NOTES"), fvcr_wc) as rows:
                 for row in rows:
+                    note = ''
                     uniqueID = row[0]
                     
                     wc = "%s = '%s'" % (fc_obj.UNIQUEID, uniqueID)
