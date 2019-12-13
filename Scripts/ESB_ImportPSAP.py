@@ -6,7 +6,7 @@ Created on Thu Nov 14 13:35:03 2019
 """
 from arcpy import (GetParameterAsText, MakeFeatureLayer_management, 
                    CopyFeatures_management, Exists, Delete_management,
-                   Frequency_analysis, Describe, AddError)
+                   Statistics_analysis, Describe, AddError)
 from arcpy.da import SearchCursor
 from os.path import join, abspath, dirname
 from inspect import getsourcefile
@@ -28,7 +28,8 @@ def getStewardWC(fc):
     MakeFeatureLayer_management(fc, fl_submit, wc_submit)
 
     #run frequency to get unique list in "STEWARD" field
-    Frequency_analysis(fl_submit, output, field, "")
+    Statistics_analysis(fl_submit, output, field + " COUNT", field)
+#    Frequency_analysis(fl_submit, output, field, "")
 
     #set up empty variables to hold list of stewards
     stewardList = []
