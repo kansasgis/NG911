@@ -45,10 +45,11 @@ def adjustBoundaries(gdb, fcs):
             env.workspace = ds_other
             ut_list = ListFeatureClasses("UT*")
             
-            for ut in ut_list:
-                fp_ut = join(ds_other, ut)
-                if hasRecords(fp_ut):
-                    adjust_list.append(fp_ut)
+            if ut_list not None:
+                for ut in ut_list:
+                    fp_ut = join(ds_other, ut)
+                    if hasRecords(fp_ut):
+                        adjust_list.append(fp_ut)
         
         else:
             # use the adjustment list provided by the user
