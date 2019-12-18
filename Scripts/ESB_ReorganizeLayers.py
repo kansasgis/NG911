@@ -36,10 +36,13 @@ def main():
         env.workspace = fds
         fcs = ListFeatureClasses("*_NEW")
         
-        # create full path to feature class
-        for fc in fcs:
-            fp = join(fds, fc)
-            adjusted_list.append(fp)
+        try:
+            # create full path to feature class
+            for fc in fcs:
+                fp = join(fds, fc)
+                adjusted_list.append(fp)
+        except:
+            pass
             
     # move esbs, append local to name
     for full_path_new in adjusted_list:
