@@ -3262,7 +3262,8 @@ def sanityCheck(currentPathSettings):
     checkParities(currentPathSettings)
     
     # add NOTES to FVCR
-    addFVCRNotes(gdb)
+    if Exists(gdbObject.FieldValuesCheckResults):
+        addFVCRNotes(gdb)
 
     # verify that the check resulted in 0 issues
     sanity = 0 # flag to return at end
@@ -3424,7 +3425,8 @@ def main_check(checkType, currentPathSettings):
             checkUniqueIDFrequency(currentPathSettings)
             
     # add NOTES to FVCR
-    addFVCRNotes(gdb)
+    if Exists(gdbObject.FieldValuesCheckResults):
+        addFVCRNotes(gdb)
 
     # work on reporting
     fieldCheckResults = gdbObject.FieldValuesCheckResults
