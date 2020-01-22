@@ -5,15 +5,16 @@ Created on Thu Nov 14 13:18:38 2019
 @author: kristen
 """
 from arcpy import (GetParameterAsText, MakeFeatureLayer_management, Exists,
-                   Delete_management, Union_analysis, DeleteIdentical_management,
-                   AddMessage, Clip_analysis, AddError, env, ListFeatureClasses)
+                   Delete_management, Union_analysis, AddMessage, 
+                   Clip_analysis, AddError, env, ListFeatureClasses,
+                   GetInstallInfo)
 from os.path import join, basename
 from NG911_arcpy_shortcuts import hasRecords
 
 def userMessage(msg):
     print(msg)
     AddMessage(msg)
-
+    
     
 def adjustBoundaries(gdb, fcs):
     psap = join(gdb, "NG911", "PSAP_temp")
@@ -73,8 +74,12 @@ def adjustBoundaries(gdb, fcs):
             Union_analysis(fc, self_union, "ALL", "0.01 Feet", "NO_GAPS")
         
             # then run a delete identical on Shape_Length & Shape_Area
-            userMessage("Deleting identical shapes")
-            DeleteIdentical_management(self_union, "Shape_Length;Shape_Area", "", "0")
+            try:
+                from arcpy import DeleteIdentical_management
+                userMessage("Deleting identical shapes")
+                DeleteIdentical_management(self_union, "Shape_Length;Shape_Area", "", "0")
+            except:
+                pass
         
             # run another union between the ESB & PSAP
             psap_union = join(gdb, "PU")

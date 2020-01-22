@@ -220,8 +220,17 @@ def verifyESBAlignment(pathsInfoObject):
     # set up variables for authoritative boundary
     ab = join(gdb, "NG911", "AuthoritativeBoundary")
 
-    a = "a"
-    MakeFeatureLayer_management(ab, a)
+    # get area and length of authoritative boundary
+    with SearchCursor(ab, ["SHAPE@AREA", "SHAPE@LENGTH"]) as ab_rows:
+        for ab_row in ab_rows:
+            ab_area = ab_row[0]
+            ab_length = ab_row[1]
+          
+    # clean up
+    try:
+        del ab_rows, ab_row
+    except:
+        pass
     
     # verify the authoritative boundary is the same as the PSAP boundary sent out
     # get spatial reference of address points
@@ -244,12 +253,29 @@ def verifyESBAlignment(pathsInfoObject):
         # make psap feature layer
         p = "p"
         MakeFeatureLayer_management(psap_big, p, steward_wc)
+        
+        # get control area & length
+        with SearchCursor(p, ["SHAPE@AREA", "SHAPE@LENGTH"]) as p_rows:
+            for p_row in p_rows:
+                p_area = p_row[0]
+                p_length = p_row[1]
     
-        SelectLayerByLocation_management(a, "ARE_IDENTICAL_TO", p)
+        # clean up
+        try:
+            del p_rows, p_row
+        except:
+            pass
         
-        count = getFastCount(a)
+        close = True
         
-        if count != 1:
+        # compare area & length
+        area_diff = abs(ab_area - p_area)
+        leng_diff = abs(ab_length - p_length)
+        
+        if area_diff > 100 or leng_diff > 20:
+            close = False
+        
+        if close == False:
             dataset_report = "Notice: Authoritative boundary does not represent statewide seamless layer."
             val = (today, dataset_report, "AuthoritativeBoundary", "GEOMETRY", "", "Verify ESB Alignment")
             values.append(val)
@@ -257,6 +283,10 @@ def verifyESBAlignment(pathsInfoObject):
         else:
     
             # check to make sure ESBs are adjusted
+            
+            # create feature layer from authoritative boundary
+            a = "a"
+            MakeFeatureLayer_management(ab, a)
             
             fds = join(gdb, "NG911")
             
@@ -291,9 +321,7 @@ def verifyESBAlignment(pathsInfoObject):
                 
             # clean up
             Delete_management(p)
-    
-    # clean up
-    Delete_management(a)
+            Delete_management(a)
     
     #record issues if any exist
     if values != []:

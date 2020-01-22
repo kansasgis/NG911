@@ -118,3 +118,4 @@ Values|Definition
 485063|Wilson County Central Dispatch Data Steward
 485064|Woodson County Sheriff's Office Data Steward
 2512205|Ft. Leavenworth Data Steward
+999001|PRAIRIE BAND POTAWATOMI TRIBAL PSAP
