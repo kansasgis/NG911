@@ -120,3 +120,4 @@ psap.wh.ks.us|A PSAP ID in Kansas
 psap.wl.ks.us|A PSAP ID in Kansas
 psap.wo.ks.us|A PSAP ID in Kansas
 psap.ftleavenworth.ks.us|A PSAP ID in Kansas
+psap.pbpntp.ks.us|A PSAP ID in Kansas

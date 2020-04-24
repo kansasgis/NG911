@@ -272,7 +272,8 @@ def verifyESBAlignment(pathsInfoObject):
         area_diff = abs(ab_area - p_area)
         leng_diff = abs(ab_length - p_length)
         
-        if area_diff > 100 or leng_diff > 20:
+        if area_diff > 150 or leng_diff > 20:
+            userMessage("Area difference is %s, length difference is %s" % (str(area_diff), str(leng_diff)))
             close = False
         
         if close == False:
@@ -375,8 +376,11 @@ def checkStewards(pathsInfoObject):
 
             if len(stewardList) > 1:
 
-                # only three PSAPs submit data for multiple STEWARDs
-                multiStewardDict = {"Crawford": ['484988', '485643'], "Leavenworth": ['485016', '485610', '2512205'], "Montgomery": ['485556', '485598']}
+                # only four PSAPs submit data for multiple STEWARDs
+                multiStewardDict = {"Crawford": ['484988', '485643'], 
+                                    "Leavenworth": ['485016', '485610', '2512205'], 
+                                    "Montgomery": ['485556', '485598'],
+                                    "Jackson": ["999001", '485007']}
 
                 # set variables
                 good = False
@@ -1044,17 +1048,22 @@ def checkAddressPointGEOMSAG(currentPathSettings):
                     rc_wc = "".join(rc_wc_list)
 
                     # set up road centerline
-                    rc_fields = [rc_obj.SUBMIT, "GEOMSAG" + rclside]
-                	# set up a search cursor on the RCLMATCH road segment
-                    with SearchCursor(rc, rc_fields, rc_wc) as r_rows:
-                        for r_row in r_rows:
+                    if rclside is not None and rclside not in ('', ' '):
+                        rc_fields = [rc_obj.SUBMIT, "GEOMSAG" + rclside]
+                    	# set up a search cursor on the RCLMATCH road segment
+                        with SearchCursor(rc, rc_fields, rc_wc) as r_rows:
+                            for r_row in r_rows:
+    
+                                # if GEOMSAG on the proper road side is "Y", mark that address point as an error
+                                if r_row[0] == 'Y' and r_row[1] == 'Y':
+                                    report = "Error: Point duplicates GEOMSAG with RCLMATCH record %s on %s side" % (str(segid), rclside)
+                                    val = (today, report, filename, "GEOMSAG", addid, "Check Address Point GEOMSAG")
+                                    values.append(val)
 
-                            # if GEOMSAG on the proper road side is "Y", mark that address point as an error
-                            if r_row[0] == 'Y' and r_row[1] == 'Y':
-                                report = "Error: Point duplicates GEOMSAG with RCLMATCH record %s on %s side" % (str(segid), rclside)
-                                val = (today, report, filename, "GEOMSAG", addid, "Check Address Point GEOMSAG")
-                                values.append(val)
-
+                    else:
+                        report = "Error: RCLSIDE does not have a valid value"
+                        val = (today, report, filename, "RCLSIDE", addid, "Check Address Point GEOMSAG")
+                        values.append(val)
 
     #report records
     if values != []:
@@ -1309,7 +1318,8 @@ def checkFrequency(fc, freq, fields, gdb, fullFreq):
                                     i += 1
 
                                 #trim last "and " off where clause
-                                wcList.pop()
+                                if wcList[-1] == "and ":
+                                    wcList.pop()
 
                                 # create the official string where clause statement
                                 wc = "".join(wcList)
@@ -3037,6 +3047,7 @@ def checkTopology(gdbObject, check_polygons, check_roads):
 
         # loop through polygon and line errors
         for errorFC in top_dict:
+            userMessage("Top Dict " + errorFC)
             fields = top_dict[errorFC]
 
             # start a search cursor to report issues
@@ -3059,41 +3070,45 @@ def checkTopology(gdbObject, check_polygons, check_roads):
                         fc = row[0]
                         objectID = row[1]
                         ruleDesc = row[2]
+                        
+                        # userMessage("fc is |%s|" % fc)
 
                         # get the issues
                         if basename(errorFC) == "NG911_poly" and check_polygons == True:
-                            fc_lyr = "fc_lyr"
                             fc_full = join(gdb, "NG911", fc)
-                            MakeFeatureLayer_management(fc_full, fc_lyr)
-
-                            #add join
-                            AddJoin_management(fc_lyr, "OBJECTID", lyr, "OriginObjectID")
-
-                            obj = NG911_GDB_Objects.getFCObject(fc_full)
-
-                            #set query and field variables
-                            qry = "%s.OriginObjectID IS NOT NULL and %s.isException = 0" % (basename(errorFC), basename(errorFC))
-                            fields2 = ("%s.%s" % (fc, obj.UNIQUEID), basename(errorFC) + ".RuleDescription", basename(errorFC) + ".isException")
-
-                            #set up search cursor to loop through records
-                            with SearchCursor(fc_lyr, fields2, qry) as rows2:
-
-                                for row2 in rows2:
-                                    # make sure we're not reporting back an exception
-                                    if row2[2] not in (1, "1"):
-
-                                        # report the issues back as notices
-                                        msg = "Error: Topology issue- %s" % row2[1]
-                                        val = (today, msg, fc, "", row2[0], "Check Topology")
-                                        values.append(val)
-                                try:
-                                    del row2, rows2
-                                except:
-                                    pass
-
-                            #clean up & reset
-                            RemoveJoin_management(fc_lyr)
-                            Delete_management(fc_lyr)
+                            
+                            if fc_full != join(gdb, "NG911", ""):
+                                fc_lyr = "fc_lyr"
+                                MakeFeatureLayer_management(fc_full, fc_lyr)
+    
+                                #add join
+                                AddJoin_management(fc_lyr, "OBJECTID", lyr, "OriginObjectID")
+    
+                                obj = NG911_GDB_Objects.getFCObject(fc_full)
+    
+                                #set query and field variables
+                                qry = "%s.OriginObjectID IS NOT NULL and %s.isException = 0 and %s.SUBMIT = 'Y'" % (basename(errorFC), basename(errorFC), basename(fc_full))
+                                fields2 = ("%s.%s" % (fc, obj.UNIQUEID), basename(errorFC) + ".RuleDescription", basename(errorFC) + ".isException")
+    
+                                #set up search cursor to loop through records
+                                with SearchCursor(fc_lyr, fields2, qry) as rows2:
+    
+                                    for row2 in rows2:
+                                        # make sure we're not reporting back an exception
+                                        if row2[2] not in (1, "1"):
+    
+                                            # report the issues back as notices
+                                            msg = "Error: Topology issue- %s" % row2[1]
+                                            val = (today, msg, fc, "", row2[0], "Check Topology")
+                                            values.append(val)
+                                    try:
+                                        del row2, rows2
+                                    except:
+                                        pass
+    
+                                #clean up & reset
+                                RemoveJoin_management(fc_lyr)
+                                Delete_management(fc_lyr)
 
                         elif basename(errorFC) == "NG911_line":
                             if check_polygons == True and "ESB" in fc:
@@ -3127,7 +3142,7 @@ def checkTopology(gdbObject, check_polygons, check_roads):
                             if check_roads == True and "Road" in fc:
 
                                 # see if the road is marked as an exception or not
-                                wc = "OBJECTID = " + str(objectID)
+                                wc = "SUBMIT = 'Y' AND OBJECTID = " + str(objectID)
                                 with SearchCursor(roads, (rd_object.UNIQUEID, rd_object.EXCEPTION), wc) as j_rows:
                                     for j_row in j_rows:
                                         # get the NGSEGID & the exception
@@ -3270,7 +3285,7 @@ def sanityCheck(currentPathSettings):
     try:
         EnableEditorTracking_management(roads, "", "", "UPDATEBY", "L_UPDATE", "NO_ADD_FIELDS", "UTC")
     except:
-        userWarning("Hit that PASS")
+        userWarning("Could not reenable editor tracking on roads.")
         pass
 
     checkMSAGCOspaces(roads, gdb)

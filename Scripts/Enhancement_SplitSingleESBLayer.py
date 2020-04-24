@@ -116,7 +116,7 @@ def splitESB(inputESB, working_dir):
             fld = "OBJECTID"
         elif fieldExists(output, "FID"):
             fld = "FID"
-        CalculateField_management(output, esb_obj.UNIQUEID, '"' + letter + '" + !' + fld + '!', "PYTHON_9.3", "")
+        CalculateField_management(output, esb_obj.UNIQUEID, '"' + letter + '" + str(!' + fld + '!)', "PYTHON_9.3", "")
 
         #add and calculate other required fields
         fieldsDict = {"L_UPDATE": ["DATE"], "EFF_DATE": ["DATE"], "EXP_DATE": ["DATE"], "UPDATEBY": ["TEXT", 50], "SUBMIT": ["TEXT", 1, "SUBMIT"], "NOTES": ["TEXT", 255]}
