@@ -219,18 +219,6 @@ def verifyESBAlignment(pathsInfoObject):
     
     # set up variables for authoritative boundary
     ab = join(gdb, "NG911", "AuthoritativeBoundary")
-
-    # get area and length of authoritative boundary
-    with SearchCursor(ab, ["SHAPE@AREA", "SHAPE@LENGTH"]) as ab_rows:
-        for ab_row in ab_rows:
-            ab_area = ab_row[0]
-            ab_length = ab_row[1]
-          
-    # clean up
-    try:
-        del ab_rows, ab_row
-    except:
-        pass
     
     # verify the authoritative boundary is the same as the PSAP boundary sent out
     # get spatial reference of address points
@@ -244,85 +232,119 @@ def verifyESBAlignment(pathsInfoObject):
     psap_gdb = join(ng911_folder, "PSAP_Data", "PSAP_Data.gdb")
     psap_big = join(psap_gdb, "PSAP_%s" % factoryCode)
     
+    # get stewards from authoritative boundary
+    steward_wc = getStewardWC(ab)
+    
+    # create another where clause to see if the data has been updated
+    adjusted_wc = steward_wc + " AND Adjusted = 1"
+    
+    # create where clause to see how many records are present
+    adj = "adj"
+    
     # make sure the psap data exists
     if Exists(psap_big):
-
-        # get stewards from address points
-        steward_wc = getStewardWC(ab)
-    
-        # make psap feature layer
-        p = "p"
-        MakeFeatureLayer_management(psap_big, p, steward_wc)
+        MakeFeatureLayer_management(psap_big, adj, adjusted_wc)
         
-        # get control area & length
-        with SearchCursor(p, ["SHAPE@AREA", "SHAPE@LENGTH"]) as p_rows:
-            for p_row in p_rows:
-                p_area = p_row[0]
-                p_length = p_row[1]
-    
+        # get the count
+        adj_count = getFastCount(adj)
+        
         # clean up
-        try:
-            del p_rows, p_row
-        except:
-            pass
-        
-        close = True
-        
-        # compare area & length
-        area_diff = abs(ab_area - p_area)
-        leng_diff = abs(ab_length - p_length)
-        
-        if area_diff > 150 or leng_diff > 20:
-            userMessage("Area difference is %s, length difference is %s" % (str(area_diff), str(leng_diff)))
-            close = False
-        
-        if close == False:
-            dataset_report = "Notice: Authoritative boundary does not represent statewide seamless layer."
-            val = (today, dataset_report, "AuthoritativeBoundary", "GEOMETRY", "", "Verify ESB Alignment")
-            values.append(val)
-            userWarning(dataset_report)
-        else:
+        Delete_management(adj)
     
-            # check to make sure ESBs are adjusted
+        # this means that the PSAP has not been adjusted
+        if adj_count == 0:
+    
+            # get area and length of authoritative boundary
+            with SearchCursor(ab, ["SHAPE@AREA", "SHAPE@LENGTH"]) as ab_rows:
+                for ab_row in ab_rows:
+                    ab_area = ab_row[0]
+                    ab_length = ab_row[1]
+                  
+            # clean up
+            try:
+                del ab_rows, ab_row
+            except:
+                pass
+    
+            # make psap feature layer
+            p = "p"
+            MakeFeatureLayer_management(psap_big, p, steward_wc)
             
-            # create feature layer from authoritative boundary
-            a = "a"
-            MakeFeatureLayer_management(ab, a)
+            # get control area & length
+            with SearchCursor(p, ["SHAPE@AREA", "SHAPE@LENGTH"]) as p_rows:
+                for p_row in p_rows:
+                    p_area = p_row[0]
+                    p_length = p_row[1]
+        
+            # clean up
+            try:
+                del p_rows, p_row
+            except:
+                pass
             
-            fds = join(gdb, "NG911")
+            close = True
             
-            env.workspace = fds
+            # compare area & length
+            area_diff = abs(ab_area - p_area)
+            leng_diff = abs(ab_length - p_length)
             
-            esb_list = ListFeatureClasses("ESB*")
+            if area_diff > 150 or leng_diff > 20:
+                userMessage("Area difference is %s, length difference is %s" % (str(area_diff), str(leng_diff)))
+                close = False
             
-            for esb in esb_list:
-                full_path = join(fds, esb)
-                # get initial feature count
-                init_count = getFastCount(full_path)
+            if close == False:
+                dataset_report = "Notice: Authoritative boundary does not represent statewide seamless layer."
+                val = (today, dataset_report, "AuthoritativeBoundary", "GEOMETRY", "", "Verify ESB Alignment")
+                values.append(val)
+                userWarning(dataset_report)
+            else:
+        
+                # check to make sure ESBs are adjusted
                 
-                # make a feature layer
-                b = "b"
-                MakeFeatureLayer_management(full_path, b)
+                # create feature layer from authoritative boundary
+                a = "a"
+                MakeFeatureLayer_management(ab, a)
                 
-                SelectLayerByLocation_management(b, "WITHIN", a)
+                fds = join(gdb, "NG911")
                 
-                sel_count = getFastCount(b)
+                env.workspace = fds
                 
-                # check counts
-                if init_count > sel_count:
-                    dataset_report = "Notice: %s has not been adjusted to statewide seamless layer." % esb
-                    val = (today, dataset_report, esb, "GEOMETRY", "", "Verify ESB Alignment")
-                    values.append(val)
-                    userWarning(dataset_report)
-                else:
-                    userMessage(esb + " has been adjusted to statewide seamless layer.")
+                esb_list = ListFeatureClasses("ESB*")
+                
+                for esb in esb_list:
+                    full_path = join(fds, esb)
+                    # get initial feature count
+                    init_count = getFastCount(full_path)
+                    
+                    # make a feature layer
+                    b = "b"
+                    MakeFeatureLayer_management(full_path, b)
+                    
+                    SelectLayerByLocation_management(b, "WITHIN", a)
+                    
+                    sel_count = getFastCount(b)
+                    
+                    # check counts
+                    if init_count > sel_count:
+                        dataset_report = "Notice: %s has not been adjusted to statewide seamless layer." % esb
+                        val = (today, dataset_report, esb, "GEOMETRY", "", "Verify ESB Alignment")
+                        values.append(val)
+                        userWarning(dataset_report)
+                    else:
+                        userMessage(esb + " has been adjusted to statewide seamless layer.")
+                        
+                    # clean up
+                    Delete_management(b)
                     
                 # clean up
-                Delete_management(b)
+                Delete_management(p)
+                Delete_management(a)
                 
-            # clean up
-            Delete_management(p)
-            Delete_management(a)
+    else:
+        dataset_report = "Error: PSAP_Data.gdb cannot be accessed to verify ESB Alignment."
+        val = (today, dataset_report, esb, "GEOMETRY", "", "Verify ESB Alignment")
+        values.append(val)
+        userWarning(dataset_report) 
     
     #record issues if any exist
     if values != []:
