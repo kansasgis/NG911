@@ -119,3 +119,6 @@ Values|Definition
 485064|Woodson County Sheriff's Office Data Steward
 2512205|Ft. Leavenworth Data Steward
 999001|PRAIRIE BAND POTAWATOMI TRIBAL PSAP
+484936|Chanute 911 Communications Data Steward
+472756|Sabetha Police Department
+471362|University of Kansas Public Safety

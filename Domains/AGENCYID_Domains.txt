@@ -114,10 +114,12 @@ psap.colby.ks.us|A PSAP ID in Kansas
 psap.tr.ks.us|A PSAP ID in Kansas
 psap.wa.ks.us|A PSAP ID in Kansas
 psap.wb.ks.us|A PSAP ID in Kansas
-psap.wamego.ks.us|A PSAP ID in Kansas
 psap.ws.ks.us|A PSAP ID in Kansas
 psap.wh.ks.us|A PSAP ID in Kansas
 psap.wl.ks.us|A PSAP ID in Kansas
 psap.wo.ks.us|A PSAP ID in Kansas
 psap.ftleavenworth.ks.us|A PSAP ID in Kansas
 psap.pbpntp.ks.us|A PSAP ID in Kansas
+psap.chanute.ks.us|A PSAP ID in Kansas
+psap.ku.ks.us|A PSAP ID in Kansas
+psap.sabetha.ks.us|A PSAP ID in Kansas

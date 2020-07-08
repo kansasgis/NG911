@@ -395,14 +395,20 @@ def checkStewards(pathsInfoObject):
                 for row in rows:
                     if row[0] is not None:
                         stewardList.append(row[0])
+                        
+#            userMessage(fc + ": " + str(stewardList))
 
             if len(stewardList) > 1:
 
-                # only four PSAPs submit data for multiple STEWARDs
+                # list of PSAPs that submit data for multiple STEWARDs
                 multiStewardDict = {"Crawford": ['484988', '485643'], 
                                     "Leavenworth": ['485016', '485610', '2512205'], 
                                     "Montgomery": ['485556', '485598'],
-                                    "Jackson": ["999001", '485007']}
+                                    "Butler":['2393956','485543','484977'],
+                                    "Labette":['485014','485641'],
+                                    "Nemaha":['485029','472756'],
+                                    "Pottawatomie":['485038','2397188','485044'],
+                                    "Douglas":['484992','471362']}
 
                 # set variables
                 good = False
@@ -2631,85 +2637,92 @@ def checkLineSelfIntersections(roads):
     
     wc = "SUBMIT = 'Y'"
     
-    with SearchCursor(roads, ("SHAPE@", "NGSEGID"), wc) as rows:
-        for row in rows:
-            ngsegid = row[1]
-            
-            touche = row[0].crosses(row[0])
-        
-            if touche:
-                intersections.append(ngsegid)
-
-            # loop through parts of the line geometry            
-            for part in row[0]:
+    try:
+    
+        with SearchCursor(roads, ("SHAPE@", "NGSEGID"), wc) as rows:
+            for row in rows:
+                ngsegid = row[1]
                 
-                # check to see if first and last part are the same
-                if [part[0].X, part[0].Y] == [part[-1].X, part[-1].Y]:
-                    pass
+                touche = row[0].crosses(row[0])
+            
+                if touche:
+                    intersections.append(ngsegid)
+    
+                # loop through parts of the line geometry            
+                for part in row[0]:
                     
-                # else, check for self intersections
-                else:
+                    # check to see if first and last part are the same
+                    if [part[0].X, part[0].Y] == [part[-1].X, part[-1].Y]:
+                        pass
+                        
+                    # else, check for self intersections
+                    else:
+                    
+                        # create a list of all the points
+                        lstPoints = []
+                        for pt in part:
+                            lstPoints.append([pt.X, pt.Y])
+                            
+                        # get a count of how many times each point happens
+                        for pt in lstPoints:
+                            count = lstPoints.count(pt)
+                            
+                            # if the count is greater than 1...
+                            if count > 1:
+                                
+                                # get the index of the first time the point happens
+                                index = lstPoints.index(pt)
+                                
+                                # if the next time it happens is the index + 1, then ignore
+                                if lstPoints[index + 1] == pt:
+                                    pass
+                                else:
+                                    # this is a real duplicate point
+                                    if ngsegid not in intersections:
+                                        intersections.append(ngsegid)
+                                     
+                                try:
+                                    del index
+                                except:
+                                    pass
+                                        
+                        del lstPoints, pt, count
+                        
+                del part
                 
-                    # create a list of all the points
-                    lstPoints = []
-                    for pt in part:
-                        lstPoints.append([pt.X, pt.Y])
-                        
-                    # get a count of how many times each point happens
-                    for pt in lstPoints:
-                        count = lstPoints.count(pt)
-                        
-                        # if the count is greater than 1...
-                        if count > 1:
-                            
-                            # get the index of the first time the point happens
-                            index = lstPoints.index(pt)
-                            
-                            # if the next time it happens is the index + 1, then ignore
-                            if lstPoints[index + 1] == pt:
-                                pass
-                            else:
-                                # this is a real duplicate point
-                                if ngsegid not in intersections:
-                                    intersections.append(ngsegid)
-                                 
-                            try:
-                                del index
-                            except:
-                                pass
-                                    
-                    del lstPoints, pt, count
+        del row, rows, wc
+        
                     
-            del part
+        if intersections != []:                
+            userWarning("Total self-looping roads: %s. See FieldValuesCheckResults for specifics." % str(len(intersections)))
             
-    del row, rows, wc
+            # do reporting
+            values = []
+            today = strftime("%m/%d/%y")
+            layer = basename(roads)
             
-    if intersections != []:                
-        userWarning("Total self-looping roads: %s. See FieldValuesCheckResults for specifics." % str(len(intersections)))
-        
-        # do reporting
-        values = []
-        today = strftime("%m/%d/%y")
-        layer = basename(roads)
-        
-        # populate values
-        for ngsegid in intersections:
-            report = "Notice: %s road geometry loops back on itself" % ngsegid
-            val = (today, report, layer, "GEOMETRY", ngsegid, "Self-intersections")
-            values.append(val)
-            
-        if dirname(roads)[-3:] != 'gdb':
-            gdb = dirname(dirname(roads))
+            # populate values
+            for ngsegid in intersections:
+                report = "Notice: %s road geometry loops back on itself" % ngsegid
+                val = (today, report, layer, "GEOMETRY", ngsegid, "Self-intersections")
+                values.append(val)
+                
+            if dirname(roads)[-3:] != 'gdb':
+                gdb = dirname(dirname(roads))
+            else:
+                gdb = dirname(roads)
+                
+            RecordResults("fieldValues", values, gdb)
+            try:
+                del values, today, layer
+            except:
+                pass
         else:
-            gdb = dirname(roads)
-            
-        RecordResults("fieldValues", values, gdb)
-        try:
-            del values, today, layer
-        except:
-            pass
-    else:
-        userMessage("No self-intersecting roads found.")
+            userMessage("No self-intersecting roads found.")
+        
+    except:
+        userWarning("Unable to check roads for self-intersections. If you are on ArcMap 10.4.1, this is probably ok. If not, there is probably an error with your data.")
+
         
     try:
         del intersections, ngsegid, report, val, gdb
