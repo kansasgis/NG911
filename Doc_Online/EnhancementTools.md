@@ -73,7 +73,7 @@ Running *Add KSPID*:
 Running *Assign Unique Identifier* and *Assign Unique Identifier Road
 Alias Table*:
 
-1.  Open ArcCatalog and navigate to the toolbox called “Kansas NG911 GIS Tools” > “Enhancement Tools” > “Assign Unique Identifier” or “Assign Unique Identifier Road Alias Table”.
+1.  Open toolbox and navigate to “Enhancement Tools” > “Assign Unique Identifier” or “Assign Unique Identifier Road Alias Table”.
 
 2.  In the “Feature Class” or “Alias Table” input box, select the layer
     or table to have its unique ID’s updated.
@@ -86,7 +86,7 @@ Alias Table*:
 <a name="CalcLabel"></a>
 Running *Calculate Label*:
 
-1.  Open ArcCatalog and navigate to the toolbox called “Kansas NG911 GIS Tools” > “Enhancement Tools” > “Calculate Label”.
+1.  Open toolbox and navigate to “Enhancement Tools” > “Calculate Label”.
 
 2.  In the “Feature Class to Receive Label” input box, select the layer
     (Address Points or Road Centerline, any other layer will
@@ -100,7 +100,7 @@ Running *Calculate Label*:
 <a name="elevDir"></a>
 Running *Check Road Elevation Direction*:
 
-1.  Open ArcCatalog and navigate to the toolbox called “Kansas NG911 GIS Tools” > “Enhancement Tools” > “Check Road Elevation Direction”.
+1.  Open toolbox and navigate to “Enhancement Tools” > “Check Road Elevation Direction”.
 
 2.  In the “NG911 Geodatabase” input box, put in the full path of the
     NG911 geodatabase.
@@ -112,7 +112,7 @@ Running *Check Road Elevation Direction*:
 <a name="CompareRoads"></a>
 Running *Compare Road Names*:
 
-1.	Open ArcCatalog and navigate to the toolbox called “Kansas NG911 GIS Tools” > “Enhancement Tools” > “Compare Road Names”.
+1.	Open toolbox and navigate to “Enhancement Tools” > “Compare Road Names”.
 
 2.	In the “NG911 Geodatabase” box, select the appropriate NG911 geodatabase.
 
@@ -124,7 +124,7 @@ Running *Compare Road Names*:
 <a name="createRoadAlias"></a>
 Running *Create Road Alias Records*:
 
-1.	Open ArcCatalog and navigate to the toolbox called “Kansas NG911 GIS Tools” > “Enhancement Tools” > “Create Road Alias Records”.
+1.	Open toolbox and navigate to “Enhancement Tools” > “Create Road Alias Records”.
 
 2.  In the “NG911 Geodatabase” box, select the appropriate
     NG911 geodatabase.
@@ -161,7 +161,7 @@ Running *Create Road Alias Records*:
 <a name="overlaps"></a>
 Running *Find Address Range Overlaps*:
 
-1.	Open ArcCatalog and navigate to the toolbox called “Kansas NG911 GIS Tools” > “Enhancement Tools” > “Find Address Range Overlaps”.
+1.	Open toolbox and navigate to “Enhancement Tools” > “Find Address Range Overlaps”.
 
 2.  In the “NG911 Geodatabase” box, select the appropriate
     NG911 geodatabase.
@@ -175,7 +175,7 @@ Running *Find Address Range Overlaps*:
 <a name="geocode"></a>
 Running *Geocompare Address Points*:
 
-1.	Open ArcCatalog and navigate to the toolbox called “Kansas NG911 GIS Tools” > “Enhancement Tools” > “Geocompare Address Points”.
+1.	Open toolbox and navigate to “Enhancement Tools” > “Geocompare Address Points”.
 
 2.  In the “NG911 Geodatabase” box, select the appropriate
     NG911 geodatabase.
@@ -191,7 +191,7 @@ Running *Geocompare Address Points*:
 <a name="splitESB"></a>
 Running *Split Single ESB Layer*:
 
-1.	Open ArcCatalog and navigate to the toolbox called “Kansas NG911 GIS Tools” > “Enhancement Tools” > “Split Single ESB Layer”.
+1.	Open toolbox and navigate to “Enhancement Tools” > “Split Single ESB Layer”.
 
 2.	In the “Input ESB Layer” parameter, enter the path to the single ESB layer you want to split.
 
@@ -203,7 +203,7 @@ Running *Split Single ESB Layer*:
 <a name="USNG"></a>
 Running *US National Grid Calculator*:
 
-1.  Open ArcCatalog and navigate to the toolbox called “Kansas NG911 GIS Tools” > “Enhancement Tools” > “US National Grid Calculator”.
+1.  Open toolbox and navigate to “Enhancement Tools” > “US National Grid Calculator”.
 
 2.  In the “Address Points Layer” input box, select the address point
     layer that needs US National Grid Coordinates updated.
@@ -216,7 +216,7 @@ Running *US National Grid Calculator*:
 <a name="roadalias"></a>
 Running *Verify Road Alias*:
 
-1.	Open ArcCatalog and navigate to the toolbox called “Kansas NG911 GIS Tools” > “Enhancement Tools” > “Verify Road Alias”.
+1.	Open toolbox and navigate to “Enhancement Tools” > “Verify Road Alias”.
 
 2.  In the “NG911 Geodatabase” box, select the appropriate
     NG911 geodatabase.
