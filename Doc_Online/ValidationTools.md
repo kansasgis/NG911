@@ -53,10 +53,8 @@ included data validation tools check for the following errors:
 
 Running *Validation scripts*:
 
-1.  Open ArcCatalog and navigate to the toolbox called “Kansas NG911 GIS
-    Tools”, expand the toolbox, then expand the toolset called
-    “Validation Tools.” Use the tools in the numerical order presented
-    with the following guidelines.
+1.  Navigate to the toolset called “Validation Tools.” Use the tools 
+    in the numerical order presented with the following guidelines.
 
 2.  In the “Geodatabase” parameter, select the geodatabase of data to
     be checked.
