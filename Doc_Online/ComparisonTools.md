@@ -23,9 +23,7 @@ geodatabases.
 <a name="data"></a>
 Running *Compare NG911 Data*:
 
-1.  Open ArcCatalog and navigate to the toolbox called “Kansas NG911 GIS
-    tools”, expand the toolbox, then expand the toolset called
-    “Comparison Tools.”
+1.  Navigate to the toolset called “Comparison Tools.”
 
 2.  Double click the script titled “Compare NG911 Data.”
 
@@ -52,9 +50,7 @@ Running *Compare NG911 Data*:
 <a name="geodatabases"></a>
 Running *Compare NG911 Geodatabases*:
 
-1.  Open ArcCatalog and navigate to the toolbox called “Kansas NG911 GIS
-    tools”, expand the toolbox, then expand the toolset called
-    “Comparison Tools.”
+1.  Navigate to the toolset called “Comparison Tools.”
 
 2.  Double click the script titled “Compare NG911 Geodatabases.”
 
