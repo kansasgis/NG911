@@ -48,9 +48,7 @@ For full documentation, please see the official conversion documentation called
 <a name="parcels"></a>
 Running *Add/Update Parcel Layer*:
 
-1.  Open ArcCatalog and navigate to the toolbox called “Kansas NG911 GIS
-    tools”, expand the toolbox, then expand the toolset called
-    “Conversion Tools.”
+1.  From the toolbox, expand the toolset called “Conversion Tools.”
 
 2.  Double click the script titled “Add/Update Parcel Layer.”
 
@@ -70,7 +68,7 @@ you’d like to import the parcels.
 
 <a name="NENA"></a>
 Running *Address Points to NENA*:
-1.	Open ArcCatalog and navigate to the toolbox called “Kansas NG911 GIS Tools”, expand the toolbox, then expand the toolset called “Conversion Tools.”
+1.	From the toolbox, expand the toolset called “Conversion Tools.”
 
 2.	Double click the script titled “Address Points to NENA”.
 
@@ -83,9 +81,7 @@ Running *Address Points to NENA*:
 <a name="gdb2shp"></a>
 Running *GDB to Shapefile*:
 
-1.  Open ArcCatalog and navigate to the toolbox called “Kansas NG911 GIS
-    Tools”, expand the toolbox, then expand the toolset called
-    “Conversion Tools.”
+1.  From the toolbox, expand the toolset called “Conversion Tools.”
 
 2.  Double click the script titled “GDB to Shapefiles.”
 
@@ -100,9 +96,7 @@ Running *GDB to Shapefile*:
 <a name="zip"></a>
 Running *Zip NG911 Geodatabase*:
 
-1.  Open ArcCatalog and navigate to the toolbox called “Kansas NG911 GIS
-    tools”, expand the toolbox, then expand the toolset called
-    “Conversion Tools.”
+1.  From the toolbox, expand the toolset called “Conversion Tools.”
 
 2.  Double click the script titled “Zip NG911 Geodatabase.”
 
