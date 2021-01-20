@@ -2,7 +2,7 @@ readme.txt for Kansas NG911 GIS Tools
 
 These tools assist with various tasks in preparing and validating data for the Kansas NG911 GIS project. 
 
-These tools are intended for ArcGIS Desktop version 10.3 and higher.
+These tools are intended for ArcGIS Desktop version 10.3 and higher and ArcGIS Pro.
 
 To get started using the tools, please read "GettingStarted.docx" located in this same folder or read
 the online version at https://github.com/kansasgis/NG911/blob/master/GettingStarted.md

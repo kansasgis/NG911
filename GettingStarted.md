@@ -14,6 +14,7 @@ Document Change Log
 |12/21/15|Kristen Jordan|Added “Verify Road Alias” tool|We added a new tool|
 |06/30/16|Kristen Jordan Koenig|Clarified ArcGIS release version|Tool works in 10.3 and higher|
 |07/28/16|Kristen Jordan Koenig|Created online md version with links|Time to go really digital. Future edits will be noted in the GitHub change log.|
+|08/07/20|Kristen Jordan Koenig|Clarified ArcGIS release version|Tool works in 10.3 and higher and ArcGIS Pro|
 
 
 The Kansas NG911 Toolbox contains a series of data quality assurance
@@ -35,7 +36,7 @@ toolbox includes the following modules:
 -   [Validation Tools](https://github.com/kansasgis/NG911/blob/master/Doc_Online/ValidationTools.md)
 
 The Kansas NG911 Toolbox is compatible with ArcGIS Desktop versions 10.3
-and higher.
+and higher and ArcGIS Pro.
 
 Getting Started
 ===============
@@ -53,7 +54,7 @@ geodatabase data as a baseline for submission to the NG911 project.
 The Local Data Steward or Data Maintainer is responsible for running
 Kansas NG911 GIS data submissions through the Kansas NG911 Toolbox
 validation module before data is submitted through the NG911 Portal. To
-run these tools, open the toolbox and toolset in ArcCatalog, and, at
+run these tools, open the toolbox and toolset in ArcCatalog or ArcGIS Pro, and, at
 minimum, run the tools numbered 1 through 5. To run all checks included
 in tools 1-5, run “9 Optional Check All Required.”
 
@@ -97,8 +98,8 @@ All data in *FieldValuesCheckResults* table will have a FeatureID
 recorded. This ID number corresponds to the unique ID field (like SegID
 for roads) of a particular layer. Users can look up errors in multiple
 ways. One way is to bring the feature class and the
-*FieldValuesCheckResults* table into ArcMap and to do a join between the
-feature class unique ID field and the FeatureID field in
+*FieldValuesCheckResults* table into ArcMap or ArcGIS Pro 
+and to do a join between the feature class unique ID field and the FeatureID field in
 *FieldValuesCheckResults*.
 
 Checking Data After Edits

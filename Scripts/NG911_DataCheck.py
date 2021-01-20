@@ -352,6 +352,42 @@ def verifyESBAlignment(pathsInfoObject):
         userWarning("This geodatabase has not been adjusted to the statewide seamless layer. See FieldValuesCheckResults.")
     else:
         userMessage("This geodatabase has been adjusted to the statewide seamless layer.")
+        
+        
+def getStewards(fc):
+    
+    output = r"in_memory\Summary"
+    field = "STEWARD"
+
+    if Exists(output):
+        Delete_management(output)
+
+    wc_submit = "SUBMIT = 'Y'"
+    fl_submit = "fl_submit"
+    MakeTableView_management(fc, fl_submit, wc_submit)
+
+    #run frequency to get unique list in "STEWARD" field
+    Statistics_analysis(fl_submit, output, [["STEWARD","COUNT"]], "STEWARD")
+
+    #set up empty variables to hold list of stewards in the data
+    stewardList = []
+
+    #run search cursor to get list of stewards
+    with SearchCursor(output, (field)) as rows:
+        for row in rows:
+            if row[0] is not None:
+                stewardList.append(row[0])
+                
+    try:
+        del rows, row
+    except:
+        pass
+                
+    # clean up
+    Delete_management(output)
+    Delete_management(fl_submit)
+                
+    return stewardList
 
 
 def checkStewards(pathsInfoObject):
@@ -368,79 +404,50 @@ def checkStewards(pathsInfoObject):
     today = strftime("%m/%d/%y")
 
     for fc in layerList:
-        output = r"in_memory\Summary"
-        field = "STEWARD"
-
-        if Exists(output):
-            Delete_management(output)
-
-        wc_submit = "SUBMIT = 'Y'"
-        fl_submit = "fl_submit"
-        MakeTableView_management(fc, fl_submit, wc_submit)
-
-        #run frequency to get unique list in "STEWARD" field
-        Statistics_analysis(fl_submit, output, [["STEWARD","COUNT"]], "STEWARD")
-
-        # run a count to see if the output is more than one record long
-        stewardCount = getFastCount(output)
+        
+        stewardList = getStewards(fc)
 
         # if it's a bigger list, get the list of stewards
-        if stewardCount > 1:
+        if len(stewardList) > 1:
 
-            #set up empty variables to hold list of stewards in the data
-            stewardList = []
+            # list of PSAPs that submit data for multiple STEWARDs
+            multiStewardDict = {"Crawford": ['484988', '485643'], 
+                                "Leavenworth": ['485016', '485610', '2512205'], 
+                                "Montgomery": ['485556', '485598'],
+                                "Butler":['2393956','485543','484977'],
+                                "Labette":['485014','485641'],
+                                "Nemaha":['485029','472756'],
+                                "Pottawatomie":['485038','2397188','485044'],
+                                "Douglas":['484992','471362']}
 
-            #run search cursor to get list of stewards
-            with SearchCursor(output, (field)) as rows:
-                for row in rows:
-                    if row[0] is not None:
-                        stewardList.append(row[0])
-                        
-#            userMessage(fc + ": " + str(stewardList))
+            # set variables
+            good = False
+            county = ""
 
-            if len(stewardList) > 1:
+            # loop through the dictionary
+            for co in multiStewardDict.keys():
+                coList = multiStewardDict[co]
+                diff = list(set(stewardList) - set(coList))
 
-                # list of PSAPs that submit data for multiple STEWARDs
-                multiStewardDict = {"Crawford": ['484988', '485643'], 
-                                    "Leavenworth": ['485016', '485610', '2512205'], 
-                                    "Montgomery": ['485556', '485598'],
-                                    "Butler":['2393956','485543','484977'],
-                                    "Labette":['485014','485641'],
-                                    "Nemaha":['485029','472756'],
-                                    "Pottawatomie":['485038','2397188','485044'],
-                                    "Douglas":['484992','471362']}
+                # test to see if there are more stewards listed than are approved
+                if diff == []:
+                    good = True
+                    county = co
 
-                # set variables
-                good = False
-                county = ""
+            if not good:
+                # report that an unapproved steward exists in the feature class
+                dataset_report = "Error: STEWARD contains values not approved for this PSAP in " + basename(fc)
+                val = (today, dataset_report, basename(fc), "STEWARD", "", "Check STEWARD")
+                values.append(val)
+                userWarning(dataset_report)
 
-                # loop through the dictionary
-                for co in multiStewardDict.keys():
-                    coList = multiStewardDict[co]
-                    diff = list(set(stewardList) - set(coList))
-
-                    # test to see if there are more stewards listed than are approved
-                    if diff == []:
-                        good = True
-                        county = co
-
-                if not good:
-                    # report that an unapproved steward exists in the feature class
-                    dataset_report = "Error: STEWARD contains values not approved for this PSAP in " + basename(fc)
-                    val = (today, dataset_report, basename(fc), "STEWARD", "", "Check STEWARD")
-                    values.append(val)
-                    userWarning(dataset_report)
-
-                else:
-                    # report that approved stewards exist
-                    userMessage("All stewards approved for %s %s" % (county, basename(fc)))
+            else:
+                # report that approved stewards exist
+                userMessage("All stewards approved for %s %s" % (county, basename(fc)))
 
         else:
             userMessage("Stewards good for " + basename(fc))
-
-        # clean up
-        Delete_management(output)
-        Delete_management(fl_submit)
+            
 
     #record issues if any exist
     if values != []:
@@ -542,12 +549,12 @@ def checkParities(currentPathSettings):
                     if r_phrase not in a_phrase:
                         if auth_r == "Y":
                             r_report = getParityReport(r_phrase)
-                            val = (today, "Notice: R Side- " + r_report, filename, "", row[0], check)
+                            val = (today, "Error: R Side- " + r_report, filename, "", row[0], check)
                             values.append(val)
                     if l_phrase not in a_phrase:
                         if auth_l == "Y":
                             l_report = getParityReport(l_phrase)
-                            val = (today, "Notice: L Side- " + l_report, filename, "", row[0], check)
+                            val = (today, "Error: L Side- " + l_report, filename, "", row[0], check)
                             values.append(val)
                 except Exception as e:
                     if type(row[0]) is not None:
@@ -3285,8 +3292,25 @@ def sanityCheck(currentPathSettings):
     checkESBDisplayLength(currentPathSettings)
     checkFeatureLocations(currentPathSettings)
     verifyESBAlignment(currentPathSettings)
+    
+    # see if we can check out the stewards
     try:
-        checkTopology(gdbObject, True, True) # check everything
+        ab = gdbObject.AuthoritativeBoundary
+        stew = getStewards(ab)
+        first_steward = stew[0]
+        
+    except:
+        first_steward = ''
+        
+    try:
+        # don't run topology on certain stewards (like Johnson)
+        if first_steward not in ['485010']:
+            checkTopology(gdbObject, True, True) # check polygons
+            
+        else:
+            userMessage('Intentionally skipped running topology check')
+            RecordResults("template", [strftime("%m/%d/%y"), "Notice: Intentionally did not validate topology", "Topology"], gdb)
+            
     except Exception as e:
         userWarning(str(e))
         RecordResults("template", [strftime("%m/%d/%y"), "Error: Could not validate topology", "Topology"], gdb)
@@ -3493,8 +3517,25 @@ def main_check(checkType, currentPathSettings):
         if checkList[1] == "true":
             verifyESBAlignment(currentPathSettings)
             checkFeatureLocations(currentPathSettings)
+            
+            # see if we can check out the stewards
             try:
-                checkTopology(gdbObject, True, False) # just check polygons
+                ab = gdbObject.AuthoritativeBoundary
+                stew = getStewards(ab)
+                first_steward = stew[0]
+                
+            except:
+                first_steward = ''
+                
+            try:
+                # don't run topology on certain stewards (like Johnson)
+                if first_steward not in ['485010']:
+                    checkTopology(gdbObject, True, False) # check polygons
+                    
+                else:
+                    userMessage('Intentionally skipped running polygon topology check')
+                    RecordResults("template", [strftime("%m/%d/%y"), "Message: Intentionally did not validate polygon topology", "Topology"], gdb)
+
             except Exception as e:
                 userWarning(str(e))
                 RecordResults("template", [strftime("%m/%d/%y"), "Error: Could not validate topology", "Topology"], gdb)

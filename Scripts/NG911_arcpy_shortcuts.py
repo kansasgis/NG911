@@ -121,10 +121,12 @@ def hasIndex(fc):
         exists = True
     return exists
 
+
 def ListIndexNames(fc):
     from arcpy import ListIndexes
     names = map(lambda x: x.name, ListIndexes(fc))
     return names
+
 
 def MakeLayer(item, lyrName, wc):
     from arcpy import Describe, MakeFeatureLayer_management, MakeTableView_management
@@ -150,3 +152,5 @@ def CalcWithWC(fc, fld, val, wc):
     MakeFeatureLayer_management(fc, fl_calc, wc)
     CalculateField_management(fl_calc, fld, val, "PYTHON_9.3", "")
     Delete_management(fl_calc)
+    
+    
