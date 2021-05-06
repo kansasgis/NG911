@@ -14,7 +14,8 @@ from arcpy import (AddField_management, AddMessage, CalculateField_management, C
                    SelectLayerByLocation_management, env, ListDatasets,
                    AddJoin_management, RemoveJoin_management, AddWarning, CopyFeatures_management,
                    Dissolve_management, DeleteField_management, DisableEditorTracking_management, EnableEditorTracking_management,
-                   ExportTopologyErrors_management, Buffer_analysis, Intersect_analysis, Point, ListFeatureClasses)
+                   ExportTopologyErrors_management, Buffer_analysis, Intersect_analysis, 
+                   Point, ListFeatureClasses, SpatialReference, Project_management)
 from arcpy.da import InsertCursor, SearchCursor
 from os import path, remove
 from os.path import basename, dirname, join, exists, abspath
@@ -63,8 +64,7 @@ def checkToolboxVersion():
         try:
             response = urllib.request.urlopen(url).read()
             mostRecentData = json.loads(response.decode('utf-8'))
-        except Exception as e:
-##            userMessage(str(e))
+        except:
             response = urllib.urlopen(url)
             mostRecentData = json.loads(response.read())
 
@@ -457,7 +457,7 @@ def checkStewards(pathsInfoObject):
         userMessage("Checked stewards.")
 
     try:
-        del stewardList, wc_submit
+        del stewardList
     except:
         pass
 
@@ -556,7 +556,7 @@ def checkParities(currentPathSettings):
                             l_report = getParityReport(l_phrase)
                             val = (today, "Error: L Side- " + l_report, filename, "", row[0], check)
                             values.append(val)
-                except Exception as e:
+                except:
                     if type(row[0]) is not None:
                         userWarning("Could not process parity check for road segment " + row[0] + ". Please check address ranges and parities for null values.")
                         val = (today, "Error: Could not process parity check. Look for null values.", filename, "", row[0], check)
@@ -2469,6 +2469,75 @@ def checkFeatureLocations(pathsInfoObject):
 
                 #clean up
                 Delete_management(fl)
+               
+            # check to see if the address points have values outside the boundaries of Kansas
+            if "AddressPoints" in fullPath:
+                
+                # create a layer of address points that are for submission and have lat/long calculated
+                wc = "SUBMIT = 'Y' AND LAT <> 0 AND LONG <> 0"
+                fl_ap = "fl_ap"
+                MakeFeatureLayer_management(fullPath, fl_ap, wc)
+                
+                # see if the count is higher than 0
+                if getFastCount(fl_ap) > 0:
+                    
+                    # find some boundary layer to use
+                    if Exists(authBound):
+                        ext_boundary = authBound
+                    elif Exists(join(gdb, "NG911", "CountyBoundary")):
+                        ext_boundary = join(gdb, "NG911", "CountyBoundary")
+                    elif Exists(join(gdb, "NG911", "ESB")):
+                        ext_boundary = join(gdb, "NG911", "ESB")
+                    else:
+                        ext_boundary = join(gdb, "NG911", "ESB_EMS")
+                    
+                    # get GCS bounding coordinates of the authoritative boundary
+                    ab_copy = r"in_memory\EXT"
+                    ab_gcs = join(gdb, "EXT_GCS")
+                
+                    # copy first
+                    CopyFeatures_management(ext_boundary, ab_copy)
+                     
+                    # reproject AB in memory to GCS
+                    sr = SpatialReference(4269)
+                    Project_management(ab_copy, ab_gcs, sr)
+                    
+                    # get bounding coordinates
+                    ext = Describe(ab_gcs).extent
+                    
+                    # create feature layer of any features that are outside Kansas by GCS
+                    outobounds_wc = "LONG < %s OR LONG > %s OR LAT < %s OR LAT > %s" % (ext.XMin, ext.XMax, ext.YMin, ext.YMax)
+                    fl_ap_outside = "fl_ap_outside"
+                    MakeFeatureLayer_management(fullPath, fl_ap_outside, outobounds_wc)
+                    
+                    if getFastCount(fl_ap_outside) > 0:
+                        
+                        obj = NG911_GDB_Objects.getFCObject(fullPath)
+                        id1 = obj.UNIQUEID
+                        layer = basename(fullPath)
+                        
+                        # if there are, report the features
+                        with SearchCursor(fl_ap_outside, (id1)) as rows1:
+                            for row1 in rows1:
+                                fID = row1[0]
+                                report = "Error: Lat or Long field outside PSAP geographic coordinates"
+                                val = (today, report, layer, "LAT|LONG", fID, "Check Feature Locations")
+                                values.append(val)
+                                
+                        # clean up
+                        try:
+                            del row1, rows1
+                        except:
+                            pass
+                        
+                    # clean up
+                    Delete_management(fl_ap_outside)
+                    Delete_management(ab_copy)
+                    Delete_management(ab_gcs)
+                    
+                # clean up
+                Delete_management(fl_ap)
+                
 
     if values != []:
         RecordResults("fieldValues", values, gdb)
@@ -2618,7 +2687,7 @@ def checkCutbacks(pathsInfoObject):
                                             values.append(val)
                                             cutbacks.append(segid)
                                     i += 1
-                except Exception as e:
+                except:
                     userMessage("Issue checking a cutback with segment " + segid)
                     k += 1
 
@@ -2880,7 +2949,7 @@ def VerifyRoadAlias(gdb, domainFolder):
                                             val = (today, report, filename, field, fID, "Check Road Alias")
                                             values.append(val)
 
-                except Exception as e:
+                except:
                     report = "Error: Issue with road alias record"
                     val = (today, report, filename, field, fID, "Check Road Alias")
                     values.append(val)
