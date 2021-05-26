@@ -2506,7 +2506,7 @@ def checkFeatureLocations(pathsInfoObject):
                     ext = Describe(ab_gcs).extent
                     
                     # create feature layer of any features that are outside Kansas by GCS
-                    outobounds_wc = "LONG < %s OR LONG > %s OR LAT < %s OR LAT > %s" % (ext.XMin, ext.XMax, ext.YMin, ext.YMax)
+                    outobounds_wc = "SUBMIT = 'Y' AND (LONG < %s OR LONG > %s OR LAT < %s OR LAT > %s)" % (ext.XMin, ext.XMax, ext.YMin, ext.YMax)
                     fl_ap_outside = "fl_ap_outside"
                     MakeFeatureLayer_management(fullPath, fl_ap_outside, outobounds_wc)
                     
