@@ -95,13 +95,11 @@ Support Contact:
 
 For issues or questions, please contact Kristen Jordan Koenig with the
 Kansas Data Access and Support Center. Email Kristen at
-<Kristen@kgs.ku.edu> and please include in the email which script you
-were running, any error messages, and a zipped copy of your geodatabase
-(change the file extension from zip to piz so it gets through the email
-server).
+<Kristen.kgs@ku.edu> and please include in the email which script you
+were running, any error messages, and a zipped copy of your geodatabase.
 
 If you have a domain issue to report, please email Kristen Jordan-Koenig
-at <kristen@kgs.ku.edu>. Please indicate what type of domain the issue
+at <kristen.kgs@ku.edu>. Please indicate what type of domain the issue
 is with and the values needing corrections. If you're feeling fancy, you
 can also fork the GitHub repository at
 <https://github.com/kansasgis/NG911>. Make your changes and submit a
