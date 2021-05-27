@@ -81,7 +81,7 @@ Support Contact:
 
 For issues or questions, please contact Kristen Jordan Koenig with the
 Kansas Data Access and Support Center. Email Kristen at
-<Kristen@kgs.ku.edu> and please include in the email which script you
+<kristen.kgs@ku.edu> and please include in the email which script you
 were running, any error messages, and a zipped copy of your geodatabase
 (change the file extension from zip to piz so it gets through the email
 server).
