@@ -2026,7 +2026,71 @@ def checkMSAGCOspaces(fc1, gdb):
         userWarning("Check complete. %s issues found. See table FieldValuesCheckResults for results." % (str(len(values))))
     else:
         userMessage("Check complete. No MSAGCO records have leading or trailing spaces.")
+        
+        
+def checkAttributes(fc, gdb):
+    
+    fcobj = NG911_GDB_Objects.getFCObject(fc)
+    uniqueID = fcobj.UNIQUEID
+    
+    userMessage("Checking field values for out-of-character characters...")
+    
+    # set up parameters for reporting
+    values = []
+    resultType = "fieldValues"
+    today = strftime("%m/%d/%y")
+    
+    fieldList = ['STP', 'RD', 'POM']
+    
+    # add extra fields if checking address points
+    if "AddressPoints" in fc:
+    
+        addy_append = ['HNS', 'BLD', 'FLR', "UNIT", "ROOM", "SEAT"]
+        
+        for fld in addy_append:
+            fieldList.append(fld)
+            
+    # define characters to find
+    chars = ['/', '\\', 'NULL', 'null', "Null", "#", "^", "!", "@", "$", "(", ")", '*', "<", ">"]
+             
+    # loop through fields
+    for fld in fieldList:
+             
+        # loop through characters
+        for char in chars:
+            
+            check = True
+            
+            # skip check in certain places since these characters are allowed
+            if char == '/' and fld in ('HNS', 'UNIT', 'BLD', 'ROOM'):
+                check = False
+                    
+            if check:
+            
+                # set up where clause
+                wc = fld + " like '%" + char + "%'"
+                
+                # make a feature layer
+                fl = "fl"
+                MakeFeatureLayer_management(fc, fl, wc)
+                
+                # if the count is higher than 0, identify the features
+                if getFastCount(fl) > 0:
+                    
+                    with SearchCursor(fl, [uniqueID]) as rows:
+                        for row in rows:
+                            report = "Warning: %s has character %s in the attributes. This will be removed during statewide processing." % (fld, char)
+                            val = (today, report, basename(fc), fld, row[0], "Check Attributes")
+                            values.append(val)
+                            
+                # clean up between iterations
+                Delete_management(fl)
 
+    if values != []:
+        RecordResults(resultType, values, gdb)
+        userWarning("Attribute check complete. %s issues found. See table FieldValuesCheckResults for results." % (str(len(values))))
+    else:
+        userMessage("Attribute check complete. No out-of-character characters found.")
 
 def checkValuesAgainstDomain(pathsInfoObject):
     gdb = pathsInfoObject.gdbPath
@@ -2325,25 +2389,28 @@ def checkSubmissionNumbers(pathsInfoObject):
             wc2 = "SUBMIT = 'Y'"
             if "AddressPoints" in fc:
                 wc2 = wc2 + " AND LOCTYPE = 'PRIMARY'"
-            MakeTableView_management(fc, lyr2, wc2)
-
-            #get count of the results
-            count = getFastCount(lyr2)
-            bn = basename(fc)
-
-            umList = [bn, ": ", str(count), " records marked for submission"]
-            um = "".join(umList)
-            userMessage(um)
-
-            if count == 0:
-                report = "Error: %s has 0 records for submission" % (bn)
-                if bn.upper() in skipList or bn[0:3].upper() == 'UT_':
-                    report = report.replace("Error", "Notice")
-                #add issue to list of values
-                val = (today, report, "Submission", "Check Submission Counts")
-                values.append(val)
-
-            Delete_management(lyr2)
+                
+            if fieldExists(fc, "SUBMIT"):
+                MakeTableView_management(fc, lyr2, wc2)
+    
+                #get count of the results
+                count = getFastCount(lyr2)
+                bn = basename(fc)
+    
+                umList = [bn, ": ", str(count), " records marked for submission"]
+                um = "".join(umList)
+                userMessage(um)
+    
+                if count == 0:
+                    report = "Error: %s has 0 records for submission" % (bn)
+                    if bn.upper() in skipList or bn[0:3].upper() == 'UT_':
+                        report = report.replace("Error", "Notice")
+                    #add issue to list of values
+                    val = (today, report, "Submission", "Check Submission Counts")
+                    values.append(val)
+    
+                Delete_management(lyr2)
+                
         else:
             userWarning(fc + " does not exist")
 
@@ -3388,6 +3455,7 @@ def sanityCheck(currentPathSettings):
     # check address points
 ##    geocodeAddressPoints(currentPathSettings)
     addressPoints = gdbObject.AddressPoints
+    checkAttributes(addressPoints, gdb)
     checkKSPID(addressPoints, "KSPID")
     checkMSAGCOspaces(addressPoints, gdb)
     if fieldExists(addressPoints, "RCLMATCH"):
@@ -3405,6 +3473,7 @@ def sanityCheck(currentPathSettings):
 
     # check roads
     roads = gdbObject.RoadCenterline
+    checkAttributes(roads, gdb)
     road_freq = gdbObject.RoadCenterlineFrequency
     rc_obj = NG911_GDB_Objects.getFCObject(roads)
     road_fields = rc_obj.FREQUENCY_FIELDS_STRING
@@ -3507,6 +3576,7 @@ def main_check(checkType, currentPathSettings):
         addressPoints = gdbObject.AddressPoints
         if checkList[0] == "true":
             checkValuesAgainstDomain(currentPathSettings)
+            checkAttributes(addressPoints, gdb)
             checkMSAGCOspaces(addressPoints, gdb)
             checkKSPID(addressPoints, "KSPID")
             if fieldExists(addressPoints, "RCLMATCH"):
@@ -3537,6 +3607,7 @@ def main_check(checkType, currentPathSettings):
         rc_obj = NG911_GDB_Objects.getFCObject(roads)
         if checkList[0] == "true":
             checkValuesAgainstDomain(currentPathSettings)
+            checkAttributes(roads, gdb)
             checkMSAGCOspaces(roads, gdb)
 
             # check parity

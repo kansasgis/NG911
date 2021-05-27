@@ -105,7 +105,7 @@ The official repository for this project is on the KansasGIS GitHub account.
 
 The tool will be available as a package download from the Kansas Data Access and Support Center (DASC) website: http://www.kansasgis.org
 
-Support: for questions or issues, email a full description to Kristen: kristen at kgs.ku.edu
+Support: for questions or issues, email a full description to Kristen: kristen.kgs at ku.edu
 
 Credits: Scripts written by Sherry Massey with Dickinson County, Kristen Jordan Koenig with DASC, and Kyle Gonterwitz and Dirk Talley with Kansas Department of Transportation
 
