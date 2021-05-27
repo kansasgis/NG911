@@ -15,6 +15,7 @@ Document Change Log
 |06/30/16|Kristen Jordan Koenig|Clarified ArcGIS release version|Tool works in 10.3 and higher|
 |07/28/16|Kristen Jordan Koenig|Created online md version with links|Time to go really digital. Future edits will be noted in the GitHub change log.|
 |08/07/20|Kristen Jordan Koenig|Clarified ArcGIS release version|Tool works in 10.3 and higher and ArcGIS Pro|
+|05/26/21|Kristen Jordan Koenig|Updated email address|Updated contact information|
 
 
 The Kansas NG911 Toolbox contains a series of data quality assurance
@@ -209,4 +210,4 @@ elusive data issues:
 Additional documentation for each toolset can be found in the “Docs”
 folder.
 
-Questions? Please email Kristen Jordan Koenig at kristen@kgs.ku.edu
+Questions? Please email Kristen Jordan Koenig at kristen.kgs@ku.edu
