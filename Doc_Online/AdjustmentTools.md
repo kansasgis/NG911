@@ -64,7 +64,7 @@ Running *Fix Duplicate ESB IDs*:
 
 3.	Run “Validation Tools” > “9 Optional Check All Required” again. See the difference of results in FieldValuesCheckResults.
 
-< a name="fixSpaces"></a>
+<a name="fixSpaces"></a>
 Running *Fix KSPID, Fix MSAGCO Spaces, & Fix Submit*:
 
 1.	Open “Adjustment Tools” and the tool you want to run and identify your NG911 geodatabase.
