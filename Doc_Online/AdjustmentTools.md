@@ -3,6 +3,11 @@
 Description: The adjustment tools will help prepare data so it passes
 all data checks prior to submission into the NG911 Portal.
 
+[*Fix Attributes*](#fixAttributes): Based on attribute issues that exist 
+in FieldValuesCheckResults, this tool edits character issues in data. 
+It fixes spelled out NULL and various special characters that cause 
+issues with geospatial call routing.
+
 [*Fix Domain Case*](#domainCase): Based on domain issues that exist in
 FieldValuesCheckResults, this tool edits case issues in data. For
 example, if FieldValuesCheckResults has the error “Value Primary not in
@@ -22,6 +27,17 @@ remove those characters so the KSPID is the required 19 digits.
 MSAGCO_R fields in the Address Point and Road Centerline feature classes.
 
 [*Fix Submit*](#fixSpaces): This tool auto-fills all blank or null SUBMIT fields in all required feature classes as “Y”.
+
+<a name="fixAttributes"></a>
+Running *Fix Attributes*:
+1.	First, run “Validation Tools” > “9 Optional Check All Required” to 
+    make sure all address field components of address points and road 
+    centerlines are examined and all issues are recorded in FieldValuesCheckResults.
+2.	Open “Adjustment Tools” > “Fix Attributes” and identify the parameters for the 
+    NG911 geodatabase and the folder containing domains files.
+3.	Run the tool.
+4.	Run “Validation Tools” > “9 Optional Check All Required” again. See the difference 
+    of results in FieldValuesCheckResults.
 
 <a name="domainCase"></a>
 Running *Fix Domain Case*:
