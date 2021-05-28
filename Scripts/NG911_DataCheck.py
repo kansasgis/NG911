@@ -2079,7 +2079,7 @@ def checkAttributes(fc, gdb):
                     
                     with SearchCursor(fl, [uniqueID]) as rows:
                         for row in rows:
-                            report = "Warning: %s has character %s in the attributes. This will be removed during statewide processing." % (fld, char)
+                            report = "Notice: %s has character %s in the attributes. This will be removed during statewide processing." % (fld, char)
                             val = (today, report, basename(fc), fld, row[0], "Check Attributes")
                             values.append(val)
                             
