@@ -984,3 +984,14 @@ YODER|Postal Community in or bordering Kansas
 ZENDA|Postal Community in or bordering Kansas
 ZIMMERDALE|Postal Community in or bordering Kansas
 ZURICH|Postal Community in or bordering Kansas
+BARTLESVILLE|Postal Community in or bordering Okalhoma
+CHELSEA|Postal Community in or bordering Okalhoma
+DELAWARE|Postal Community in or bordering Okalhoma
+DEWEY|Postal Community in or bordering Oklahoma
+LENAPAH|Postal Community in or bordering Okalhoma
+NOWATA|Postal Community in or bordering Okalhoma
+S COFFEYVILLE|Postal Community in or bordering Okalhoma
+TALALA|Postal Community in or bordering Oklahoma
+VINITA|Postal Community in or bordering Okalhoma
+WANN|Postal Community in or bordering Okalhoma
+WELCH|Postcal Community in or bordering Oklahoma

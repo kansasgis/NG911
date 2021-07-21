@@ -8,15 +8,19 @@
 #-------------------------------------------------------------------------------
 
 def main():
-    from arcpy import GetParameterAsText, ListFeatureClasses, CopyFeatures_management, CopyRows_management, env
+    from arcpy import (GetParameterAsText, ListFeatureClasses, CopyFeatures_management, 
+                       CopyRows_management, env, Exists)
     from os.path import join
+    from NG911_GDB_Objects import getGDBObject
 
     #get variables
     gdb = GetParameterAsText(0)
     outputFolder = GetParameterAsText(1)
+    
+    gdb_obj = getGDBObject(gdb)
 
     #set workspace
-    env.workspace = join(gdb, "NG911")
+    env.workspace = gdb_obj.NG911_FeatureDataset
 
     #list all feature classes
     fcs = ListFeatureClasses()
@@ -29,11 +33,12 @@ def main():
         CopyFeatures_management(fc, outFC)
 
     #set variabes for road alias table
-    roadAliasTable = join(gdb, "RoadAlias")
+    roadAliasTable = gdb_obj.RoadAlias
     outRoadAliasTable = join(outputFolder, "RoadAlias.dbf")
 
     #copy road alias table
-    CopyRows_management(roadAliasTable, outRoadAliasTable)
+    if Exists(roadAliasTable):
+        CopyRows_management(roadAliasTable, outRoadAliasTable)
 
 if __name__ == '__main__':
     main()

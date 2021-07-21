@@ -12,18 +12,21 @@ from arcpy import GetParameterAsText, CalculateField_management, MakeFeatureLaye
 from arcpy.da import UpdateCursor, Editor
 from os.path import basename, dirname
 from NG911_DataCheck import userMessage
-from NG911_GDB_Objects import getFCObject
+from NG911_GDB_Objects import getFCObject, getGDBObject
 
 def main():
     layer = GetParameterAsText(0)
     updateBlanksOnly = GetParameterAsText(1)
+    
+    gdb = layer.split(".gdb")[0] + ".gdb"
+    gdb_obj = getGDBObject(gdb)
 
     expression = ""
     a = ""
     field_list = []
 
     #define object & field list
-    if basename(layer) in ("RoadCenterline", "AddressPoints"):
+    if basename(layer) in (basename(gdb_obj.RoadCenterline), basename(gdb_obj.AddressPoints)):
         a = getFCObject(layer)
         field_list = a.LABEL_FIELDS
     else:
@@ -38,7 +41,7 @@ def main():
         while i < len(field_list):
             #since the house number needs a string conversion, we need to have a slightly different expression for the first piece
             if i == 1:
-                if basename(layer) == "AddressPoints":
+                if basename(layer) == basename(gdb_obj.AddressPoints):
                     expression = 'str(!' +  field_list[i] + '!) + " " + !'
                 else:
                     expression = '!' + field_list[i] + '! + " " + !'

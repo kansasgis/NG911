@@ -49,7 +49,7 @@ def splitESB(inputESB, working_dir):
 
     #limit records to only those for submission
     lyrESB = "lyrESB"
-    if not fieldExists(inputESB, "SUBMIT"):
+    if not fieldExists(inputESB, esb_obj.SUBMIT):
         MakeFeatureLayer_management(inputESB, lyrESB)
     else:
         wc = esb_obj.SUBMIT + " = 'Y'"
@@ -57,11 +57,11 @@ def splitESB(inputESB, working_dir):
 
     #get the most common eff_date
     stats_eff_date = join("in_memory", "eff_date")
-    Statistics_analysis(lyrESB, stats_eff_date, [["EFF_DATE", "COUNT"]], "EFF_DATE")
+    Statistics_analysis(lyrESB, stats_eff_date, [[esb_obj.EFF_DATE, esb_obj.COUNT]], esb_obj.EFF_DATE)
 
     eff_date = ""
     high_count = 0
-    with SearchCursor(stats_eff_date, ("EFF_DATE", "COUNT_EFF_DATE")) as rows:
+    with SearchCursor(stats_eff_date, (esb_obj.EFF_DATE, "COUNT_%s" % esb_obj.EFF_DATE)) as rows:
         for row in rows:
             if row[1] > high_count:
                 high_count = row[1]
@@ -119,17 +119,19 @@ def splitESB(inputESB, working_dir):
         CalculateField_management(output, esb_obj.UNIQUEID, '"' + letter + '" + str(!' + fld + '!)', "PYTHON_9.3", "")
 
         #add and calculate other required fields
-        fieldsDict = {"L_UPDATE": ["DATE"], "EFF_DATE": ["DATE"], "EXP_DATE": ["DATE"], "UPDATEBY": ["TEXT", 50], "SUBMIT": ["TEXT", 1, "SUBMIT"], "NOTES": ["TEXT", 255]}
+        fieldsDict = {esb_obj.L_UPDATE: ["DATE"], esb_obj.EFF_DATE: ["DATE"], 
+                      esb_obj.EXP_DATE: ["DATE"], esb_obj.UPDATEBY: ["TEXT", 50], 
+                      esb_obj.SUBMIT: ["TEXT", 1, esb_obj.SUBMIT], esb_obj.NOTES: ["TEXT", 255]}
 
         for f in fieldsDict:
             parameters = fieldsDict[f]
             fieldType = parameters[0]
             if len(parameters) == 1:
                 AddField_management(output, f, fieldType)
-                if f == "L_UPDATE":
+                if f == esb_obj.L_UPDATE:
                     #set last update to now
                     CalculateField_management(output, f, 'datetime.datetime.now()', 'PYTHON_9.3')
-                elif f == "EFF_DATE":
+                elif f == esb_obj.EFF_DATE:
                     #set to common eff_date
                     CalculateField_management(output, f, '"' + eff_date + '"', "PYTHON_9.3")
 
@@ -142,10 +144,10 @@ def splitESB(inputESB, working_dir):
                 AddField_management(output, f, fieldType, "", "", fieldLength, "", "", "", fieldDomain)
 
 
-                if f == "UPDATEBY":
+                if f == esb_obj.UPDATEBY:
                     CalculateField_management(output, f, "os.getenv('username')", 'PYTHON_9.3', 'import os')
 
-                elif f == "SUBMIT":
+                elif f == esb_obj.SUBMIT:
                     CalculateField_management(output, f, '"Y"', 'PYTHON_9.3')
 
 
@@ -156,7 +158,7 @@ def splitESB(inputESB, working_dir):
     Delete_management(lyrESB)
 
     if Exists(EMSOutput) and Exists(FireOutput) and Exists(LawOutput):
-        userMessage("ESBs split. NOTE: the EFF_DATE was filled in with the MOST COMMON EFF_DATE from the ESB layer. Please check individual data pieces for accuracy.")
+        userMessage("ESBs split. NOTE: the %s was filled in with the MOST COMMON %s from the ESB layer. Please check individual data pieces for accuracy." % (esb_obj.EFF_DATE, esb_obj.EFF_DATE))
     else:
         userMessage("There was an issue splitting the ESB boundaries. Please contact kristen@kgs.ku.edu.")
 

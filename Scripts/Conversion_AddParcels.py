@@ -59,9 +59,9 @@ def makeKSPID(tPID, countycode):
         lenPID = len(tPID)
 
         #check PID length to see what needs to be adjusted
-        if lenPID == 16:
+        if lenPID == 16 or lenPID == 15:
             tPID = countycode + tPID
-        elif lenPID == 19:
+        elif lenPID == 19 or lenPID == 18:
             tPID = tPID
         elif lenPID == 21:
             tPID = tPID[0:19]
@@ -87,10 +87,14 @@ def main():
 
     #set target path
     target = gdb_object.PARCELS
+    
+    # get parcel object
+    p_obj = getFCObject(target)
 
     if not Exists(target):
         CreateFeatureclass_management(dirname(target), basename(target), "POLYGON")
-        fieldDict = {"STEWARD": [75, "Stewards"], "NGKSPID": [19, ""], "SUBMIT": [1, "Submit"], "NOTES": [255, ""]}
+        fieldDict = {p_obj.STEWARD: [75, "Stewards"], p_obj.NGKSPID: [19, ""], 
+                     p_obj.SUBMIT: [1, "Submit"], p_obj.NOTES: [255, ""]}
         for field in fieldDict:
             length = fieldDict[field][0]
             domain = fieldDict[field][1]
@@ -98,9 +102,6 @@ def main():
 
     #delete existing features in the parcels so everything can be updated quickly
     DeleteFeatures_management(target)
-
-    #get parcel object
-    p_obj = getFCObject(target)
 
     #add a field so the 19 digit PID can be calculated
     if not fieldExists(target, "tempPID"):
@@ -113,10 +114,8 @@ def main():
     Dissolve_management(parcels, tempOutput, [pidField])
 
     #append dissolved features into the parcel target
-    #set up parameters for the append
     schema_type="NO_TEST"
-    field_mapping= """STEWARD "STEWARD" true true false 50 Text 0 0 ,First,#;NGKSPID"NGKSPID" true true false 19 Text 0 0 ,First,#;SUBMIT "SUBMIT" true true false 1 Text 0 0 ,First,#;NOTES "NOTES" true true false 50 Text 0 0 ,First,#;tempPID "tempPID" true true false 19 Text 0 0 ,First,#,""" + tempOutput + "," + pidField + """,-1,-1;SHAPE_Length "SHAPE_Length" false true true 8 Double 0 0 ,First,#;SHAPE_Area "SHAPE_Area" false true true 8 Double 0 0 ,First,#"""
-    Append_management(tempOutput, target, schema_type, field_mapping, "")
+    Append_management(tempOutput, target, schema_type)
 
     Delete_management(tempOutput)
 
@@ -131,13 +130,19 @@ def main():
     #make sure the PID is the proper 19 digit version
     with UpdateCursor(target, ("tempPID", p_obj.NGKSPID)) as w_rows:
         for w_row in w_rows:
+            
             #get the value of the parcel ID
             pid = w_row[0]
 
             #turn the parcel ID into a KSPID
             kspid = makeKSPID(pid, countyCode)
             w_row[1] = kspid
-            w_rows.updateRow(w_row)
+            
+            try:
+                w_rows.updateRow(w_row)
+            except:
+                pass
+            
 
     #delete tempPID field
     DeleteField_management(target, "tempPID")

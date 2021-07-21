@@ -10,6 +10,7 @@ from arcpy import (GetParameterAsText, MakeFeatureLayer_management, Exists,
                    GetInstallInfo)
 from os.path import join, basename
 from NG911_arcpy_shortcuts import hasRecords
+from NG911_GDB_Objects import getFCObject, getGDBObject
 
 def userMessage(msg):
     print(msg)
@@ -17,7 +18,10 @@ def userMessage(msg):
     
     
 def adjustBoundaries(gdb, fcs):
-    psap = join(gdb, "NG911", "PSAP_temp")
+    
+    gdb_obj = getGDBObject(gdb)
+    ds = gdb_obj.NG911_FeatureDataset
+    psap = join(ds, "PSAP_temp")
     
     if not Exists(psap):
         AddError("PSAP import does not exist. You must import the PSAP layer.")
@@ -31,7 +35,6 @@ def adjustBoundaries(gdb, fcs):
         if fcs == "":
         
             # get list of features classes that start with ESB
-            ds = join(gdb, "NG911")
             env.workspace = ds
             
             esb_list = ListFeatureClasses("ESB*")
@@ -42,7 +45,7 @@ def adjustBoundaries(gdb, fcs):
             adjust_list = [join(ds, esb) for esb in esb_list]
             
             # add in any utility layers that have records
-            ds_other = join(gdb, "OptionalLayers")
+            ds_other = gdb_obj.OPTIONAL_LAYERS_FD
             env.workspace = ds_other
             ut_list = ListFeatureClasses("UT*")
             

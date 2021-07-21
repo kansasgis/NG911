@@ -16,6 +16,7 @@ from arcpy.da import UpdateCursor
 from os.path import basename, dirname, join, realpath
 from NG911_DataCheck import userMessage, getFieldDomain
 from NG911_arcpy_shortcuts import fieldExists
+from NG911_GDB_Objects import getFCObject
 
 def addFields(out_fc):
     
@@ -85,13 +86,13 @@ def addFields(out_fc):
     userMessage("Added all fields")
     
     
-def convertFields(working_ap):
+def convertFields(working_ap, a_obj):
     
     # ---------add fields & calculate full values for translating values
-    leg_dict = {"PRD":["St_PreDir", 9, "PRD"],
-                "STS":["St_PosTyp", 50, "STS"],
-                "POD":["St_PosDir", 9, "POD"],
-                "LOCTYPE":["Placement", 25, "NENA_LOCTYPE"]}
+    leg_dict = {a_obj.PRD:["St_PreDir", 9, "PRD"],
+                a_obj.STS:["St_PosTyp", 50, "STS"],
+                a_obj.POD:["St_PosDir", 9, "POD"],
+                a_obj.LOCTYPE:["Placement", 25, "NENA_LOCTYPE"]}
 
     # loop through the dictionary
     for field in leg_dict.keys():
@@ -136,6 +137,8 @@ def main():
     out_fc = GetParameterAsText(1)
     working_ap = ap + "_working"
     
+    a_obj = getFCObject(ap)
+    
     # create working copy of the data
     if Exists(working_ap):
         Delete_management(working_ap)
@@ -158,7 +161,7 @@ def main():
         DeleteField_management(out_fc, "Id")
     
     userMessage("Converting data to NENA format...")
-    convertFields(working_ap)
+    convertFields(working_ap, a_obj)
     
     # append data
     field_map = '''DiscrpAgID "Discrepancy Agency ID" true true false 75 Text 0 0 ,First,#;

@@ -15,7 +15,7 @@ from arcpy.da import SearchCursor, Editor, UpdateCursor
 from NG911_GDB_Objects import getFCObject, getGDBObject
 from NG911_DataCheck import userMessage, RecordResults
 from NG911_arcpy_shortcuts import getFastCount
-from os.path import join
+from os.path import join, basename
 from time import strftime
 
 def prepLayer(fc, copy_table, unique, rc_obj, gdb):
@@ -129,7 +129,7 @@ def main():
 
     #loop through unmatching records if necessary and report issues
     if b > 0:
-        filename = "AddressPoints"
+        filename = basename(addressPoints)
         userMessage(str(b) + " records were in address point road labels and not in road labels")
         with SearchCursor(apnt, ("AP_UNIQUE.ROAD_LABEL"), wc1) as a_rows:
             for a_row in a_rows:

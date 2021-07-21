@@ -12,6 +12,7 @@ from arcpy.da import SearchCursor
 from NG911_DataCheck import RecordResults, userMessage
 from time import strftime
 from NG911_GDB_Objects import getFCObject, getGDBObject
+from os.path import basename
 
 def main():
     gdb = GetParameterAsText(0)
@@ -116,7 +117,7 @@ def main():
     values = []
     resultType = "fieldValues"
     today = strftime("%m/%d/%y")
-    fc = "RoadCenterline"
+    fc = basename(roads)
     report = a_obj.ELEV_F + " and:or " + a_obj.ELEV_T + " are not consistent with neighboring road segments"
 
     if len(badSegs) > 0:

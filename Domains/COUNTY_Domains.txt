@@ -148,3 +148,4 @@ FURNAS COUNTY|County in KS or neighboring county
 RED WILLOW COUNTY|County in KS or neighboring county
 HITCHCOCK COUNTY|County in KS or neighboring county
 DUNDY COUNTY|County in KS or neighboring county
+ROGERS COUNTY|County in OK or neighboring county

@@ -14,7 +14,7 @@ from arcpy import (GetParameterAsText, env, Append_management, ListFeatureClasse
     ListTables, CopyRows_management, CopyFeatures_management)
 from os.path import join, basename, dirname, exists
 from os import remove
-from NG911_GDB_Objects import getGDBObject
+from NG911_GDB_Objects import getGDBObject, getFCObject
 from NG911_arcpy_shortcuts import fieldExists, hasRecords
 from NG911_DataCheck import userMessage
 from Enhancement_AddTopology import add_topology
@@ -185,6 +185,7 @@ def copy_gdb(gdbCurrent, gdbFuture):
         itemF = convList[0]
         item_type = convList[1]
         method = convList[2]
+        item_obj = getFCObject(data_item)
 
         editorC = Describe(itemC).editorTrackingEnabled
         if Exists(itemF):
@@ -228,9 +229,9 @@ def copy_gdb(gdbCurrent, gdbFuture):
 
         # turn editor tracking back on
         if editorC:
-            EnableEditorTracking_management(itemC, "", "", "UPDATEBY", "L_UPDATE", "NO_ADD_FIELDS", "UTC")
+            EnableEditorTracking_management(itemC, "", "", item_obj.UPDATEBY, item_obj.L_UPDATE, "NO_ADD_FIELDS", "UTC")
         if editorF:
-            EnableEditorTracking_management(itemF, "", "", "UPDATEBY", "L_UPDATE", "NO_ADD_FIELDS", "UTC")
+            EnableEditorTracking_management(itemF, "", "", item_obj.UPDATEBY, item_obj.L_UPDATE, "NO_ADD_FIELDS", "UTC")
 
         userMessage(data_item + " done")
 

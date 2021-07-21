@@ -11,6 +11,7 @@ from arcpy.da import SearchCursor
 from os.path import join, abspath, dirname
 from inspect import getsourcefile
 from ESB_AdjustESB import userMessage
+from NG911_GDB_Objects import getGDBObject
 
 
 def getStewardWC(fc):
@@ -55,8 +56,10 @@ def main():
     # copy psap boundary into geodatabase
     gdb = GetParameterAsText(0)
     
+    gdb_obj = getGDBObject(gdb)
+    
     # use address points as a baseline for extra info
-    addy_pt = join(gdb, "NG911", "AddressPoints")
+    addy_pt = gdb_obj.AddressPoints
     
     # get spatial reference of address points
     desc = Describe(addy_pt)
@@ -80,7 +83,7 @@ def main():
         MakeFeatureLayer_management(psap_big, p, steward_wc)
     
         # copy psap into the geodatabase
-        psap = join(gdb, "NG911", "PSAP_temp")
+        psap = join(gdb_obj.NG911_FeatureDataset, "PSAP_temp")
         userMessage("Copying PSAP data...")
         CopyFeatures_management(p, psap)
         

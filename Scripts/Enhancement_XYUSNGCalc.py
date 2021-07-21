@@ -10,7 +10,9 @@
 # Licence:     Subject to Creative Commons Attribution-ShareAlike 4.0 International Public License
 #-------------------------------------------------------------------------------
 import CoordConvertor
-from arcpy import GetParameterAsText, AddMessage, Describe, SpatialReference, PointGeometry, Point, MakeFeatureLayer_management
+from arcpy import (GetParameterAsText, AddMessage, Describe, SpatialReference, 
+                   PointGeometry, Point, MakeFeatureLayer_management, 
+                   Delete_management)
 from arcpy.da import Editor, UpdateCursor
 from os.path import dirname
 from NG911_GDB_Objects import getFCObject
@@ -63,13 +65,13 @@ def calc_coordinates(fc, updateOnlyBlank):
     # Start an edit operation
     edit.startOperation()
 
-    fl = "fl"
+    flcc = "flcc"
     # If necessary, only update blank records
     if updateOnlyBlank == "true":
         wc = NG + " IS NULL OR " + NG + " = '' OR " + NG  + " = ' '"
-        MakeFeatureLayer_management(fc, fl, wc)
+        MakeFeatureLayer_management(fc, flcc, wc)
     else:
-        MakeFeatureLayer_management(fc, fl)
+        MakeFeatureLayer_management(fc, flcc)
 
     #define the field list
     fields = (xField, yField, NG, "SHAPE@X", "SHAPE@Y") #modify this to access the shape field
@@ -82,7 +84,7 @@ def calc_coordinates(fc, updateOnlyBlank):
 
     #calculate the NG coordinate for each row
     try:
-        with UpdateCursor(fl, fields) as cursor:
+        with UpdateCursor(flcc, fields) as cursor:
             for row in cursor:
                 #see if the x/y fields are blank or are populated
                 if row[0] is None or row[0] == 0:
@@ -132,6 +134,8 @@ def calc_coordinates(fc, updateOnlyBlank):
 
         # Stop the edit session and save the changes
         edit.stopEditing(True)
+        
+        Delete_management(flcc)
 
     AddMessage("Processing complete.")
 

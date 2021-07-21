@@ -862,3 +862,13 @@ Values|Definition
 81047|Zip Code in or bordering Kansas
 81071|Zip Code in or bordering Kansas
 81090|Zip Code in or bordering Kansas
+74006|Zip Code in or bordering Oklahoma
+74016|Zip Code in or bordering Oklahoma
+74027|Zip Code in or bordering Oklahoma
+74029|Zip Code in or bordering Oklahoma
+74042|Zip Code in or bordering Oklahoma
+74048|Zip Code in or bordering Oklahoma
+74072|Zip Code in or bordering Oklahoma
+74083|Zip Code in or bordering Oklahoma
+74301|Zip Code in or bordering Oklahoma
+74369|Zip Code in or bordering Oklahoma

@@ -14,22 +14,17 @@ from arcpy.da import InsertCursor, UpdateCursor
 from NG911_DataCheck import userMessage, getFieldDomain
 from os.path import join, dirname, basename, exists, realpath
 from os import mkdir
-from NG911_GDB_Objects import getFCObject, getTNObject
+from NG911_GDB_Objects import getFCObject, getTNObject, getGDBObject
 from MSAG_CheckTNList import geocodeTable
 
-def prepXLS(tnxls_sheet, gdb, xls_fields):
+def prepXLS(tnxls_sheet, gdb, xls_fields, tn_object, a_obj):
     import xlrd
 
     userMessage("Converting spreadsheet to geodatabase table...")
     #create gdb table
-    tn_object = getTNObject(gdb)
     outTable = tn_object.TN_List
     tn_gdb = tn_object.tn_gdb
     LocatorFolder = tn_object.LocatorFolder
-
-    #get the correct address point object
-    address_points = join(gdb, "NG911", "AddressPoints")
-    a_obj = getFCObject(address_points)
 
     if not exists(LocatorFolder):
         mkdir(LocatorFolder)
@@ -105,8 +100,8 @@ def prepXLS(tnxls_sheet, gdb, xls_fields):
 
     folder = join(dirname(dirname(realpath(__file__))), "Domains")
 
-    streetSuffixDict = getFieldDomain("STS", folder).keys()
-    postDirectionalDict = getFieldDomain("POD", folder).keys()
+    streetSuffixDict = getFieldDomain(a_obj.STS, folder).keys()
+    postDirectionalDict = getFieldDomain(a_obj.POD, folder).keys()
 
     with UpdateCursor(outTable, postRoadFields) as rows:
         for row in rows:
@@ -142,9 +137,14 @@ def main():
     post = GetParameterAsText(7)
     msagco = GetParameterAsText(8)
     tn = GetParameterAsText(9)
-
-    addy_fc = join(gdb, "NG911", "AddressPoints")
-    rd_fc = join(gdb, "NG911", "RoadCenterline")
+    
+    # set objects
+    gdb_obj = getGDBObject(gdb)
+    addy_fc = gdb_obj.AddressPoints
+    rd_fc = gdb_obj.RoadCenterline
+    a_obj = getFCObject(addy_fc)
+    r_obj = getFCObject(rd_fc)
+    tn_object = getTNObject(gdb)
 
     # turn off editor tracking
     DisableEditorTracking_management(addy_fc, "DISABLE_CREATOR", "DISABLE_CREATION_DATE", "DISABLE_LAST_EDITOR", "DISABLE_LAST_EDIT_DATE")
@@ -152,14 +152,14 @@ def main():
 
     xls_fields = [hno, hns, prd, rd, sts, post, msagco, tn]
 
-    prepXLS(xls, gdb, xls_fields)
+    prepXLS(xls, gdb, xls_fields, tn_object, a_obj)
 
     #geocode addresses
-    geocodeTable(gdb)
+    geocodeTable(gdb, tn_object, a_obj)
 
     # turn editor tracking back on
-    EnableEditorTracking_management(addy_fc, "", "", "UPDATEBY", "L_UPDATE", "NO_ADD_FIELDS", "UTC")
-    EnableEditorTracking_management(rd_fc, "", "", "UPDATEBY", "L_UPDATE", "NO_ADD_FIELDS", "UTC")
+    EnableEditorTracking_management(addy_fc, "", "", a_obj.UPDATEBY, a_obj.L_UPDATE, "NO_ADD_FIELDS", "UTC")
+    EnableEditorTracking_management(rd_fc, "", "", r_obj.UPDATEBY, r_obj.L_UPDATE, "NO_ADD_FIELDS", "UTC")
 
 if __name__ == '__main__':
     main()

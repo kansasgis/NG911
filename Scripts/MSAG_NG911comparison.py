@@ -17,7 +17,7 @@ from arcpy.da import SearchCursor, InsertCursor
 from os import mkdir
 from os.path import exists, dirname, basename, join
 from time import strftime
-
+from NG911_GDB_Objects import getGDBObject, getFCObject
 
 
 class MSAG_Object(object):
@@ -104,9 +104,12 @@ def getRanges(data):
 
 def prepRoads(msag_object, gdb, field):
     workingRoads = msag_object.workingRoads
+    gdb_obj = getGDBObject(gdb)
+    rd_fc = gdb_obj.RoadCenterline
+    r_obj = getFCObject(rd_fc)
 
     if not Exists(workingRoads):
-        CopyFeatures_management(join(gdb, "NG911", "RoadCenterline"), workingRoads)
+        CopyFeatures_management(rd_fc, workingRoads)
         userMessage("Copied roads")
 
     #prep roads
@@ -116,7 +119,7 @@ def prepRoads(msag_object, gdb, field):
             AddField_management(workingRoads, k, "TEXT", "", "", road_fields[k])
 
     #replace nulls in road centerline
-    fields_with_nulls = ['PRD', 'STS']
+    fields_with_nulls = [r_obj.PRD, r_obj.STS]
     for fwn in fields_with_nulls:
         wcf = fwn + " is null"
         fl = "fl"
@@ -125,15 +128,14 @@ def prepRoads(msag_object, gdb, field):
         Delete_management(fl)
 
     #calculate fields to hold directionally appropriate full street name, MSAGCO & ESN
-    CalculateField_management(workingRoads, field+"_L", "(!PRD!+!RD!+!STS!+'|'+!MSAGCO_L!+'|'+!ESN_L!).replace(' ','').upper()", "PYTHON")
-    CalculateField_management(workingRoads, field+"_R", "(!PRD!+!RD!+!STS!+'|'+!MSAGCO_R!+'|'+!ESN_R!).replace(' ','').upper()", "PYTHON")
-
-##    chars = r'"/\[]{}-.,?;:`~!@#$%^&*()' + "'"
-##    for char in chars:
-    CalculateField_management(workingRoads, field+"_L", "!" + field + "_L!.replace(" + "'" + '"' + "'" + ",'')", "PYTHON")
-    CalculateField_management(workingRoads, field+"_R", "!" + field + "_R!.replace(" + "'" + '"' + "'" + ",'')", "PYTHON")
-    CalculateField_management(workingRoads, field+"_L", "!" + field + "_L!.replace(" + '"' + "'" + '"' + ",'')", "PYTHON")
-    CalculateField_management(workingRoads, field+"_R", "!" + field + "_R!.replace(" + '"' + "'" + '"' + ",'')", "PYTHON")
+    for side in ["L", "R"]:
+        field_side = field + "_" + side
+        exp = "(!%s!+!%s!+!%s!+'|'+!%s!+'|'+!%s!).replace(' ','').upper()" % (r_obj.PRD, r_obj.RD, r_obj.STS, r_obj.MSAGCO_L[0:-1] + side, r_obj.ESN_L[0:-1] + side)
+        CalculateField_management(workingRoads, field_side, exp, "PYTHON_9.3")
+        
+        # replace any quotation marks
+        CalculateField_management(workingRoads, field_side, "!" + field_side + "!.replace(" + "'" + '"' + "'" + ",'')", "PYTHON")
+        CalculateField_management(workingRoads, field_side, "!" + field_side + "!.replace(" + '"' + "'" + '"' + ",'')", "PYTHON")
 
     #record L/R same status
     wc_list = {"COMPARE_L = COMPARE_R": "'Y'", "L_R_SAME is null":"'N'"}
@@ -205,14 +207,14 @@ def insertReports(workingGDB, report, records, high, low):
         if len(fld) == 2:
             cursor.insertRow((report[0:254], r))
 
-def consolidateMSAG(table, compare_field, hilow_fields):
+def consolidateMSAG(table, compare_field, hilow_fields, rd_fc, r_obj):
     #Run stats on combine field
     dissolve_names = table + "_NAMES"
     if Exists(dissolve_names):
         Delete_management(dissolve_names)
 
     #make sure all road segments get represented
-    if basename(table) == "RoadCenterline":
+    if basename(table) == basename(rd_fc):
         #get all the left side names
         dissolve_left = table + "_NAMES_L"
         if Exists(dissolve_left):
@@ -261,21 +263,22 @@ def consolidateMSAG(table, compare_field, hilow_fields):
             #run basic MSAG merge
             if name is not None:
                 name_wc = compare_field + " = '" + name + "'"
-                if "RoadCenterline" in table:
+                if basename(table) == basename(rd_fc):
                     name_wc = name_wc + " AND L_R_SAME = 'Y'"
                 writeSegmentInfo(table, hilow_fields, name_wc, NG911_msag, name)
 
                 #run R & L isolated analysis
-                if "RoadCenterline" in table:
+                if basename(table) == basename(rd_fc):
                     r_wc = "COMPARE_R = '" + name + "' AND L_R_SAME = 'N'"
-                    writeSegmentInfo(table, ("R_F_ADD", "R_T_ADD"), r_wc, NG911_msag, name)
+                    writeSegmentInfo(table, (r_obj.R_F_ADD, r_obj.R_T_ADD), r_wc, NG911_msag, name)
 
                     l_wc = "COMPARE_L = '" + name + "' AND L_R_SAME = 'N'"
-                    writeSegmentInfo(table, ("L_F_ADD", "L_T_ADD"), l_wc, NG911_msag, name)
+                    writeSegmentInfo(table, (r_obj.L_F_ADD, r_obj.L_T_ADD), l_wc, NG911_msag, name)
 
     del n_row, n_rows
 
     userMessage("Consolidated MSAG complete for " + basename(table))
+
 
 def writeSegmentInfo(table, hilow_fields, name_wc, NG911_msag, name):
     seg_list = []
@@ -390,6 +393,7 @@ def compareMSAGnames(msag_object):
     RemoveJoin_management(lyr_road_names)
     Delete_management(lyr_msag_names)
     Delete_management(lyr_road_names)
+    
 
 def compareMSAGranges(msag_object):
     #loop through road centerline names
@@ -465,6 +469,9 @@ def main():
     field = "COMPARE"
 
     msag_object = getMSAGObject(gdb, today)
+    gdb_obj = getGDBObject(gdb)
+    rd_fc = gdb_obj.RoadCenterline
+    r_obj = getFCObject(rd_fc)
 
     #create workspaces- folder
     workspaceFolder = msag_object.workspace_folder
@@ -479,14 +486,14 @@ def main():
     #copy over road centerline
     if road_flag == "true" or not Exists(msag_object.workingRoads):
         prepRoads(msag_object, gdb, field)
-        consolidateMSAG(msag_object.workingRoads, "COMPARE_L", ("L_F_ADD", "L_T_ADD", "R_F_ADD", "R_T_ADD"))
+        consolidateMSAG(msag_object.workingRoads, "COMPARE_L", (r_obj.L_F_ADD, r_obj.L_T_ADD, r_obj.R_F_ADD, r_obj.R_T_ADD), rd_fc, r_obj)
     else:
         userMessage("Road data already converted.")
 
     #prep msag table
     if msag_flag == "true" or not Exists(msag_object.msag_table):
         fields = prepMSAG(msag_object, msag, field)
-        consolidateMSAG(msag_object.msag_table, "COMPARE", (fields[0],fields[1]))
+        consolidateMSAG(msag_object.msag_table, "COMPARE", (fields[0],fields[1]), rd_fc, r_obj)
     else:
         userMessage("MSAG data already converted.")
 
@@ -529,12 +536,12 @@ def main():
 
     #run a join on the road centerline based on the R
     AddJoin_management(wr, "COMPARE_R", report_roads, "COMPARISON")
-    CalculateField_management(wr, "RoadCenterline.REPORT_R", "!MSAG_reporting.REPORT!", "PYTHON")
+    CalculateField_management(wr, basename(rd_fc) + ".REPORT_R", "!MSAG_reporting.REPORT!", "PYTHON")
     RemoveJoin_management(wr)
 
     #run a join on the road centerline based on the L
     AddJoin_management(wr, "COMPARE_L", report_roads, "COMPARISON")
-    CalculateField_management(wr, "RoadCenterline.REPORT_L", "!MSAG_reporting.REPORT!", "PYTHON")
+    CalculateField_management(wr, basename(rd_fc) + ".REPORT_L", "!MSAG_reporting.REPORT!", "PYTHON")
     RemoveJoin_management(wr)
 
     # refresh the layer

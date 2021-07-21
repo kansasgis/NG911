@@ -269,7 +269,7 @@ def getDefaultNG911AddressObject(gdb_version):
 
 class NG911_FieldValuesCheckResults_Object(object):
 
-    def __init__(self, u_DATEFLAGGED, u_DESCRIPTION, u_LAYER, u_FIELD, u_FEATUREID, u_CHECK):
+    def __init__(self, u_DATEFLAGGED, u_DESCRIPTION, u_LAYER, u_FIELD, u_FEATUREID, u_CHECK, u_NOTES):
 
         self.DATEFLAGGED = u_DATEFLAGGED
         self.DESCRIPTION = u_DESCRIPTION
@@ -277,11 +277,12 @@ class NG911_FieldValuesCheckResults_Object(object):
         self.FIELD = u_FIELD
         self.FEATUREID = u_FEATUREID
         self.CHECK = u_CHECK
+        self.NOTES = u_NOTES
 
 
 def getDefaultNG911FieldValuesCheckResultsObject():
 
-    NG911_FieldValuesCheckResults_Default = NG911_FieldValuesCheckResults_Object("DATEFLAGGED", "DESCRIPTION", "LAYER", "FIELD", "FEATUREID", "CHECK")
+    NG911_FieldValuesCheckResults_Default = NG911_FieldValuesCheckResults_Object("DATEFLAGGED", "DESCRIPTION", "LAYER", "FIELD", "FEATUREID", "CHECK", "NOTES")
 
     return NG911_FieldValuesCheckResults_Default
 
@@ -793,24 +794,27 @@ def getGDBObject(gdb):
             self.FIRE = FIRE
             self.LAW = LAW
             self.RESCUE = RESCUE
+            self.FIREAUTOAID = FIREAUTOAID
+            self.myState = "KS"
 
             if self.GDB_VERSION == "20":
                 self.HYDRANTS = join(gdb, "Hydrants")
                 self.PARCELS = join(gdb, "Parcels")
                 self.GATES = join(gdb, "Gates")
-                self.CELL_SECTOR = join(gdb, "Cell_Sector")
-                self.BRIDGES = ""
+                self.CELLSECTORS = join(gdb, "Cell_Sector")
                 self.CELLSITES = ""
+                self.BRIDGES = ""
                 self.UT_ELECTRIC = ""
                 self.UT_GAS = ""
                 self.UT_SEWER = ""
                 self.UT_WATER = ""
+
             elif self.GDB_VERSION == "21":
                 self.OPTIONAL_LAYERS_FD = join(gdb, "OptionalLayers")
                 self.HYDRANTS = join(self.OPTIONAL_LAYERS_FD, "HYDRANTS")
                 self.PARCELS = join(self.OPTIONAL_LAYERS_FD, "PARCELS")
                 self.GATES = join(self.OPTIONAL_LAYERS_FD, "GATES")
-                self.CELL_SECTOR = join(self.OPTIONAL_LAYERS_FD, "CELLSECTORS")
+                self.CELLSECTORS = join(self.OPTIONAL_LAYERS_FD, "CELLSECTORS")
                 self.CELLSITES = join(self.OPTIONAL_LAYERS_FD, "CELLSITES")
                 self.BRIDGES = join(self.OPTIONAL_LAYERS_FD, "BRIDGES")
                 self.UT_ELECTRIC = join(self.OPTIONAL_LAYERS_FD, "UT_ELECTRIC")
@@ -831,8 +835,8 @@ def getGDBObject(gdb):
 
             # variable lists
             featureClasses = [self.AddressPoints, self.RoadCenterline, self.RoadAlias, self.AuthoritativeBoundary, self.MunicipalBoundary,
-                        self.CountyBoundary, self.ESZ, self.PSAP, self.HYDRANTS, self.PARCELS, self.GATES, self.CELL_SECTOR]
-            otherLayers = [self.HYDRANTS, self.PARCELS, self.GATES, self.CELL_SECTOR]
+                        self.CountyBoundary, self.ESZ, self.PSAP, self.HYDRANTS, self.PARCELS, self.GATES, self.CELLSECTORS]
+            otherLayers = [self.HYDRANTS, self.PARCELS, self.GATES, self.CELLSECTORS]
 
             # make sure a 2.1 object contains the right information
             setList = [featureClasses, otherLayers]
@@ -869,7 +873,7 @@ def getFCObject(fc):
             version = "20"
         obj = getDefaultNG911RoadCenterlineObject(version)
 
-    elif "ADDRESSPOINTS" in word:
+    elif "ADDRESS" in word:
         if fieldExists(fc, "RCLMATCH"):
             # 2.1 indicator
             version = "21"

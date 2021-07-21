@@ -628,3 +628,8 @@ WOODSTON|Municipality in Kansas
 YATES CENTER|Municipality in Kansas
 ZENDA|Municipality in Kansas
 ZURICH|Municipality in Kansas
+DELAWARE|Municipality in Oklahoma
+LENAPAH|Municipality in Oklahoma
+NEW ALLUWE|Municipality in Oklahoma
+NOWATA|Municipality in Oklahoma
+SOUTH COFFEYVILLE|Municipality in Oklahoma

@@ -10,24 +10,29 @@
 from Enhancement_GeocodeAddressPoints import geocompare
 from arcpy import GetParameterAsText, Exists, AddMessage
 from NG911_arcpy_shortcuts import hasRecords, CalcWithWC
-from os.path import join
+from NG911_GDB_Objects import getFCObject, getGDBObject
+
 
 def main():
     gdb = GetParameterAsText(0)
+    
+    gdb_obj = getGDBObject(gdb)
 
-    ap = join(gdb, "NG911", "AddressPoints")
-    rc = join(gdb, "NG911", "RoadCenterline")
+    ap = gdb_obj.AddressPoints
+    rc = gdb_obj.RoadCenterline
+    
+    a_obj = getFCObject(ap)
 
     if Exists(ap) and Exists(rc) and hasRecords(ap) and hasRecords(rc):
         geocompare(gdb, "21", "true")
 
         # calculate any SUBMIT = 'N' as RCLSIDE "N"
-        wc_rclside = "RCLSIDE is null or RCLSIDE in ('', ' ')"
-        CalcWithWC(ap, "RCLSIDE", '"N"', wc_rclside)
+        wc_rclside = "%s is null or %s in ('', ' ')" % (a_obj.RCLSIDE, a_obj.RCLSIDE)
+        CalcWithWC(ap, a_obj.RCLSIDE, '"N"', wc_rclside)
 
     else:
-        print("Either " + ap + " or " + rc + " either doesn't exist or doesn't have records. Cannot perform populating RCLMATCH.")
-        AddMessage("Either " + ap + " or " + rc + " either doesn't exist or doesn't have records. Cannot perform populating RCLMATCH.")
+        print("Either " + ap + " or " + rc + " either doesn't exist or doesn't have records. Cannot perform populating %s." % a_obj.RCLMATCH)
+        AddMessage("Either " + ap + " or " + rc + " either doesn't exist or doesn't have records. Cannot perform populating %s." % a_obj.RCLMATCH)
 
 if __name__ == '__main__':
     main()

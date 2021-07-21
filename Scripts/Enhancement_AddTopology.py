@@ -10,7 +10,8 @@
 from arcpy import (AddRuleToTopology_management, ValidateTopology_management,
                 AddFeatureClassToTopology_management, Exists, CreateTopology_management,
                 GetParameterAsText, AddMessage, Describe)
-from os.path import join
+from os.path import join, basename
+from NG911_GDB_Objects import getGDBObject
 
 def userMessage(msg):
     print(msg)
@@ -22,10 +23,12 @@ def main():
     add_topology(gdb, validate_topology)
 
 def add_topology(gdb, validate_topology):
+    
+    gdb_obj = getGDBObject(gdb)
 
-    ds = join(gdb, "NG911")
-    topology_name ="NG911_Topology"
-    topology = join(ds, topology_name)
+    ds = gdb_obj.NG911_FeatureDataset
+    topology = gdb_obj.Topology
+    topology_name = basename(topology)
 
     # see if topology exists
     if not Exists(topology):
@@ -37,19 +40,22 @@ def add_topology(gdb, validate_topology):
     topology_desc = Describe(topology)
     fc_topology = topology_desc.featureClassNames
 
-    # userMessage(fc_topology)
+#    userMessage(fc_topology)
 
     # list of feature classes to be added to the topology
-    fc_list= ["RoadCenterline", "AddressPoints", "ESB", "ESB_LAW", "ESB_EMS", "ESB_FIRE", "AuthoritativeBoundary",
-                "ESZ", "ESB_PSAP", "ESB_RESCUE", "ESB_FIREAUTOAID"]
+    fc_list= [gdb_obj.RoadCenterline, gdb_obj.AddressPoints, gdb_obj.ESB,
+              gdb_obj.LAW, gdb_obj.EMS, gdb_obj.FIRE, gdb_obj.AuthoritativeBoundary,
+              gdb_obj.ESZ, gdb_obj.PSAP, gdb_obj.RESCUE, gdb_obj.FIREAUTOAID]
 
-    esb_list = ["ESB", "ESB_EMS", "ESB_FIRE", "ESB_LAW", "ESB_PSAP", "ESZ", "ESB_RESCUE", "ESB_FIREAUTOAID"]
+    esb_list = [gdb_obj.ESB, gdb_obj.EMS, gdb_obj.FIRE, gdb_obj.LAW,
+                gdb_obj.PSAP, gdb_obj.ESZ, gdb_obj.RESCUE, gdb_obj.FIREAUTOAID]
 
     # add all feature classes that exist to the topology
-    for fc in fc_list:
-        fc_full = join(ds, fc)
+    for fc_full in fc_list:
+        fc = basename(fc_full)
 
         if Exists(fc_full):
+            userMessage(fc)
 
             present = False
             # if the feature class isn't in the topology, add it
@@ -59,7 +65,7 @@ def add_topology(gdb, validate_topology):
                 present = True
 
             # if it's a polygon, add the no overlap rule
-            if fc not in ["RoadCenterline", "AddressPoints"]:
+            if fc_full not in [gdb_obj.RoadCenterline, gdb_obj.AddressPoints]:
                 AddRuleToTopology_management(topology, "Must Not Overlap (Area)", fc_full)
 
             # add no gaps rule to ESB layers
@@ -76,7 +82,7 @@ def add_topology(gdb, validate_topology):
     road_rules = ["Must Not Overlap (Line)", "Must Not Intersect (Line)", "Must Not Have Dangles (Line)",
                     "Must Not Self-Overlap (Line)", "Must Not Self-Intersect (Line)", "Must Be Single Part (Line)",
                     "Must Not Intersect Or Touch Interior (Line)"]
-    road = join(ds, "RoadCenterline")
+    road = gdb_obj.RoadCenterline
 
     if Exists(road):
         # add all individual road rules
@@ -90,8 +96,8 @@ def add_topology(gdb, validate_topology):
 ##                AddRuleToTopology_management(topology, "Must Be Inside (Line-Area)", road, "", esb_full)
 
     # make sure authoritative boundary covers everything
-    auth_bnd = join(ds, "AuthoritativeBoundary")
-    addy_pt = join(ds, "AddressPoints")
+    auth_bnd = gdb_obj.AuthoritativeBoundary
+    addy_pt = gdb_obj.AddressPoints
 
     if Exists(auth_bnd):
         # points

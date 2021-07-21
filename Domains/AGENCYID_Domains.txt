@@ -123,3 +123,4 @@ psap.pbpntp.ks.us|A PSAP ID in Kansas
 psap.chanute.ks.us|A PSAP ID in Kansas
 psap.ku.ks.us|A PSAP ID in Kansas
 psap.sabetha.ks.us|A PSAP ID in Kansas
+psap.5691.ok.gov|A PSAP ID in Oklahoma

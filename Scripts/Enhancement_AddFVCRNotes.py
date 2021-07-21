@@ -18,7 +18,7 @@ from arcpy import (GetParameterAsText, AddField_management, AddMessage,
 from arcpy.da import SearchCursor, UpdateCursor
 from os.path import join
 from NG911_arcpy_shortcuts import fieldExists
-from NG911_GDB_Objects import getFCObject
+from NG911_GDB_Objects import getFCObject, getGDBObject
 
 def userMessage(msg):
     print(msg)
@@ -32,8 +32,10 @@ def main():
     
 def addFVCRNotes(gdb):
     
+    gdb_obj = getGDBObject(gdb)
+    
     # get fieldvaluescheckresults table & object
-    fvcr = join(gdb, "FieldValuesCheckResults")
+    fvcr = gdb_obj.FieldValuesCheckResults
     fvcr_obj = getFCObject(fvcr)
     LAYER = fvcr_obj.LAYER
     
@@ -41,9 +43,9 @@ def addFVCRNotes(gdb):
     if Exists(fvcr):
         
         # if the NOTES field doesn't exist, add it
-        if not fieldExists(fvcr, "NOTES"):
-            userMessage("Adding NOTES field to FVCR...")
-            AddField_management(fvcr, "NOTES", 'TEXT', "", "", 255)
+        if not fieldExists(fvcr, fvcr_obj.NOTES):
+            userMessage("Adding %s field to FVCR..." % fvcr_obj.NOTES)
+            AddField_management(fvcr, fvcr_obj.NOTES, 'TEXT', "", "", 255)
             
         # get a list of the layers represented in fvcr
         fvcr_stat = fvcr + "_Stat"
@@ -67,16 +69,16 @@ def addFVCRNotes(gdb):
             pass
         
         # loop through the layer names
-        userMessage("Importing NOTES...")
+        userMessage("Importing %s..." % fvcr_obj.NOTES)
         for layer in layers:
             
             # get layer's full path
-            full_path = join(gdb, "NG911", layer)
+            full_path = join(gdb_obj.NG911_FeatureDataset, layer)
             continueRunning = True
             
             # make sure the layer exists
             if not Exists(full_path):
-                full_path = join(gdb, "OptionalLayers", layer)
+                full_path = join(gdb_obj.OPTIONAL_LAYERS_FD, layer)
                 
                 if not Exists(full_path):
                     continueRunning = False
@@ -87,7 +89,7 @@ def addFVCRNotes(gdb):
                 # query out the UNIQUE IDS in FVCR
                 fvcr_wc = "%s = '%s'" % (LAYER, layer)
                 
-                with UpdateCursor(fvcr, (fvcr_obj.FEATUREID, "NOTES"), fvcr_wc) as rows:
+                with UpdateCursor(fvcr, (fvcr_obj.FEATUREID, fvcr_obj.NOTES), fvcr_wc) as rows:
                     for row in rows:
                         note = ''
                         uniqueID = row[0]
@@ -95,7 +97,7 @@ def addFVCRNotes(gdb):
                         wc = "%s = '%s'" % (fc_obj.UNIQUEID, uniqueID)
                 
                         # query out the notes for that feature
-                        with SearchCursor(full_path, ("NOTES"), wc) as s_rows:
+                        with SearchCursor(full_path, (fvcr_obj.NOTES), wc) as s_rows:
                             for s_row in s_rows:
                                 try:
                                     note = s_row[0]
@@ -113,7 +115,7 @@ def addFVCRNotes(gdb):
                 except:
                     pass
                 
-        userMessage("Done adding NOTES.")
+        userMessage("Done adding %s." % fvcr_obj.NOTES)
     
 if __name__ == '__main__':
     main()

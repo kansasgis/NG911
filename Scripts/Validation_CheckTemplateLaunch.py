@@ -23,7 +23,8 @@ def main():
     session_object = NG911_Session(gdb)
 
     #create check list
-    checkList = [checkLayerList, checkRequiredFields, checkRequiredFieldValues, checkSubmissionNumbers, findInvalidGeometry]
+    checkList = [checkLayerList, checkRequiredFields, checkRequiredFieldValues, 
+                 checkSubmissionNumbers, findInvalidGeometry]
 
     #set object parameters
     checkType = "template"

@@ -13,8 +13,8 @@ from arcpy import (GetParameterAsText, MakeTableView_management, Delete_manageme
                    AddMessage)
 from arcpy.da import SearchCursor
 from NG911_arcpy_shortcuts import getFastCount
-from NG911_GDB_Objects import getFCObject
-from os.path import join
+from NG911_GDB_Objects import getFCObject, getGDBObject
+from os.path import basename
 
 
 def userMessage(txt):
@@ -49,6 +49,9 @@ def fixAttributes(fc, fld, char):
         field_list = a.LABEL_FIELDS
         labelField = a.LABEL
         
+        # get gdb object
+        gdb_obj = getGDBObject(fc.split(".gdb")[0] + ".gdb")
+        
         # make sure the object is something
         if a != "":
             # start at 1 since 0 is the label field itself
@@ -58,13 +61,14 @@ def fixAttributes(fc, fld, char):
             while i < len(field_list):
                 #since the house number needs a string conversion, we need to have a slightly different expression for the first piece
                 if i == 1:
-                    if "AddressPoints" in fc:
+                    if fc == gdb_obj.AddressPoints:
                         expression = 'str(!' +  field_list[i] + '!) + " " + !'
                     else:
                         expression = '!' + field_list[i] + '! + " " + !'
                         
                     # add in a pound sign in front of the unit
-                    expression.replace(' + " " + !UNIT!', ' + " #" + !UNIT!')
+                    unit = a.UNIT
+                    expression.replace(' + " " + !%s!' % unit, ' + " #" + !%s!' % unit)
     
                 else:
                     expression = expression + field_list[i] + '! + " " + !'
@@ -83,14 +87,19 @@ def fixAttributesAll(gdb):
     
     userMessage("Fixing characters...")
     
+    # get gdb object
+    gdb_obj = getGDBObject(gdb)
+    
     # fixing any out-of-character values
-    fvcr = join(gdb, "FieldValuesCheckResults")
+    fvcr = gdb_obj.FieldValuesCheckResults
+    fvcr_obj = getFCObject(fvcr)
     
-    for name in ['RoadCenterline', 'AddressPoints']:
+    for fc in [gdb_obj.RoadCenterline, gdb_obj.AddressPoints]:
         
-        fc = join(gdb, "NG911", name)
+        # get basename of feature class
+        name = basename(fc)
     
-        wc = "CHECK = 'Check Attributes' AND LAYER = '%s'" % name
+        wc = "%s = 'Check Attributes' AND %s = '%s'" % (fvcr_obj.CHECK, fvcr_obj.LAYER, name)
         tbl = "tbl"
         MakeTableView_management(fvcr, tbl, wc)
         
@@ -101,7 +110,7 @@ def fixAttributesAll(gdb):
             fixes = {}
             
             # get the fields & values that need updating
-            with SearchCursor(tbl, ["FEATUREID", "DESCRIPTION"]) as rows:
+            with SearchCursor(tbl, [fvcr_obj.FEATUREID, fvcr_obj.DESCRIPTION]) as rows:
                 for row in rows:
                     issuePhraseList = row[1].split(' ')
                     issueFld = issuePhraseList[1]

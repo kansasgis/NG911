@@ -27,6 +27,7 @@ def main():
     topology = gdbObject.Topology
     out_basename = "NG911"
     road = gdbObject.RoadCenterline
+    rd = basename(road)
     rc_obj = getFCObject(road)
 
     userMessage("Exporting topology errors...")
@@ -56,7 +57,7 @@ def main():
             fullDataset = join(gdb, errors)
             #create feture layer
             e = "e"
-            wc = "OriginObjectClassName = 'RoadCenterline'"
+            wc = "OriginObjectClassName = '%s'" % rd
             MakeFeatureLayer_management(fullDataset, e, wc)
 
             i = getFastCount(e)
@@ -70,7 +71,7 @@ def main():
 
                 #set query and field variables
                 qry = errors + ".OriginObjectID IS NOT NULL"
-                fields = ("RoadCenterline." + rc_obj.UNIQUEID, "RoadCenterline." + rc_obj.EXCEPTION, errors + ".RuleType", errors + ".RuleDescription", errors + ".isException")
+                fields = (rd + "." + rc_obj.UNIQUEID, rd + "." + rc_obj.EXCEPTION, errors + ".RuleType", errors + ".RuleDescription", errors + ".isException")
 
                 try:
                     #set up search cursor to loop through records

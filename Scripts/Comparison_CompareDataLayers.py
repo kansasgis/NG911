@@ -39,10 +39,10 @@ def CompareThatData(fc1, fc2, resultsTable, data_obj):
         #prep data for attribute comparison
         fields = data_obj.REQUIRED_FIELDS
 
-        if "L_UPDATE" in fields:
-            fields.remove("L_UPDATE")
-        if "UPDATEBY" in fields:
-            fields.remove("UPDATEBY")
+        if data_obj.L_UPDATE in fields:
+            fields.remove(data_obj.L_UPDATE)
+        if data_obj.UPDATEBY in fields:
+            fields.remove(data_obj.UPDATEBY)
 
         exp = '(str(!' + ('!) + str(!').join(fields) + '!)).replace(" ", "")'
         CalculateField_management(fc1, compare + "1", exp, "PYTHON_9.3")

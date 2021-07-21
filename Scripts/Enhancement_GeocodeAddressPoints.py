@@ -11,9 +11,9 @@ from arcpy import (GetParameterAsText, Exists, CopyFeatures_management, DisableE
             EnableEditorTracking_management, AddJoin_management, RemoveJoin_management, CalculateField_management,
             Delete_management, MakeFeatureLayer_management, AddIndex_management, ListFields, ListIndexes)
 from MSAG_DBComparison import launch_compare
-from NG911_GDB_Objects import getFCObject
+from NG911_GDB_Objects import getFCObject, getGDBObject
 from NG911_arcpy_shortcuts import fieldExists
-from os.path import join
+from os.path import join, basename
 
 
 def getIndexNames(lyr):
@@ -21,18 +21,19 @@ def getIndexNames(lyr):
     return names
 
 
-def geocompare(gdb, version, emptyOnly):
-    addy_fc = join(gdb, "NG911", "AddressPoints")
-    rd_fc = join(gdb, "NG911", "RoadCenterline")
-    addy_object = getFCObject(addy_fc)
-    addy_field_list = ["NAME_COMPARE", "PRD", "STP", "RD", "STS", "POD", "POM"]
+def geocompare(gdb_obj, version, emptyOnly, addy_fc, addy_object):
+
+    rd_fc = gdb_obj.RoadCenterline
+    rc_obj = getFCObject(rd_fc)
+    addy_field_list = ["NAME_COMPARE", addy_object.PRD, addy_object.STP, addy_object.RD, 
+                       addy_object.STS, addy_object.POD, addy_object.POM]
 
     a_id = addy_object.UNIQUEID
 
     # create output results
     out_name = "AddressPt_GC_Results"
-    output_table = join(gdb, out_name)
-    wc = "SUBMIT = 'Y'"
+    output_table = join(gdb_obj.gdbPath, out_name)
+    wc = "%s = 'Y'" % addy_object.SUBMIT
     fl = "fl"
 
     # set up where clause if the user only wants empty records done
@@ -52,7 +53,7 @@ def geocompare(gdb, version, emptyOnly):
     DisableEditorTracking_management(addy_fc, "DISABLE_CREATOR", "DISABLE_CREATION_DATE", "DISABLE_LAST_EDITOR", "DISABLE_LAST_EDIT_DATE")
     DisableEditorTracking_management(rd_fc, "DISABLE_CREATOR", "DISABLE_CREATION_DATE", "DISABLE_LAST_EDITOR", "DISABLE_LAST_EDIT_DATE")
 
-    launch_compare(gdb, output_table, addy_object.HNO, addy_object.MSAGCO, addy_field_list, False)
+    launch_compare(gdb_obj.gdbPath, output_table, addy_object.HNO, addy_object.MSAGCO, addy_field_list, False)
 
     # if the version is 2.1...
     if version == "21":
@@ -87,18 +88,18 @@ def geocompare(gdb, version, emptyOnly):
             uc_fieldNames.append(fld.name.upper())
 
         # define fields to be calculated
-        rclmatch = "AddressPoints.RCLMATCH"
-        rclside = "AddressPoints.RCLSIDE"
-        ngsegid_exp = "!AddressPt_GC_Results.NGSEGID!"
-        rclside_exp = "!AddressPt_GC_Results.RCLSIDE!"
+        rclmatch = "%s.%s" % (basename(addy_fc), addy_object.RCLMATCH)
+        rclside = "%s.%s" % (basename(addy_fc), addy_object.RCLSIDE)
+        ngsegid_exp = "!AddressPt_GC_Results.%s!" % addy_object.UNIQUEID
+        rclside_exp = "!AddressPt_GC_Results.%s!" % addy_object.RCLSIDE
 
         # fix for Butler County if those fields don't exist
         if rclmatch.upper() not in uc_fieldNames:
             rclmatch = "KSNG911S.DBO." + rclmatch
-            ngsegid_exp = "!KSNG911S.DBO.AddressPt_GC_Results.NGSEGID!"
+            ngsegid_exp = "!KSNG911S.DBO.AddressPt_GC_Results.%s!" % addy_object.UNIQUEID
         if rclside.upper() not in uc_fieldNames:
             rclside = "KSNG911S.DBO." + rclside
-            rclside_exp = "!KSNG911S.DBO.AddressPt_GC_Results.RCLSIDE!"
+            rclside_exp = "!KSNG911S.DBO.AddressPt_GC_Results.%s!" % addy_object.RCLSIDE
 
         # calculate field
         CalculateField_management(fl, rclmatch, ngsegid_exp, "PYTHON_9.3", "")
@@ -111,23 +112,27 @@ def geocompare(gdb, version, emptyOnly):
         Delete_management(ot_fl)
 
     # turn editor tracking back on
-    EnableEditorTracking_management(addy_fc, "", "", "UPDATEBY", "L_UPDATE", "NO_ADD_FIELDS", "UTC")
-    EnableEditorTracking_management(rd_fc, "", "", "UPDATEBY", "L_UPDATE", "NO_ADD_FIELDS", "UTC")
+    EnableEditorTracking_management(addy_fc, "", "", addy_object.UPDATEBY, addy_object.L_UPDATE, "NO_ADD_FIELDS", "UTC")
+    EnableEditorTracking_management(rd_fc, "", "", rc_obj.UPDATEBY, rc_obj.L_UPDATE, "NO_ADD_FIELDS", "UTC")
 
 
 def main():
     gdb = GetParameterAsText(0)
     emptyOnly = GetParameterAsText(1)
     version = "20"
+    
+    gdb_obj = getGDBObject(gdb)
 
     # see what version we're working with
-    ap = join(gdb, "NG911", "AddressPoints")
-    if fieldExists(ap, "RCLMATCH"):
+    ap = gdb_obj.AddressPoints
+    ap_obj = getFCObject(ap)
+    if fieldExists(ap, ap_obj.RCLMATCH):
         version = "21"
 
     if version == "20" and emptyOnly == "true":
         emptyOnly = "false"
-    geocompare(gdb, version, emptyOnly)
+        
+    geocompare(gdb_obj, version, emptyOnly, ap, ap_obj)
 
 if __name__ == '__main__':
     main()

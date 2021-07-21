@@ -9,25 +9,29 @@ from arcpy import (GetParameterAsText, Delete_management, Describe, Exists,
                    CopyFeatures_management, Rename_management, DeleteField_management)
 from os.path import join, basename
 from Enhancement_AddTopology import add_topology
+from NG911_GDB_Objects import getGDBObject
+
 
 def main():
+    
     # get variables
     gdb = GetParameterAsText(0)
-    ng911 = join(gdb, "NG911")
-    optional = join(gdb, "OptionalLayers")
+    gdb_obj = getGDBObject(gdb)
+    ng911 = gdb_obj.NG911_FeatureDataset
+    optional = gdb_obj.OPTIONAL_LAYERS_FD
     
     # delete topology
-    topology = join(ng911, 'NG911_Topology')
+    topology = gdb_obj.Topology
     Delete_management(topology)
     
     # get spatial reference
-    addy_pt = join(ng911, "AddressPoints")
+    addy_pt = gdb_obj.AddressPoints
     desc = Describe(addy_pt)
     sr = desc.spatialReference
     
     # create feature dataset, NG911_local
-    CreateFeatureDataset_management(gdb, "NG911_local", sr)
-    ds = join(gdb, "NG911_local")
+    CreateFeatureDataset_management(gdb, "%s_local" % basename(ng911), sr)
+    ds = join(gdb, "%s_local" % basename(ng911))
     
     adjusted_list = []
     
@@ -80,12 +84,12 @@ def main():
     # do some magic to get psap_temp into the authoritative boundary data schema
     
     # see if authoritative boundary already exists
-    ab = join(ng911, "AuthoritativeBoundary")
+    ab = gdb_obj.AuthoritativeBoundary
     flag_ab = Exists(ab)
     
     if flag_ab:
         # make a copy of the authoritative boundary
-        out_ab = join(ds, "AuthoritativeBoundary_local")
+        out_ab = ab + "_local"
         CopyFeatures_management(ab, out_ab)
         
         # remove existing authoritative boundary

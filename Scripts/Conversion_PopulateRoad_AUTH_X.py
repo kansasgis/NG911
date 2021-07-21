@@ -7,17 +7,20 @@
 # Created:     10/10/2017
 # Copyright:   (c) kristen 2017
 #-------------------------------------------------------------------------------
-from arcpy import (CalculateField_management, MakeFeatureLayer_management, GetParameterAsText, Statistics_analysis, Delete_management,
-                DisableEditorTracking_management, EnableEditorTracking_management, Exists, AddMessage)
+from arcpy import (GetParameterAsText, Statistics_analysis, Delete_management,
+                DisableEditorTracking_management, EnableEditorTracking_management, 
+                Exists, AddMessage)
 from arcpy.da import SearchCursor
-from NG911_GDB_Objects import getFCObject
-from os.path import join
+from NG911_GDB_Objects import getFCObject, getGDBObject
 from NG911_arcpy_shortcuts import CalcWithWC, hasRecords, fieldExists
+from os.path import join
 
 def main():
     gdb = GetParameterAsText(0)
+    
+    gdb_obj = getGDBObject(gdb)
 
-    rc = join(gdb, "NG911", "RoadCenterline")
+    rc = gdb_obj.RoadCenterline
     rc_obj = getFCObject(rc)
 
     if Exists(rc) and hasRecords(rc):
@@ -51,10 +54,6 @@ def main():
                 # calculate the field
                 CalcWithWC(rc, field, '"Y"', countyWC)
 
-##                # cheat for fast data checking KJK
-##                wc = field + " is null"
-##                CalcWithWC(rc, field, '"N"', wc)
-
             else:
                 AddMessage("Road Centerline file does not have " + field + " field. Please double-check your geodatabase version.")
                 print("Road Centerline file does not have " + field + " field. Please double-check your geodatabase version.")
@@ -63,7 +62,7 @@ def main():
         Delete_management(freq_table)
 
         # start editor tracking again
-        EnableEditorTracking_management(rc, "", "", "UPDATEBY", "L_UPDATE", "NO_ADD_FIELDS", "UTC")
+        EnableEditorTracking_management(rc, "", "", rc_obj.UPDATEBY, rc_obj.L_UPDATE, "NO_ADD_FIELDS", "UTC")
 
     else:
         AddMessage("Road centerline file does not exist or does not have records. Please check " + gdb)

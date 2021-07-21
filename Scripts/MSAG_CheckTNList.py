@@ -15,24 +15,19 @@ from arcpy.da import InsertCursor, UpdateCursor
 from NG911_DataCheck import userMessage, getFieldDomain
 from os.path import join, dirname, basename, exists, realpath
 from os import mkdir
-from NG911_GDB_Objects import getFCObject, getTNObject
+from NG911_GDB_Objects import getFCObject, getTNObject, getGDBObject
 from NG911_arcpy_shortcuts import getFastCount, fieldExists
 from MSAG_DBComparison import launch_compare
 
 
-def prepXLS(tnxls, gdb):
+def prepXLS(tnxls, gdb, tn_object, a_obj, r_obj):
     import xlrd
 
     userMessage("Converting spreadsheet to geodatabase table...")
     #create gdb table
-    tn_object = getTNObject(gdb)
     outTable = tn_object.TN_List
     tn_gdb = tn_object.tn_gdb
     LocatorFolder = tn_object.LocatorFolder
-
-    #get the correct address point object
-    address_points = join(gdb, "NG911", "AddressPoints")
-    a_obj = getFCObject(address_points)
 
     if not exists(LocatorFolder):
         mkdir(LocatorFolder)
@@ -71,7 +66,7 @@ def prepXLS(tnxls, gdb):
             userMessage("Converted " + str(rowIdx) + " spreadsheet records so far...")
 
         if rowIdx == endRow/2:
-            userMessage("Have you backed up your GIS data with DASC recently? Email dasc@kgs.ku.edu for more info!")
+            userMessage("Halfway there!")
 
         #create list to hold info
         rowToInsertList = []
@@ -100,12 +95,12 @@ def prepXLS(tnxls, gdb):
     for prf in postRoadFields:
         AddField_management(outTable, prf, "TEXT", "", "", 4)
 
-    postRoadFields.append("RD")
+    postRoadFields.append(r_obj.RD)
 
     folder = join(dirname(dirname(realpath(__file__))), "Domains")
 
-    streetSuffixDict = getFieldDomain("STS", folder).keys()
-    postDirectionalDict = getFieldDomain("POD", folder).keys()
+    streetSuffixDict = getFieldDomain(r_obj.STS, folder).keys()
+    postDirectionalDict = getFieldDomain(r_obj.POD, folder).keys()
 
     with UpdateCursor(outTable, postRoadFields) as rows:
         for row in rows:
@@ -171,6 +166,7 @@ def prepXLS(tnxls, gdb):
 
 
 def AddUniqueIDField(outTable, uniqueIDField):
+    import time
     if not fieldExists(outTable, uniqueIDField):
         AddField_management(outTable, uniqueIDField, "TEXT", "", "", 50) #KK EDIT: changed from 38 to 50
 
@@ -181,10 +177,10 @@ def AddUniqueIDField(outTable, uniqueIDField):
     if fieldExists(outTable, "NXX"):
         CalculateField_management(tbl, uniqueIDField, "!NPA! + !NXX! + !PHONELINE!", "PYTHON")
     else:
-        CalculateField_management(tbl, uniqueIDField, "uniqueID() + str(!OBJECTID!)", "PYTHON", "def uniqueID():\\n  x = '%d' % time.time()\\n  str(x)\\n  return x")
+        CalculateField_management(tbl, uniqueIDField, '"' + str(time.time()) + "str(!OBJECTID!)" + '"', "PYTHON_9.3")
 
 
-def geocodeTable(gdb):
+def geocodeTable(gdb, tn_object, a_obj):
     #geocode addresses
     tn_object = getTNObject(gdb)
     tname = tn_object.TN_List
@@ -193,8 +189,8 @@ def geocodeTable(gdb):
     #add unique ID to TN List table
     AddUniqueIDField(tname, uniqueFieldID)
 
-    addy_field_list = ["NAME_COMPARE", "PRD", "RD", "STS", "POD"]
-    launch_compare(gdb, tname, "HNO", "MUNI", addy_field_list, True)
+    addy_field_list = ["NAME_COMPARE", a_obj.PRD, a_obj.RD, a_obj.STS, a_obj.POD]
+    launch_compare(gdb, tname, a_obj.HNO, a_obj.MUNI, addy_field_list, True)
 
     #see if any records did not match
     wc = "MATCH <> 'M'"
@@ -212,25 +208,31 @@ def geocodeTable(gdb):
 
 def main():
 
+    # get variables
     tnxls = GetParameterAsText(0)
     gdb = GetParameterAsText(1)
-
-    addy_fc = join(gdb, "NG911", "AddressPoints")
-    rd_fc = join(gdb, "NG911", "RoadCenterline")
+    
+    # get objects
+    gdb_obj = getGDBObject(gdb)
+    addy_fc = gdb_obj.AddressPoints
+    rd_fc = gdb_obj.RoadCenterline
+    a_obj = getFCObject(addy_fc)
+    r_obj = getFCObject(rd_fc)
+    tn_object = getTNObject(gdb)
 
     # turn off editor tracking
     DisableEditorTracking_management(addy_fc, "DISABLE_CREATOR", "DISABLE_CREATION_DATE", "DISABLE_LAST_EDITOR", "DISABLE_LAST_EDIT_DATE")
     DisableEditorTracking_management(rd_fc, "DISABLE_CREATOR", "DISABLE_CREATION_DATE", "DISABLE_LAST_EDITOR", "DISABLE_LAST_EDIT_DATE")
 
     #prep TN list
-    prepXLS(tnxls, gdb)
+    prepXLS(tnxls, gdb, tn_object, a_obj, r_obj)
 
     #geocode addresses
-    geocodeTable(gdb)
-
+    geocodeTable(gdb, tn_object, a_obj)
+    
     # turn editor tracking back on
-    EnableEditorTracking_management(addy_fc, "", "", "UPDATEBY", "L_UPDATE", "NO_ADD_FIELDS", "UTC")
-    EnableEditorTracking_management(rd_fc, "", "", "UPDATEBY", "L_UPDATE", "NO_ADD_FIELDS", "UTC")
+    EnableEditorTracking_management(addy_fc, "", "", a_obj.UPDATEBY, a_obj.L_UPDATE, "NO_ADD_FIELDS", "UTC")
+    EnableEditorTracking_management(rd_fc, "", "", r_obj.UPDATEBY, r_obj.L_UPDATE, "NO_ADD_FIELDS", "UTC")
 
 
 if __name__ == '__main__':

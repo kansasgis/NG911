@@ -6,9 +6,9 @@
 #
 # Created:     10/05/2017
 #-------------------------------------------------------------------------------
-from NG911_GDB_Objects import getFCObject
+from NG911_GDB_Objects import getFCObject, getGDBObject
 from os import remove
-from os.path import join, dirname, exists
+from os.path import join, dirname, exists, basename
 from arcpy.da import SearchCursor, UpdateCursor, Editor
 from arcpy import (AddField_management, AddMessage,
                     MakeFeatureLayer_management, Delete_management,
@@ -18,7 +18,7 @@ from arcpy import (AddField_management, AddMessage,
 from NG911_arcpy_shortcuts import getFastCount, fieldExists
 import time
 
-def prep_roads_for_comparison(rd_fc, name_field, code_fields, city_fields, field_list):
+def prep_roads_for_comparison(rd_fc, name_field, code_fields, city_fields, field_list, r_obj, a_obj):
 
     # calculate values for NAME_OVLERAP field
     fields1 = tuple(field_list)
@@ -30,13 +30,13 @@ def prep_roads_for_comparison(rd_fc, name_field, code_fields, city_fields, field
     i = 0
 
     if "rcTable" in rd_fc:
-        field_list.append("NGSEGID")
-        i = field_list.index("NGSEGID")
+        field_list.append(r_obj.UNIQUEID)
+        i = field_list.index(r_obj.UNIQUEID)
     elif "apTable" in rd_fc:
-        if "NGSEGID" in field_list:
-            field_list.remove("NGSEGID")
-        field_list.append("NGADDID")
-        i = field_list.index("NGADDID")
+        if r_obj.UNIQUEID in field_list:
+            field_list.remove(r_obj.UNIQUEID)
+        field_list.append(a_obj.UNIQUEID)
+        i = field_list.index(a_obj.UNIQUEID)
 
 ##    AddMessage("Query field list:" + ", ".join(field_list))
 
@@ -155,12 +155,11 @@ def prep_roads_for_comparison(rd_fc, name_field, code_fields, city_fields, field
 ##            CalculateField_management(rd_fc, code_field, 1, "PYTHON_9.3")
 
 
-def ap_compare(hno, hno_code, ap_fc):
+def ap_compare(hno, hno_code, ap_fc, a_obj):
 
     segid_list = []
 
-    wc = "CODE_COMPARE = %s AND HNO = %s AND LOCTYPE = 'PRIMARY'" % (str(hno_code), str(hno))
-##    wc = "CODE_COMPARE = " + str(hno_code) + " AND HNO = " + str(hno)
+    wc = "CODE_COMPARE = %s AND %s = %s AND %s = 'PRIMARY'" % (str(hno_code), a_obj.HNO, str(hno), a_obj.LOCTYPE)
 
     a = "a"
     MakeFeatureLayer_management(ap_fc, a, wc)
@@ -169,7 +168,7 @@ def ap_compare(hno, hno_code, ap_fc):
     if count > 0:
         # search cursor to get all ties
 
-        segid_field = "NGADDID"
+        segid_field = a_obj.UNIQUEID
 
         rd_fields = (segid_field)
 
@@ -197,7 +196,7 @@ def ap_compare(hno, hno_code, ap_fc):
     del segid_list
 
 
-def db_compare(hno, hno_code, tempTable, addid, txt, idField):
+def db_compare(hno, hno_code, tempTable, addid, txt, idField, a_obj, r_obj):
     # see if the text file exists already
     if exists(txt):
         method = "a"
@@ -219,10 +218,10 @@ def db_compare(hno, hno_code, tempTable, addid, txt, idField):
     if fieldExists(tempTable, "AUTH"):
         wc = wc + " AND AUTH = 'Y'"
 
-    segid_field = "NGSEGID"
+    segid_field = r_obj.UNIQUEID
     side = "N"
 
-    rd_fields = [segid_field, "FROM_ADD", "TO_ADD", "RCLSIDE", "PARITY"]
+    rd_fields = [segid_field, "FROM_ADD", "TO_ADD", a_obj.RCLSIDE, "PARITY"]
 
     with SearchCursor(tempTable, rd_fields, wc) as r_rows:
         for r_row in r_rows:
@@ -241,7 +240,7 @@ def db_compare(hno, hno_code, tempTable, addid, txt, idField):
 
             if hno in sideRange:
                 if r_row[0] is None:
-                    AddWarning("An NGSEGID value is blank/null. Matching records cannot be calculated. Make sure all NGSEGIDs are populated and run again.")
+                    AddWarning("An %s value is blank/null. Matching records cannot be calculated. Make sure all %ss are populated and run again." % (r_obj.UNIQUEID, r_obj.UNIQUEID))
                     segid_list.append("NULL_ID")
                 else:
                     segid_list.append(r_row[0])
@@ -262,7 +261,7 @@ def db_compare(hno, hno_code, tempTable, addid, txt, idField):
         segid = ""
         side = "N"
     else:
-        segids = idField + " " + addid + " TIES WHERE CLAUSE: NGSEGID in ('" + "', '".join(segid_list) + "')\n"
+        segids = idField + " " + addid + " TIES WHERE CLAUSE: " + r_obj.UNIQUEID + " in ('" + "', '".join(segid_list) + "')\n"
         writeToText(txt, segids, method)
         segid = "TIES"
         side = "N"
@@ -279,25 +278,28 @@ def writeToText(textFile, stuff, method):
 
 def launch_compare(gdb, output_table, HNO, addy_city_field, addy_field_list, queryAP):
 
-##    start_time = time.time()
-    rd_fc = join(gdb, "NG911", "RoadCenterline")
-    ap_fc = join(gdb, "NG911", "AddressPoints")
+    # set objects and feature classes
+    gdb_obj = getGDBObject(gdb)
+    rd_fc = gdb_obj.RoadCenterline
+    ap_fc = gdb_obj.AddressPoints
+    r_obj = getFCObject(rd_fc)
+    a_obj = getFCObject(ap_fc)
+    
+    # set variables
+    city_field = a_obj.MSAGCO
     name_field = "NAME_COMPARE"
     code_field = "CODE_COMPARE"
-    city_field = "MSAGCO"
-    rd_object = getFCObject(rd_fc)
-
+    
     # flip switch for gdb instead of in_memory
     storage = "in_memory"
     #storage = gdb
 
     # prep address points with concatenated label field
-
-    prep_roads_for_comparison(output_table, name_field, [code_field], [addy_city_field], addy_field_list)
+    prep_roads_for_comparison(output_table, name_field, [code_field], [addy_city_field], addy_field_list, r_obj, a_obj)
 
     # prep road centerline with concatenated label field
-    road_field_list = ["NAME_COMPARE", "PRD", "STP", "RD", "STS", "POD", "POM"]
-    version = rd_object.GDB_VERSION
+    road_field_list = ["NAME_COMPARE", r_obj.PRD, r_obj.STP, r_obj.RD, r_obj.STS, r_obj.POD, r_obj.POM]
+    version = r_obj.GDB_VERSION
 
     # copy the roads to a table for comparison
     rc_table_view = "rc_table_view"
@@ -305,15 +307,15 @@ def launch_compare(gdb, output_table, HNO, addy_city_field, addy_field_list, que
     rt = join(storage, "rcTable" + version)
     if Exists(rt):
         Delete_management(rt)
-    wc = "SUBMIT = 'Y'"
+    wc = r_obj.SUBMIT + " = 'Y'"
     MakeTableView_management(rd_fc, rc_table_view, wc)
     CopyRows_management(rc_table_view, rt)
-    prep_roads_for_comparison(rt, name_field, [code_field + "_L", code_field +"_R"], [ city_field + "_L", city_field + "_R"], road_field_list)
+    prep_roads_for_comparison(rt, name_field, [code_field + "_L", code_field +"_R"], [ city_field + "_L", city_field + "_R"], road_field_list, r_obj, a_obj)
 
     # prep address points with concatenated label field if necessary
     if queryAP == True:
-        addy_field_list1 = ["NAME_COMPARE", "PRD", "STP", "RD", "STS", "POD", "POM"]
-        prep_roads_for_comparison(ap_fc, name_field, [code_field], [city_field], addy_field_list1)
+        addy_field_list1 = ["NAME_COMPARE", a_obj.PRD, a_obj.STP, a_obj.RD, a_obj.STS, a_obj.POD, a_obj.POM]
+        prep_roads_for_comparison(ap_fc, name_field, [code_field], [city_field], addy_field_list1, r_obj, a_obj)
 
     if version == "20":
 
@@ -377,8 +379,8 @@ def launch_compare(gdb, output_table, HNO, addy_city_field, addy_field_list, que
         NAME_COMPARE NAME_COMPARE VISIBLE NONE;CODE_COMPARE_L CODE_COMPARE_L HIDDEN NONE;CODE_COMPARE_R CODE_COMPARE VISIBLE NONE"""
 
     # set up list of lists to look at each side of the road
-    side_lists = [[rd_object.PARITY_L, rd_object.L_F_ADD, rd_object.L_T_ADD, rd_object.UNIQUEID,  code_field + "_L", "RoadCenterline_Layer", l_field_info],
-                  [rd_object.PARITY_R, rd_object.R_F_ADD, rd_object.R_T_ADD, rd_object.UNIQUEID, code_field + "_R", "RoadCenterline_Layer2", r_field_info]]
+    side_lists = [[r_obj.PARITY_L, r_obj.L_F_ADD, r_obj.L_T_ADD, r_obj.UNIQUEID,  code_field + "_L", basename(rd_fc) + "_Layer", l_field_info],
+                  [r_obj.PARITY_R, r_obj.R_F_ADD, r_obj.R_T_ADD, r_obj.UNIQUEID, code_field + "_R", basename(rd_fc) + "_Layer2", r_field_info]]
 
 
     # create a temp table of road segments
@@ -407,9 +409,9 @@ def launch_compare(gdb, output_table, HNO, addy_city_field, addy_field_list, que
         Delete_management(lyr)
 
         # made sure the table has a column for what side of the street it is
-        if not fieldExists(holder, "RCLSIDE"):
-            AddField_management(holder, "RCLSIDE", "TEXT", "", "", 1)
-        CalculateField_management(holder, "RCLSIDE", '"' + side_x + '"', "PYTHON_9.3", "")
+        if not fieldExists(holder, a_obj.RCLSIDE):
+            AddField_management(holder, a_obj.RCLSIDE, "TEXT", "", "", 1)
+        CalculateField_management(holder, a_obj.RCLSIDE, '"' + side_x + '"', "PYTHON_9.3", "")
 
         # make sure that the side-neutral field names get added for comparison
         for w_f in wanted_fields_dict.keys():
@@ -433,8 +435,8 @@ def launch_compare(gdb, output_table, HNO, addy_city_field, addy_field_list, que
     if Exists(tempTable):
         Delete_management(tempTable)
 
-    rc_1 = join(storage, "RoadCenterline_Layer")
-    rc_2 = join(storage, "RoadCenterline_Layer2")
+    rc_1 = join(storage, basename(rd_fc) + "_Layer")
+    rc_2 = join(storage, basename(rd_fc) + "_Layer2")
     Merge_management([rc_1, rc_2], tempTable)
 
     Delete_management(rc_1)
@@ -442,18 +444,18 @@ def launch_compare(gdb, output_table, HNO, addy_city_field, addy_field_list, que
     Delete_management(rt)
 
     # make sure certain fields exist in the address point layer
-    makeSureFieldDict = {"MATCH": 1, rd_object.UNIQUEID: 38, "MATCH_LAYER": 20, "RCLSIDE": 1}
+    makeSureFieldDict = {"MATCH": 1, r_obj.UNIQUEID: 38, "MATCH_LAYER": 20, a_obj.RCLSIDE: 1}
 
     for fld in makeSureFieldDict.keys():
         length = makeSureFieldDict[fld]
         if not fieldExists(output_table, fld):
             AddField_management(output_table, fld, "TEXT", "", "", length)
 
-    idField = "NGADDID"
+    idField = a_obj.UNIQUEID
     if "TN_List" in output_table:
         idField = "NGTNID"
 
-    addy_fields = [HNO, code_field, "MATCH", rd_object.UNIQUEID, "MATCH_LAYER", "RCLSIDE", idField]
+    addy_fields = [HNO, code_field, "MATCH", r_obj.UNIQUEID, "MATCH_LAYER", a_obj.RCLSIDE, idField]
 
     non_match_count = 0
     count = 1
@@ -485,24 +487,24 @@ def launch_compare(gdb, output_table, HNO, addy_city_field, addy_field_list, que
             if hno not in (None, "", " "):
                 try:
                     hno = int(hno)
-                    match_combo = db_compare(hno, hno_code, tempTable, addid, txt, idField)
+                    match_combo = db_compare(hno, hno_code, tempTable, addid, txt, idField, a_obj, r_obj)
                     segid = match_combo[0]
                     side = match_combo[1]
                 except:
                     hno = ""
 
             match = "M"
-            layer = "RoadCenterline"
+            layer = basename(rd_fc)
             if segid == "TIES":
                 match = "T"
                 side = "N"
                 non_match_count += 1
             elif segid == "":
                 if queryAP == True and hno not in (None, "", " "):
-                    segid = ap_compare(hno, hno_code, ap_fc)
+                    segid = ap_compare(hno, hno_code, ap_fc, a_obj)
                     match = "M"
                     side = "N"
-                    layer = "AddressPoints"
+                    layer = basename(ap_fc)
                     if segid =="TIES":
                         match = "T"
                         side = "N"
@@ -526,15 +528,11 @@ def launch_compare(gdb, output_table, HNO, addy_city_field, addy_field_list, que
                 row[5] = side
 
             rows.updateRow(row)
-##            r_end_time = time.time()
-##            print("Record time: %g seconds" % (r_end_time - r_start_time))
-##            AddMessage("Record time: %g seconds" % (r_end_time - r_start_time))
+
             if count in timeDict:
                 fraction = timeDict[count]
                 AddMessage("Processing is " + fraction + " complete.")
-##                partial_time = time.time()
-##                AddMessage("Elapsed time s %g seconds" % (partial_time - start_time))
-##
+
             count += 1
 
     if non_match_count == 0:
@@ -543,9 +541,6 @@ def launch_compare(gdb, output_table, HNO, addy_city_field, addy_field_list, que
     else:
         print("Some address points did not match. Results are available in " + output_table + ", ties are listed in " + txt + ". Please examine the MATCH field to find U (unmatched) records or T (ties).")
         AddMessage("Some address points did not match. Results are available in " + output_table + ", ties are listed in " + txt + ". Please examine the MATCH field to find U (unmatched) records or T (ties).")
-
-##    end_time = time.time()
-##    print("Elapsed time was %g seconds" % (end_time - start_time))
 
     # clean up
     if "TN_List" not in output_table:
@@ -562,5 +557,3 @@ def launch_compare(gdb, output_table, HNO, addy_city_field, addy_field_list, que
                 except:
                     pass
 
-if __name__ == '__main__':
-    main()

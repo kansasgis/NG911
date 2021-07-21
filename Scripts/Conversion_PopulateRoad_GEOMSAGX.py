@@ -7,10 +7,10 @@
 # Created:     10/10/2017
 # Copyright:   (c) kristen 2017
 #-------------------------------------------------------------------------------
-from arcpy import (CalculateField_management, MakeFeatureLayer_management, GetParameterAsText, Delete_management,
-            DisableEditorTracking_management, EnableEditorTracking_management, Exists, AddMessage, AddError)
-from NG911_GDB_Objects import getFCObject
-from os.path import join
+from arcpy import (MakeFeatureLayer_management, GetParameterAsText, 
+            DisableEditorTracking_management, EnableEditorTracking_management, 
+            Exists, AddMessage, AddError)
+from NG911_GDB_Objects import getFCObject, getGDBObject
 from NG911_arcpy_shortcuts import CalcWithWC, hasRecords, fieldExists, getFastCount
 
 def userMessage(msg):
@@ -20,7 +20,8 @@ def userMessage(msg):
 def main():
     gdb = GetParameterAsText(0)
 
-    rc = join(gdb, "NG911", "RoadCenterline")
+    gdb_obj = getGDBObject(gdb)
+    rc = gdb_obj.RoadCenterline
     rc_obj = getFCObject(rc)
 
     success = 0
@@ -28,12 +29,13 @@ def main():
     # make sure the file exists and has records
     if Exists(rc) and hasRecords(rc):
 
-        check_auth_wc = "AUTH_L is null or AUTH_R is null"
+        check_auth_wc = "%s is null or %s is null" % (rc_obj.AUTH_L, rc_obj.AUTH_R)
         auth = "auth"
         MakeFeatureLayer_management(rc, auth, check_auth_wc)
         if getFastCount(auth) > 0:
-            AddError("One or more AUTH_L or AUTH_R field values is null. No AUTH_L or AUTH_R fields can be null. Please fix those before running this tool.")
-            print("One or more AUTH_L or AUTH_R field values is null. No AUTH_L or AUTH_R fields can be null. Please fix those before running this tool.")
+            msg = "One or more %s or %s field values is null. No %s or %s fields can be null. Please fix those before running this tool." % (rc_obj.AUTH_L, rc_obj.AUTH_R, rc_obj.AUTH_L, rc_obj.AUTH_R)
+            AddError(msg)
+            print(msg)
 
         else:
 
@@ -47,13 +49,13 @@ def main():
                 if fieldExists(rc, side):
                     # populate GEOMSAGX based on parity
                     # if side of road is ZERO parity, GEOMSAGX = "N"
-                    parityWC = "PARITY_" + x + " = 'Z' AND " + rc_obj.SUBMIT + " = 'Y'"
+                    parityWC = rc_obj.PARITY_L[0:-1] + x + " = 'Z' AND " + rc_obj.SUBMIT + " = 'Y'"
                     bigNo = '"N"'
                     CalcWithWC(rc, side, bigNo, parityWC)
 
                     # populate GEOMSAGX based on AUTH_X
                     # if auth_X = N, GEOMSAGX = "N"
-                    authWC = "AUTH_" + x + " = 'N' AND " + rc_obj.SUBMIT + " = 'Y'"
+                    authWC = rc_obj.AUTH_L[0:-1] + x + " = 'N' AND " + rc_obj.SUBMIT + " = 'Y'"
                     CalcWithWC(rc, side, bigNo, authWC)
 
                     # populate all remaining records as "Y"
@@ -69,7 +71,7 @@ def main():
                     userMessage("Road centerline file does not have " + side + " field. Please double-check your geodatabase version.")
 
             # reenable editor tracking
-            EnableEditorTracking_management(rc, "", "", "UPDATEBY", "L_UPDATE", "NO_ADD_FIELDS", "UTC")
+            EnableEditorTracking_management(rc, "", "", rc_obj.UPDATEBY, rc_obj.L_UPDATE, "NO_ADD_FIELDS", "UTC")
 
     else:
         userMessage("Road Centerline file does not exist or does not have records. Please check " + rc)

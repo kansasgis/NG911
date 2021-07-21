@@ -28,26 +28,24 @@ def PIDreplace(pid, ch):
 def makeKSPID(tPID, countycode):
     #copy the ORKA function here to create a 19 digit PID
 
-    if tPID != '' or tPID is not None:
-        tPID = tPID.strip()
+    if tPID != '':
         tPID = PIDreplace(tPID, "-")
         tPID = PIDreplace(tPID, ".")
         tPID = PIDreplace(tPID, " ")
         lenPID = len(tPID)
 
         #check PID length to see what needs to be adjusted
-        if lenPID == 16:
+        if lenPID == 16 or lenPID == 15:
             tPID = countycode + tPID
-        elif lenPID == 19:
+        elif lenPID == 19 or lenPID == 18:
             tPID = tPID
         elif lenPID == 21:
             tPID = tPID[0:19]
         else:
+            if tPID is None:
+                tPID = " "
             try:
-                if " " not in tPID:
-                    userMessage("Error updating KSPID for " + tPID)
-                else:
-                    userMessage("Error updating KSPID for a blank PID")
+                userMessage("Error updating KSPID for " + tPID)
             except:
                 userMessage("Error updating KSPID for a null value")
             finally:
@@ -121,7 +119,7 @@ def main():
 
     #make sure the KSPID column is populated with a properly formatted KSPID
     userMessage("Calculating KSPID values...")
-    with UpdateCursor(workingFile, ("KSPID19", pid_column, "NGADDID")) as w_rows:
+    with UpdateCursor(workingFile, ("KSPID19", pid_column, a.UNIQUEID)) as w_rows:
         for w_row in w_rows:
             #get the value of the parcel ID
             pid = w_row[1]
@@ -134,7 +132,7 @@ def main():
                 w_rows.updateRow(w_row)
             else:
                 ngaddid = w_row[2]
-                userMessage("Null KSPID for NGADDID " + str(ngaddid))
+                userMessage("Null KSPID for %s %s " % (a.UNIQUEID, str(ngaddid)))
                 null_kspid = True
 
     if null_kspid == True:
