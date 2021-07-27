@@ -633,3 +633,4 @@ LENAPAH|Municipality in Oklahoma
 NEW ALLUWE|Municipality in Oklahoma
 NOWATA|Municipality in Oklahoma
 SOUTH COFFEYVILLE|Municipality in Oklahoma
+WANN|Municipality in Oklahoma
