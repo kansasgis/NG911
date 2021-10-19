@@ -90,13 +90,13 @@ def geocompare(gdb_obj, version, emptyOnly, addy_fc, addy_object):
         # define fields to be calculated
         rclmatch = "%s.%s" % (basename(addy_fc), addy_object.RCLMATCH)
         rclside = "%s.%s" % (basename(addy_fc), addy_object.RCLSIDE)
-        ngsegid_exp = "!AddressPt_GC_Results.%s!" % addy_object.UNIQUEID
+        ngsegid_exp = "!AddressPt_GC_Results.%s!" % rc_obj.UNIQUEID
         rclside_exp = "!AddressPt_GC_Results.%s!" % addy_object.RCLSIDE
 
         # fix for Butler County if those fields don't exist
         if rclmatch.upper() not in uc_fieldNames:
             rclmatch = "KSNG911S.DBO." + rclmatch
-            ngsegid_exp = "!KSNG911S.DBO.AddressPt_GC_Results.%s!" % addy_object.UNIQUEID
+            ngsegid_exp = "!KSNG911S.DBO.AddressPt_GC_Results.%s!" % rc_obj.UNIQUEID
         if rclside.upper() not in uc_fieldNames:
             rclside = "KSNG911S.DBO." + rclside
             rclside_exp = "!KSNG911S.DBO.AddressPt_GC_Results.%s!" % addy_object.RCLSIDE

@@ -111,7 +111,15 @@ def main():
             RecordResults(recordType, values, gdb)
 
         #clean up & reset
-        RemoveJoin_management(rd)
+        try:
+            RemoveJoin_management(rd)
+        except:
+            pass
+        
+        try:
+            Delete_management(rd)
+        except:
+            pass
 
         #give the user some feedback
         message = "Topology check complete. " + str(count) + " issues found."

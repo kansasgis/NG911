@@ -93,9 +93,14 @@ def main():
 
     if not Exists(target):
         CreateFeatureclass_management(dirname(target), basename(target), "POLYGON")
-        fieldDict = {p_obj.STEWARD: [75, "Stewards"], p_obj.NGKSPID: [19, ""], 
-                     p_obj.SUBMIT: [1, "Submit"], p_obj.NOTES: [255, ""]}
-        for field in fieldDict:
+        
+    # set up field dictionary
+    fieldDict = {p_obj.STEWARD: [75, "Stewards"], p_obj.NGKSPID: [19, ""], 
+                 p_obj.SUBMIT: [1, "Submit"], p_obj.NOTES: [255, ""]}
+    
+    # make sure all the fields exist, add them if necessary
+    for field in fieldDict:
+        if not fieldExists(target, field):
             length = fieldDict[field][0]
             domain = fieldDict[field][1]
             AddField_management(target, field, "TEXT", "", "", length, field, "", "", domain)
@@ -112,6 +117,12 @@ def main():
 
     #dissolve features based on PID
     Dissolve_management(parcels, tempOutput, [pidField])
+    
+    # add tempPID field
+    AddField_management(tempOutput, "tempPID", "TEXT", "", "", 50)
+    
+    # copy PID into tempPID field
+    CalculateField_management(tempOutput, "tempPID", "!%s!" % pidField, "PYTHON")
 
     #append dissolved features into the parcel target
     schema_type="NO_TEST"

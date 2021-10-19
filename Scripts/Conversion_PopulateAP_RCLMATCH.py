@@ -24,7 +24,7 @@ def main():
     a_obj = getFCObject(ap)
 
     if Exists(ap) and Exists(rc) and hasRecords(ap) and hasRecords(rc):
-        geocompare(gdb, "21", "true")
+        geocompare(gdb_obj, "21", "true", ap, a_obj)
 
         # calculate any SUBMIT = 'N' as RCLSIDE "N"
         wc_rclside = "%s is null or %s in ('', ' ')" % (a_obj.RCLSIDE, a_obj.RCLSIDE)

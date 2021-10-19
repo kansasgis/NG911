@@ -1128,15 +1128,17 @@ def checkUniqueIDFrequency(currentPathSettings):
     i = 0
     
     # get the esb_uniqueid from the data objects
-    while esb_uniqueid == "":
-        if Exists(esbList[i]):
-            try:
-                e_obj = NG911_GDB_Objects.getFCObject(esbList[i])
-                esb_uniqueid = e_obj.UNIQUEID
-            except:
-                pass
-            
-        i += 1
+    if esbList != []:
+        while esb_uniqueid == "":
+        
+            if Exists(esbList[i]):
+                try:
+                    e_obj = NG911_GDB_Objects.getFCObject(esbList[i])
+                    esb_uniqueid = e_obj.UNIQUEID
+                except:
+                    pass
+                
+            i += 1
 
 
     layerList = []
@@ -3220,7 +3222,7 @@ def checkTopology(gdbObject, check_polygons, check_roads):
 
         top_dict = {polyFC: top_fields, lineFC: top_fields_line, pointFC: top_fields}
 
-        # make a list of all of the exceptions in road attributes sp these aren't reported
+        # make a list of all of the exceptions in road attributes so these aren't reported
         roads = gdbObject.RoadCenterline
         rd_object = rd_object = NG911_GDB_Objects.getFCObject(roads)
         wc = rd_object.EXCEPTION + " <> 'NOT EXCEPTION'"
@@ -3328,7 +3330,53 @@ def checkTopology(gdbObject, check_polygons, check_roads):
                                     rules.append(ruleDesc)
                                     esb_dict[fc] = rules
 
-                            if check_roads == True and fc == roads:
+                            if check_roads == True and fc == basename(roads):
+
+                                # see if the road is marked as an exception or not
+                                wc = rd_object.SUBMIT + " = 'Y' AND OBJECTID = " + str(objectID)
+                                with SearchCursor(roads, (rd_object.UNIQUEID, rd_object.EXCEPTION), wc) as j_rows:
+                                    for j_row in j_rows:
+                                        # get the NGSEGID & the exception
+                                        ngsegid = j_row[0]
+                                        rd_exc = j_row[1]
+
+                                        # check to see if the exception has been marked
+                                        if rd_exc in exc_dict:
+
+                                            # get the list of plausible exceptions
+                                            plausibleException = exc_dict[rd_exc]
+
+                                            # if the reported issue isn't in acceptable exceptions,
+                                            # then report it
+                                            if ruleDesc not in plausibleException:
+                                                userMessage("In attributes: " + ", ".join(plausibleException))
+                                                userMessage("In topology: " + ruleDesc)
+                                                # then report the issue
+                                                msg = "Error: Topology issue- %s" % ruleDesc
+                                                val = (today, msg, fc, "", ngsegid, "Check Topology")
+                                                values.append(val)
+
+                                            # the else implying that the marked exception and the
+                                            # found issue match, so it should not be marked
+
+                                        # this means it isn't marked, so report the topology issue
+                                        elif rd_exc == "NOT EXCEPTION":
+                                            # then report the issue
+                                            msg = "Error: Topology issue- %s" % ruleDesc
+                                            val = (today, msg, fc, "", ngsegid, "Check Topology")
+                                            values.append(val)
+
+                                    try:
+                                        del j_row, j_rows
+                                    except:
+                                        pass
+                                    
+                                    
+                        elif basename(errorFC) == pointErrors:
+#                            userMessage("checking points")
+
+                            if check_roads == True and fc == basename(roads):
+#                                userMessage("checking road points")
 
                                 # see if the road is marked as an exception or not
                                 wc = rd_object.SUBMIT + " = 'Y' AND OBJECTID = " + str(objectID)
@@ -3369,7 +3417,6 @@ def checkTopology(gdbObject, check_polygons, check_roads):
                                     except:
                                         pass
 
-
                 # report back polygon issues
                 if reportESB == True:
                     for esb in esb_dict:
@@ -3401,7 +3448,7 @@ def checkTopology(gdbObject, check_polygons, check_roads):
         fvcrTable = basename(gdbObject.FieldValuesCheckResults)
         messageList.append("Results in %s." % fvcrTable)
     elif count == 0:
-        #clean up topology export if there were no errors
+        # clean up topology export if there were no errors
         for topE in (lineErrors, pointErrors, polyErrors):
             full = join(gdb, topE)
             if Exists(full):

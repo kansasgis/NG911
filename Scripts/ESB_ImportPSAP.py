@@ -29,7 +29,7 @@ def getStewardWC(fc):
     MakeFeatureLayer_management(fc, fl_submit, wc_submit)
 
     #run frequency to get unique list in "STEWARD" field
-    Statistics_analysis(fl_submit, output, field + " COUNT", field)
+    Statistics_analysis(fl_submit, output, [[field, "COUNT"]], field)
 #    Frequency_analysis(fl_submit, output, field, "")
 
     #set up empty variables to hold list of stewards
