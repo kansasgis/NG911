@@ -480,7 +480,7 @@ class NG911_Hydrant_Object(object):
         self.GDB_VERSION = u_gdb_version
         self.REQUIRED_FIELDS = [self.STEWARD, self.UNIQUEID, self.HYDTYPE, self.STATUS, self.PRIVATE, self.SUBMIT]
         self.FIELDS_WITH_DOMAINS = {self.STEWARD: "STEWARD", self.SUBMIT: "YN", self.HYDTYPE: "HYDTYPE",
-                                self.STATUS: "HYDSTATUS", self.PRIVATE: "PRIVATE"}
+                                self.STATUS: "HYDSTATUS", self.PRIVATE: "YNU"}
         self.FIELD_MAP = [self.STEWARD, self.UNIQUEID, self.HYDTYPE, self.PROVIDER, self.STATUS,
                             self.SUBMIT, self.NOTES, self.PRIVATE]
 
@@ -741,11 +741,12 @@ def getGDBObject(gdb):
     featureDataset = "NG911"
 
     # see what version of the database we're working with
-    ap = join(gdb, featureDataset, "AddressPoints")
-    if fieldExists(ap, "RCLMATCH"):
-        version = "21"
-    else:
-        version = "20"
+    version = "21"
+#    ap = join(gdb, featureDataset, "AddressPoints")
+#    if fieldExists(ap, "RCLMATCH"):
+#        version = "21"
+#    else:
+#        version = "20"
 
     # prep potential ESB list
     ESB = join(gdb, featureDataset, "ESB")

@@ -24,11 +24,13 @@
 # Import modules
 from arcpy import GetParameterAsText
 from NG911_DataCheck import FindOverlaps
+from NG911_GDB_Objects import getGDBObject
 
 def main():
     # Set important parameters here
     working_gdb = GetParameterAsText(0)
-    FindOverlaps(working_gdb)
+    gdb_obj = getGDBObject(working_gdb)
+    FindOverlaps(gdb_obj)
 
 if __name__ == '__main__':
     main()

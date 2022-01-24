@@ -1546,11 +1546,12 @@ def launchRangeFinder(f_add, t_add, parity):
 
 
 def checkMsagLabelCombo(msag, label, overlaps, rd_fc, fields, msagList, name_field, txt):
+    from NG911_GDB_Objects import getDefaultNG911RoadCenterlineObject
     address_list = []
     checked_segids = []
     dict_ranges = {}
     
-    r_obj = NG911_GDB_Objects.getFCObject(rd_fc)
+    r_obj = getDefaultNG911RoadCenterlineObject("21")
     
     for msagfield in msagList:
         side = msagfield[-1]
@@ -1606,17 +1607,24 @@ def checkMsagLabelCombo(msag, label, overlaps, rd_fc, fields, msagList, name_fie
     return overlaps
 
 
-def FindOverlaps(gdb_object):
+def FindOverlaps(gdb_object, geomsag=False, road_fc = ""):
+    from NG911_GDB_Objects import getDefaultNG911RoadCenterlineObject
 ##    start_time = time.time()
     userMessage("Checking overlapping address ranges...")
-    #get gdb object
+    
+    #get gdb path
     working_gdb = gdb_object.gdbPath
 
     env.workspace = working_gdb
     env.overwriteOutput = True
-    rd_fc = gdb_object.RoadCenterline         # Our street centerline feature class
+    
+    if not geomsag:
+        rd_fc = gdb_object.RoadCenterline         # Our street centerline feature class
+    else:
+        rd_fc = road_fc
+        
     final_fc = join(working_gdb, "AddressRange_Overlap")
-    rd_object = NG911_GDB_Objects.getFCObject(rd_fc)
+    rd_object = getDefaultNG911RoadCenterlineObject("21")
     name_field = "NAME_OVERLAP"
     parity_l = rd_object.PARITY_L
     parity_r = rd_object.PARITY_R
@@ -1668,6 +1676,9 @@ def FindOverlaps(gdb_object):
     expression = "calc_name(!%s!, !%s!, !%s!, !%s!, !%s!, !%s!)" % (rd_object.PRD, rd_object.STP,
                            rd_object.RD, rd_object.STS, rd_object.POD, rd_object.POM)
     CalculateField_management(rd_fc, name_field, expression, "PYTHON_9.3", code_block)
+    
+    # convert all road names to upper case
+    CalculateField_management(rd_fc, name_field, "!" + name_field + "!.upper()", "PYTHON_9.3", code_block)
 
     # make sure the text file notification only shows up if there's an overlap problem
     overlap_error_flag = 0
