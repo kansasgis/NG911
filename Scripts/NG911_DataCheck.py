@@ -1587,7 +1587,8 @@ def checkMsagLabelCombo(msag, label, overlaps, rd_fc, fields, msagList, name_fie
                                                 if lR in values:
                                                     k_segid = key.split("|")[0]
                                                     # make sure the script isn't comparing a road segment to itself
-                                                    writeToText(txt, "Address " + str(lR) + " overlaps between NGSEGID " + str(k_segid) + " and NGSEGID " + str(segid) + "\n")
+                                                    if (str(k_segid) != str(segid)):
+                                                        writeToText(txt, "Address " + str(lR) + " overlaps between NGSEGID " + str(k_segid) + " and NGSEGID " + str(segid) + "\n")
                                                     if k_segid not in overlaps:
                                                         overlaps.append(k_segid)
                                                     # this means there's an overlap & we found the partner
@@ -1607,7 +1608,7 @@ def checkMsagLabelCombo(msag, label, overlaps, rd_fc, fields, msagList, name_fie
     return overlaps
 
 
-def FindOverlaps(gdb_object, geomsag=False, road_fc = ""):
+def FindOverlaps(gdb_object, geomsag_flag=False, road_fc = ""):
     from NG911_GDB_Objects import getDefaultNG911RoadCenterlineObject
 ##    start_time = time.time()
     userMessage("Checking overlapping address ranges...")
@@ -1618,7 +1619,7 @@ def FindOverlaps(gdb_object, geomsag=False, road_fc = ""):
     env.workspace = working_gdb
     env.overwriteOutput = True
     
-    if not geomsag:
+    if not geomsag_flag:
         rd_fc = gdb_object.RoadCenterline         # Our street centerline feature class
     else:
         rd_fc = road_fc
@@ -1672,7 +1673,9 @@ def FindOverlaps(gdb_object, geomsag=False, road_fc = ""):
         if row[start_int] is not None and row[start_int] not in ("", " "):
             lstLabel.append(str(row[start_int]))
         start_int += 1
-    return " ".join(lstLabel)"""
+    strLabel = "".join(lstLabel)
+    strLabel = strLabel.replace(" ", "")
+    return strLabel"""
     expression = "calc_name(!%s!, !%s!, !%s!, !%s!, !%s!, !%s!)" % (rd_object.PRD, rd_object.STP,
                            rd_object.RD, rd_object.STS, rd_object.POD, rd_object.POM)
     CalculateField_management(rd_fc, name_field, expression, "PYTHON_9.3", code_block)
@@ -1747,22 +1750,38 @@ def FindOverlaps(gdb_object, geomsag=False, road_fc = ""):
             wc = "".join(wcList)
 ##            wc = segid + " in ('" +"','".join(overlaps) + "')"
             overlaps_lyr = "overlaps_lyr"
-            MakeFeatureLayer_management(rd_fc, overlaps_lyr, wc)
+            
+            if geomsag_flag == False:
+                MakeFeatureLayer_management(rd_fc, overlaps_lyr, wc)
+                
+            else:
+                MakeTableView_management(rd_fc, overlaps_lyr, wc)
 
             # get the count of persisting overlaps
             count = getFastCount(overlaps_lyr)
 
-            # if there are more than 1, copy the layer
-            if count > 0:
+            # if there are more than 1 and this is check road centerline ranges, copy the layer
+            if count > 0 and geomsag_flag == False:
                 CopyFeatures_management(overlaps_lyr, final_fc)
 
             Delete_management(overlaps_lyr)
 
             # add reporting for overlapping segments
             for ov in overlaps:
-                report = "Error: %s has an overlapping address range." % (str(ov))
-                val = (today, report, basename(rd_fc), "", ov, "Overlapping Address Range")
-                values.append(val)
+                if (basename(rd_fc) != "GEOMSAG"):
+                    report = "Error: %s has an overlapping address range." % (str(ov))
+                    val = (today, report, basename(rd_fc), "", ov, "Overlapping Address Range")
+                    values.append(val)
+                elif (str(ov)[0:2] == "AP"):
+                    # Notice for Q3 2022 > Error for Q4 2022
+                    report = "Notice: %s has an overlapping address range." % (str(ov)[2:])
+                    val = (today, report, "AddressPoints", "", str(ov)[2:], "Overlapping Address Range")
+                    values.append(val)
+                else:
+                    # Notice for Q3 2022 > Error for Q4 2022
+                    report = "Notice: %s has an overlapping address range." % (str(ov))
+                    val = (today, report, "RoadCenterline", "", ov, "Overlapping Address Range")
+                    values.append(val)
 
         else:
             userMessage("No overlaping address ranges found.")
@@ -1778,14 +1797,164 @@ def FindOverlaps(gdb_object, geomsag=False, road_fc = ""):
     if values != []:
         RecordResults(resultsType, values, working_gdb)
         fvcrTable = basename(gdb_object.FieldValuesCheckResults)
-        userWarning("Completed checking overlapping addresses: %s issues found. See %s." % (str(len(values)), fvcrTable))
+        userWarning("Completed checking overlapping ranges: %s issues found. See %s." % (str(len(values)), fvcrTable))
         if overlap_error_flag == 1:
             userWarning("All specific overlaps with corresponding Unique IDs are listed in " + txt)
     else:
-        userMessage("Completed checking overlapping addresses: 0 issues found")
+        userMessage("Completed checking overlapping ranges: 0 issues found")
 
     # turn editor tracking back on
     EnableEditorTracking_management(rd_fc, "", "", rd_object.UPDATEBY, rd_object.L_UPDATE, "NO_ADD_FIELDS", "UTC")
+    
+    
+def checkGEOMSAG(gdb_obj):
+    from arcpy import DeleteRows_management, Append_management
+    from arcpy.da import Editor
+    
+    userMessage("Check GEOMSAG ranges...")
+    
+    # get geodatabase path
+    gdb = gdb_obj.gdbPath
+    
+    # get address points & roads
+    roads = gdb_obj.RoadCenterline
+    ap = gdb_obj.AddressPoints
+    
+    # is it worth checking to see if any address points are GEOMSAG = 'Y' at the beginning?
+    geomsag = join(gdb, "GEOMSAG") 
+
+    if Exists(geomsag):
+        Delete_management(geomsag)
+        
+    # copy GEOMSAG = Y roads to working geodatabase
+    wc = "GEOMSAGL = 'Y' or GEOMSAGR = 'Y'"
+    
+    fl_gmsag = "fl_gmsag"
+    
+    if Exists(fl_gmsag):
+        Delete_management(fl_gmsag)
+    
+    MakeTableView_management(roads, fl_gmsag, wc)
+    
+    CopyRows_management(fl_gmsag, geomsag)
+    
+    # add pline ranges to the GEOMSAG
+    # query out which address points are marked as GEOMSAG = Y
+    wc = "GEOMSAG = 'Y'"
+    ap_lyr = "ap_lyr"
+    
+    if Exists(ap_lyr):
+        Delete_management(ap_lyr)
+        
+    MakeTableView_management(ap, ap_lyr, wc)
+
+    # make sure features are pulled back by the query
+    count = getFastCount(ap_lyr)
+
+    # clean up
+    Delete_management(ap_lyr)
+
+    if count > 0:
+        userMessage("Processing address points GEOMSAG conversion...")
+        
+        # make a copy of the roads, but empty  
+        rw = geomsag + "_wrk"
+        
+        if Exists(rw):
+            Delete_management(rw)
+        
+        # set variables, make a feature layer of 1 road
+        wc_rw = "OBJECTID = 1"
+        fl_rw = "fl_rw"
+        MakeTableView_management(roads, fl_rw, wc_rw)
+        
+        # copy roads
+        CopyRows_management(fl_rw, rw)
+        
+        # delete all features
+        DeleteRows_management(rw)
+        
+        # clean up
+        Delete_management(fl_rw)
+
+        ap_fields = ["NGADDID", "STEWARD", "STATE", "COUNTY", "HNO", "PRD", "STP", "RD", "STS", "POD", "POM", "ESN", "MSAGCO",
+                    "ZIP", "L_UPDATE"]
+
+        road_fields = ["NGSEGID", "STEWARD", "STATE_L", "STATE_R", "COUNTY_L", "COUNTY_R", "L_F_ADD", "L_T_ADD", "R_F_ADD", "R_T_ADD",
+                        "PARITY_L", "PARITY_R", "PRD", "STP", "RD", "STS", "POD", "POM", "ESN_L", "ESN_R", "MSAGCO_L", "MSAGCO_R",
+                        "ZIP_L", "ZIP_R", "GEOMSAGL", "GEOMSAGR", "AUTH_L", "AUTH_R", "SUBMIT", "L_UPDATE", "NOTES"]
+
+        # create list of unique addresses to avoid duplicates
+        inserted_ap = []
+
+        # loop through each record in a search cursor
+        with SearchCursor(ap, ap_fields, wc) as a_rows:
+            for a_row in a_rows:
+                
+                # make sure nulls, spaces, and blanks are all represented by blanks
+                null_dict = {"PRD": a_row[5], "STP": a_row[6], "STS": a_row[8], "POD": a_row[9], "POM":a_row[10]}
+                for street_part in null_dict:
+                    value = null_dict[street_part]
+                    if value is None or value == ' ':
+                        null_dict[street_part] = ''
+
+                ap_info = [a_row[3], a_row[4], null_dict["PRD"], null_dict["STP"], a_row[7], null_dict["STS"],
+                        null_dict["POD"], null_dict["POM"], a_row[11], a_row[12], a_row[13]]
+                
+                if ap_info not in inserted_ap:
+                    ap_id = a_row[0]
+
+                    # see if HNO is even or odd
+                    if a_row[4] % 2 == 0:
+                        parity = "E"
+                    else:
+                        parity = "O"
+                        
+                    if 1==1:
+#                    try:
+                        
+                        # get workspace
+                        workspace = gdb
+
+                        # contain inserts in an edit session
+                        edit = Editor(workspace)
+                        edit.startEditing(False, False)
+                        edit.startOperation()
+    
+                            # using an insert cursor, insert the information into the road centerline
+                        cursor = InsertCursor(rw, road_fields)
+                        attributes = (("AP" + str(ap_id))[0:37], a_row[1], a_row[2], a_row[2], a_row[3], a_row[3], a_row[4], a_row[4], "0", "0",
+                                    parity, "Z", null_dict["PRD"], null_dict["STP"], a_row[7], null_dict["STS"],
+                              null_dict["POD"], null_dict["POM"], a_row[11], a_row[11],
+                                    a_row[12], a_row[12], a_row[13], a_row[13], "Y", "N", "Y", "N", "Y", a_row[14], "GEOMSAG analysis")
+#                        print(attributes)
+
+                        cursor.insertRow(attributes)
+                        del cursor
+#                        print("Inserted %s" % ("AP" + str(ap_id)))
+    
+                        # close out the editing session
+                        edit.stopOperation()
+                        edit.stopEditing(True)
+    
+                        # append info to list of added address points
+                        inserted_ap.append(ap_info)
+                            
+        Append_management(rw, geomsag, "TEST")    
+        userMessage("Added pline ranges")    
+        
+        Delete_management(rw)
+
+    else:
+        userMessage("No address points marked for GEOMSAG")
+    
+    # check for overlapping address ranges
+    FindOverlaps(gdb_obj, geomsag_flag=True, road_fc = geomsag)
+    
+    # clean up
+    Delete_management(fl_gmsag)
+    
+    userMessage("Finished checking GEOMSAG range overlaps.")
 
 
 def checkRCLMATCH(pathsInfoObject):
@@ -2374,7 +2543,9 @@ def checkSubmissionNumbers(pathsInfoObject):
 
     today = strftime("%m/%d/%y")
     values = []
+    values2 = []
     resultsType = "template"
+    resultsType2 = "fieldValues"
 
     skipList = [basename(gdb_obj.HYDRANTS), basename(gdb_obj.GATES), basename(gdb_obj.PARCELS), 
                 basename(gdb_obj.CELLSECTORS), basename(gdb_obj.BRIDGES), basename(gdb_obj.CELLSITES),
@@ -2385,6 +2556,50 @@ def checkSubmissionNumbers(pathsInfoObject):
             obj = NG911_GDB_Objects.getFCObject(fc)
             #count records that are for submission
             lyr2 = "lyr2"
+            
+            ##added by WT
+            #check that submit is not NULL or "" or " " from domain check exception
+            
+            lyr3 = "lyr3"
+            wc2 = "(%s is NULL OR %s = '' OR %s = ' ')" % (obj.SUBMIT, obj.SUBMIT, obj.SUBMIT)
+            if fc == gdb_obj.AddressPoints:
+                wc2 = wc2 + " AND %s = 'PRIMARY'" % obj.LOCTYPE
+                
+            if fieldExists(fc, obj.SUBMIT):
+                MakeTableView_management(fc, lyr3, wc2)
+    
+                #get count of the results
+                count = getFastCount(lyr3)
+                bn = basename(fc)
+    
+                if count > 0:
+                    report = "Error: %s has %s records with NULL or blank string values in the SUBMIT field" % (bn, count)
+                    if bn.upper() in skipList or bn[0:3].upper() == 'UT_':
+                        report = report.replace("Error", "Notice")
+                    #add issue to list of values
+                    val = (today, report, "Submission", "Check Submission Values")
+                    values.append(val)
+                    #add individual feature IDs
+                    id1 = obj.UNIQUEID
+                    fields = id1
+                    with SearchCursor(lyr3, fields) as rows1:
+                        for row1 in rows1:
+                            fID = row1[0]
+                            descrip = "Error: %s has NULL or blank string values" % (bn)
+                            fld = "SUBMIT"
+                            check = "Check Attributes"
+                            val2 = (today, descrip, bn, fld, fID, check)
+                            values2.append(val2)
+                            
+                    # clean up
+                    try:
+                        del row1, rows1
+                    except:
+                        pass
+                        
+                Delete_management(lyr3)
+            ##end added by WT
+            
             wc2 = obj.SUBMIT + " = 'Y'"
             if fc == gdb_obj.AddressPoints:
                 wc2 = wc2 + " AND %s = 'PRIMARY'" % obj.LOCTYPE
@@ -2416,8 +2631,9 @@ def checkSubmissionNumbers(pathsInfoObject):
     #record issues if any exist
     if values != []:
         RecordResults(resultsType, values, gdb)
+        RecordResults(resultsType2, values2, gdb)
         templateTable = basename(pathsInfoObject.gdbObject.TemplateCheckResults)
-        userWarning("One or more layers had no features to submit. See %s." % templateTable)
+        userWarning("One or more layers had no features to submit or incorrect submit values. See %s." % templateTable)
     else:
         userMessage("All layers had features to submit.")
 
@@ -3570,7 +3786,8 @@ def sanityCheck(currentPathSettings):
     fields_string = ";".join(fields)
     checkFrequency(roads, road_freq, fields_string, gdb, "false")
     # check for overlapping address ranges
-    FindOverlaps(gdbObject)
+    ## Changed from FindOverlaps > CheckGEOMSAG
+    checkGEOMSAG(gdbObject)
     # check parities
     checkParities(currentPathSettings)
     
@@ -3722,7 +3939,8 @@ def main_check(checkType, currentPathSettings):
 
         if checkList[7] == "true":
             # check for address range overlaps
-            FindOverlaps(gdbObject)
+            ## Changed from FindOverlaps > CheckGEOMSAG
+            checkGEOMSAG(gdbObject)
 
 
     # run standard checks
