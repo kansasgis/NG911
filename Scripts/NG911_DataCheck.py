@@ -1774,12 +1774,12 @@ def FindOverlaps(gdb_object, geomsag_flag=False, road_fc = ""):
                     values.append(val)
                 elif (str(ov)[0:2] == "AP"):
                     # Notice for Q3 2022 > Error for Q4 2022
-                    report = "Notice: %s has an overlapping address range." % (str(ov)[2:])
+                    report = "Error: %s has an overlapping address range." % (str(ov)[2:])
                     val = (today, report, "AddressPoints", "", str(ov)[2:], "Overlapping Address Range")
                     values.append(val)
                 else:
                     # Notice for Q3 2022 > Error for Q4 2022
-                    report = "Notice: %s has an overlapping address range." % (str(ov))
+                    report = "Error: %s has an overlapping address range." % (str(ov))
                     val = (today, report, "RoadCenterline", "", ov, "Overlapping Address Range")
                     values.append(val)
 
@@ -3726,12 +3726,20 @@ def sanityCheck(currentPathSettings):
         
     try:
         # don't run topology on certain stewards (like Johnson)
-        if first_steward not in ['485010']:
+        if first_steward not in ['485010','485025']:
             checkTopology(gdbObject, True, True) # check polygons
             
         else:
-            userMessage('Intentionally skipped running topology check')
-            RecordResults("template", [strftime("%m/%d/%y"), "Notice: Intentionally did not validate topology", "Topology"], gdb)
+            userMessage('Intentionally skipped running topology check.')
+            ## had to add as variables for table write to function
+            topoType = "template"
+            topoToday = strftime("%m/%d/%y")
+            topoValues = []
+            topoMsg = "Notice: Intentionally did not validate topology."
+            topoVal = (topoToday, topoMsg, "Topology", "Topology")
+            topoValues.append(topoVal)
+            RecordResults(topoType, topoValues, gdb)
+            ##RecordResults("template", [strftime("%m/%d/%y"), "Notice: Intentionally did not validate topology", "Topology"], gdb)
             
     except Exception as e:
         userWarning(str(e))
@@ -3787,7 +3795,29 @@ def sanityCheck(currentPathSettings):
     checkFrequency(roads, road_freq, fields_string, gdb, "false")
     # check for overlapping address ranges
     ## Changed from FindOverlaps > CheckGEOMSAG
-    checkGEOMSAG(gdbObject)
+    ## Added exception for Johnson and Miami 10/31/22
+    try:
+        # don't run GeoMSAG/Overlap on certain stewards (like Johnson)
+        if first_steward not in ['485010','485025']:
+            checkGEOMSAG(gdbObject) # check road centerlines
+            
+        else:
+            FindOverlaps(gdbObject)
+            userMessage('Intentionally skipped running Addr GeoMSAGs in Overlap check.')
+            ## had to add as variables for table write to function
+            rcType = "template"
+            rcToday = strftime("%m/%d/%y")
+            rcValues = []
+            rcMsg = "Notice: Intentionally did not check Addr GeoMSAGs in Overlap check."
+            rcVal = (rcToday, rcMsg, "RoadCenterline", "RoadCenterline")
+            rcValues.append(rcVal)
+            RecordResults(rcType, rcValues, gdb)
+            ##RecordResults("template", [strftime("%m/%d/%y"), "Notice: Intentionally did not check GeoMSAG/Overlaps", "RoadCenterline"], gdb)
+            
+    except Exception as e:
+        userWarning(str(e))
+        RecordResults("template", [strftime("%m/%d/%y"), "Error: Could not check GeoMSAG/Overlaps", "RoadCenterline"], gdb)
+    ## checkGEOMSAG(gdbObject) added to try with exception above
     # check parities
     checkParities(currentPathSettings)
     
