@@ -426,7 +426,8 @@ def checkStewards(pathsInfoObject):
                                 "Labette":['485014','485641'],
                                 "Nemaha":['485029','472756'],
                                 "Pottawatomie":['485038','2397188','485044'],
-                                "Douglas":['484992','471362']}
+                                "Douglas":['484992','471362'],
+                                "Brown":['484976','485595']}
 
             # set variables
             good = False
@@ -1545,7 +1546,7 @@ def launchRangeFinder(f_add, t_add, parity):
     return sideRange
 
 
-def checkMsagLabelCombo(msag, label, overlaps, rd_fc, fields, msagList, name_field, txt):
+def checkMsagLabelCombo(msag, label, overlaps, overlapsGEOMSAG, rd_fc, fields, msagList, name_field, txt):
     from NG911_GDB_Objects import getDefaultNG911RoadCenterlineObject
     address_list = []
     checked_segids = []
@@ -1589,11 +1590,23 @@ def checkMsagLabelCombo(msag, label, overlaps, rd_fc, fields, msagList, name_fie
                                                     # make sure the script isn't comparing a road segment to itself
                                                     if (str(k_segid) != str(segid)):
                                                         writeToText(txt, "Address " + str(lR) + " overlaps between NGSEGID " + str(k_segid) + " and NGSEGID " + str(segid) + "\n")
-                                                    if k_segid not in overlaps:
-                                                        overlaps.append(k_segid)
-                                                    # this means there's an overlap & we found the partner
-                                                    if segid not in overlaps:
-                                                        overlaps.append(segid)
+                                                    ## add check for RC vs RC or RC vs AP
+                                                    if (str(k_segid)[0:2] == "AP") or (str(segid)[0:2] == "AP"):
+                                                        if k_segid not in overlapsGEOMSAG:
+                                                            overlapsGEOMSAG.append(k_segid)
+                                                        # this means there's an overlap & we found the partner
+                                                        if segid not in overlapsGEOMSAG:
+                                                            overlapsGEOMSAG.append(segid)
+                                                    else:
+                                                        if k_segid not in overlaps and (str(k_segid) != str(segid)):
+                                                            userMessage(k_segid)
+                                                            userMessage(segid)
+                                                            overlaps.append(k_segid)
+                                                        # this means there's an overlap & we found the partner
+                                                        if segid not in overlaps and (str(k_segid) != str(segid)):
+                                                            userMessage(segid)
+                                                            userMessage(k_segid)
+                                                            overlaps.append(segid)
 
                     if msagco_l == msagco_r:
                         checked_segids.append(segid + "|2")
@@ -1605,7 +1618,7 @@ def checkMsagLabelCombo(msag, label, overlaps, rd_fc, fields, msagList, name_fie
                             checked_segids.append(segid + "|1")
 
     del checked_segids, address_list, dict_ranges, row, rows
-    return overlaps
+    return overlaps, overlapsGEOMSAG
 
 
 def FindOverlaps(gdb_object, geomsag_flag=False, road_fc = ""):
@@ -1692,6 +1705,8 @@ def FindOverlaps(gdb_object, geomsag_flag=False, road_fc = ""):
         rd_fields = [msagco_l, msagco_r, name_field, segid, auth_l, auth_r, geomsag_l, geomsag_r]
 
         overlaps = []
+        ## added 2nd overlaps to hold difference between RC vs RC and RC vs AP errors
+        overlapsGEOMSAG = []
 
         with SearchCursor(rd_fc, rd_fields, rd_object.SUBMIT + " = 'Y'") as all_rows:
             for all_row in all_rows:
@@ -1724,7 +1739,7 @@ def FindOverlaps(gdb_object, geomsag_flag=False, road_fc = ""):
 
                 if checkL == 1 and all_row[0] + "|" + all_row[2] not in already_checked:
                     # check the left side MSAGCO & LABEL combo
-                    overlaps = checkMsagLabelCombo(all_row[0], all_row[2], overlaps, rd_fc, fields, msagList, name_field, txt)
+                    overlaps, overlapsGEOMSAG = checkMsagLabelCombo(all_row[0], all_row[2], overlaps, overlapsGEOMSAG, rd_fc, fields, msagList, name_field, txt)
                     already_checked.append(all_row[0] + "|" + all_row[2])
                     
                 runRight = False
@@ -1738,15 +1753,17 @@ def FindOverlaps(gdb_object, geomsag_flag=False, road_fc = ""):
 
                 # if the r & l msagco are different, run the right side
                 if checkR == 1 and runRight and all_row[1] + "|" + all_row[2] not in already_checked:
-                    overlaps = checkMsagLabelCombo(all_row[1], all_row[2], overlaps, rd_fc, fields, msagList, name_field, txt)
+                    overlaps, overlapsGEOMSAG = checkMsagLabelCombo(all_row[1], all_row[2], overlaps, overlapsGEOMSAG, rd_fc, fields, msagList, name_field, txt)
                     already_checked.append(all_row[1] + "|" + all_row[2])
 
-
-        if overlaps != []:
+        ## join two overlap lists
+        overlapsAll = overlaps + overlapsGEOMSAG
+        #if overlaps != []:
+        if overlapsAll != []:
             overlap_error_flag = 1
-            userMessage("%s overlapping address range segments found. Please see %s for overlap results." % (str(len(overlaps)), final_fc))
+            userMessage("%s overlapping address range segments found. Please see %s for overlap results." % (str(len(overlapsAll)), final_fc))
             # add code here for exporting the overlaps to a feature class
-            wcList = [segid, " in ('" +"','".join(overlaps), "')"]
+            wcList = [segid, " in ('" +"','".join(overlapsAll), "')"]
             wc = "".join(wcList)
 ##            wc = segid + " in ('" +"','".join(overlaps) + "')"
             overlaps_lyr = "overlaps_lyr"
@@ -1767,21 +1784,28 @@ def FindOverlaps(gdb_object, geomsag_flag=False, road_fc = ""):
             Delete_management(overlaps_lyr)
 
             # add reporting for overlapping segments
-            for ov in overlaps:
-                if (basename(rd_fc) != "GEOMSAG"):
-                    report = "Error: %s has an overlapping address range." % (str(ov))
-                    val = (today, report, basename(rd_fc), "", ov, "Overlapping Address Range")
-                    values.append(val)
-                elif (str(ov)[0:2] == "AP"):
-                    # Notice for Q3 2022 > Error for Q4 2022
-                    report = "Error: %s has an overlapping address range." % (str(ov)[2:])
-                    val = (today, report, "AddressPoints", "", str(ov)[2:], "Overlapping Address Range")
-                    values.append(val)
-                else:
-                    # Notice for Q3 2022 > Error for Q4 2022
+            ## add second loop for GEOMSAG errors
+            if overlaps != []:
+                for ov in overlaps:
                     report = "Error: %s has an overlapping address range." % (str(ov))
                     val = (today, report, "RoadCenterline", "", ov, "Overlapping Address Range")
+                    #val = (today, report, basename(rd_fc), "", ov, "Overlapping Address Range")
                     values.append(val)
+
+            if overlapsGEOMSAG != []:
+                for ovG in overlapsGEOMSAG:
+                    if (str(ovG)[0:2] == "AP"):
+                        # Notice for Q3 2022 > Error for Q4 2022
+                        ## Changed error message to better differentiate between RC vs RC overlaps and RC vs AP overlaps. WT 5/15/2023
+                        report = "Error: Address point GEOMSAG %s has an overlapping address range with a road centerline." % (str(ovG)[2:])
+                        val = (today, report, "AddressPoints", "", str(ovG)[2:], "Overlapping Address Range with RC")
+                        values.append(val)
+                    else:
+                        # Notice for Q3 2022 > Error for Q4 2022
+                        ## Changed error message to better differentiate between RC vs RC overlaps and RC vs AP overlaps. WT 5/15/2023
+                        report = "Error: Road centerline %s has an overlapping address range with an address point GEOMSAG." % (str(ovG))
+                        val = (today, report, "RoadCenterline", "", ovG, "Overlapping Address Range w/ AP GEOMSAG")
+                        values.append(val)
 
         else:
             userMessage("No overlaping address ranges found.")
@@ -2329,7 +2353,7 @@ def checkValuesAgainstDomain(pathsInfoObject):
                                 with SearchCursor(fullPathlyr, (id1, fieldN)) as rows:
                                     for row in rows:
                                         # if the row is null, skip it
-                                        if row[1] is None or row[1] in ['',' ']:
+                                        if row[1] is None: # or row[1] in ['',' ']: Edited out by WT on 5/16/23 Redundant check that overwrites line 2318 intent
                                             pass
                                         # see if the value is in the domain list
                                         elif row[1] not in domainList:

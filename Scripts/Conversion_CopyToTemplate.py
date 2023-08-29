@@ -228,9 +228,11 @@ def copy_gdb(gdbCurrent, gdbFuture):
             ImportMetadata_conversion(itemC, "FROM_ARCGIS", itemF, "ENABLED")
 
         # turn editor tracking back on
-        if editorC:
+        ## check if FC is a template FC so proper tracking fields are present and errors arent created from local files. - WT 5/15/2023
+        trackingList = ["AddressPoints", "RoadCenterline", "AuthoritativeBoundary", "ESB", "ESB_EMS", "ESB_FIRE", "ESB_LAW", "ESB_PSAP", "ESZ"]
+        if editorC and (basename(itemC) in trackingList):
             EnableEditorTracking_management(itemC, "", "", item_obj.UPDATEBY, item_obj.L_UPDATE, "NO_ADD_FIELDS", "UTC")
-        if editorF:
+        if editorF and (basename(itemF) in trackingList):
             EnableEditorTracking_management(itemF, "", "", item_obj.UPDATEBY, item_obj.L_UPDATE, "NO_ADD_FIELDS", "UTC")
 
         userMessage(data_item + " done")
