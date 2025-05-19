@@ -2572,7 +2572,7 @@ def checkSubmissionNumbers(pathsInfoObject):
     resultsType2 = "fieldValues"
 
     skipList = [basename(gdb_obj.HYDRANTS), basename(gdb_obj.GATES), basename(gdb_obj.PARCELS), 
-                basename(gdb_obj.CELLSECTORS), basename(gdb_obj.BRIDGES), basename(gdb_obj.CELLSITES),
+                basename(gdb_obj.BRIDGES), basename(gdb_obj.CELLSITES),
                 basename(gdb_obj.MunicipalBoundary), basename(gdb_obj.CountyBoundary)]
 
     for fc in fcList:
